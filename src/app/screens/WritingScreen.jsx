@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { a2Models } from '../../data/modelsA2';
-import { b1Models } from '../../data/modelsB1';
+import { b1Models } from '../../data/modelsb1';
 
 import { getSmartPremiumMessage } from '../../data/smartPremiumMessages';
 const b2Models = [];

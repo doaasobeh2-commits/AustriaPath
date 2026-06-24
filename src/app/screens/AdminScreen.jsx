@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getUsers, updateUserLevel, updateUserAllowedLevels } from '../userAccess';
 import { a2Models } from '../../data/modelsA2';
-import { b1Models } from '../../data/modelsB1';
+import { b1Models } from '../../data/modelsb1/';
 import { b2Models } from '../../data/modelsB2';
 const STORAGE_KEY = 'austriaPathAdminData';
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { b1PlanningModels } from '../../data/modelsB1';
+import { b1PlanningModels } from '../../data/modelsb1';
 import { b2Models } from '../../data/modelsB2';
 import { getSmartPremiumMessage } from '../../data/smartPremiumMessages';
 

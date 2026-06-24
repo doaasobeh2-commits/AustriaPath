@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { b1PlanningModels } from '../../data/modelsB1';
+import { b1PlanningModels } from '../../data/modelsb1';
 
 const planningModels = {
   A2: [
