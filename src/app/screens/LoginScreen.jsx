@@ -1,0 +1,123 @@
+import React, { useState } from 'react';
+import { getUsers, saveCurrentUser } from '../userAccess';
+
+export default function LoginScreen({ onLogin, onRegister }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = () => {
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanEmail || !password) {
+      alert('Bitte E-Mail und Passwort eingeben.');
+      return;
+    }
+
+    const users = getUsers();
+
+    let user = users.find(
+      (item) => item.email?.toLowerCase() === cleanEmail
+    );
+
+    if (!user) {
+      user = {
+        id: Date.now(),
+        name: cleanEmail.split('@')[0],
+        email: cleanEmail,
+        password,
+        level: localStorage.getItem('userLevel') || 'B1',
+        allowedLevels: ['A2'],
+        plan: 'free',
+        levelSource: 'login_created',
+        role: cleanEmail === 'fadisobehau@gmail.com' ? 'admin' : 'student',
+        createdAt: new Date().toISOString(),
+      };
+
+      const updatedUsers = [...users, user];
+      localStorage.setItem('austriaPathUsers', JSON.stringify(updatedUsers));
+    }
+
+    saveCurrentUser(user);
+    localStorage.setItem('userEmail', cleanEmail);
+
+    onLogin(cleanEmail);
+  };
+
+  return (
+    <div
+      style={{
+        padding: '24px',
+        maxWidth: '450px',
+        margin: '50px auto'
+      }}
+    >
+      <h1>Willkommen zurück</h1>
+
+      <p style={{ color: '#64748b' }}>
+        Melden Sie sich an, um Ihren Fortschritt zu speichern.
+      </p>
+
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="E-Mail"
+        style={{
+          width: '100%',
+          padding: '12px',
+          marginTop: '20px',
+          borderRadius: '10px',
+          border: '1px solid #d1d5db'
+        }}
+      />
+
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Passwort"
+        style={{
+          width: '100%',
+          padding: '12px',
+          marginTop: '12px',
+          borderRadius: '10px',
+          border: '1px solid #d1d5db'
+        }}
+      />
+
+      <button
+        onClick={handleLogin}
+        style={{
+          width: '100%',
+          padding: '14px',
+          marginTop: '20px',
+          border: 'none',
+          borderRadius: '10px',
+          background: '#2563eb',
+          color: 'white',
+          fontWeight: 'bold',
+          cursor: 'pointer'
+        }}
+      >
+        Anmelden
+      </button>
+
+      <button
+        onClick={onRegister}
+        style={{
+          width: '100%',
+          padding: '14px',
+          marginTop: '12px',
+          border: '1px solid #2563eb',
+          borderRadius: '10px',
+          background: '#ffffff',
+          color: '#2563eb',
+          fontWeight: 'bold',
+          cursor: 'pointer'
+        }}
+      >
+        Neues Konto erstellen
+      </button>
+    </div>
+  );
+}
