@@ -46,15 +46,14 @@ const homeTexts = {
 export function HomeScreen({ setActiveTab }) {
   const userLanguage = localStorage.getItem('userLanguage') || 'Deutsch';
   const homeT = homeTexts[userLanguage] || homeTexts.Deutsch;
+
   return (
     <div style={pageStyle}>
       <div style={mobileAppStyle}>
         <div style={heroStyle}>
-          <img
-            src="/src/public/logo.png.png"
-            alt="AustriaPath"
-            style={logoStyle}
-          />
+          <div style={heroImageStyle}>
+            <img src="/logo.png" alt="AustriaPath" style={heroLogoStyle} />
+          </div>
 
           <h1 style={heroTitleStyle}>Willkommen bei AustriaPath</h1>
 
@@ -74,29 +73,22 @@ export function HomeScreen({ setActiveTab }) {
           </div>
 
           <div style={popularStyle}>
+            <Watermark />
             <h2 style={sectionTitleStyle}>Beliebte Themen</h2>
             <p style={popularTextStyle}>📍 B1 Wien · Häufige Prüfungsthemen</p>
             <p style={popularTextStyle}>📖 Lesen · 🎧 Hören · 🖼️ Bildbeschreibung · 🗣️ Mündliche Prüfung</p>
           </div>
 
           <div style={aiBoxStyle}>
+            <Watermark />
             <h2 style={sectionTitleStyle}>{homeT.aiTitle}</h2>
- <p style={cardTextStyle}>
-  {homeT.aiText}
-</p>
 
-<p
-  style={{
-    marginTop: '12px',
-    color: '#2563eb',
-    fontWeight: '700',
-    fontSize: '14px',
-    lineHeight: '1.5',
-  }}
->{homeT.aiPlan}
-</p>
+            <p style={cardTextStyle}>{homeT.aiText}</p>
+
+            <p style={aiPlanStyle}>{homeT.aiPlan}</p>
+
             <button onClick={() => setActiveTab('premium')} style={aiButtonStyle}>
-             {homeT.aiButton}
+              {homeT.aiButton}
             </button>
           </div>
 
@@ -113,11 +105,16 @@ export function HomeScreen({ setActiveTab }) {
 function Card({ icon, title, text, color, onClick }) {
   return (
     <button onClick={onClick} style={{ ...cardStyle, background: color }}>
+      <Watermark />
       <div style={iconStyle}>{icon}</div>
       <h3 style={cardTitleStyle}>{title}</h3>
       <p style={cardTextStyle}>{text}</p>
     </button>
   );
+}
+
+function Watermark() {
+  return <img src="/logo.png" alt="" style={watermarkStyle} />;
 }
 
 const pageStyle = {
@@ -138,18 +135,39 @@ const mobileAppStyle = {
 };
 
 const heroStyle = {
-  minHeight: '210px',
-  padding: '22px 22px 26px',
+  padding: '14px 16px 26px',
   boxSizing: 'border-box',
+  
+};
+const heroImageStyle = {
+  width: '100%',
+  height: '185px',
+  borderRadius: '26px',
+  marginBottom: '22px',
+
   backgroundImage:
-    'linear-gradient(90deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0.18) 100%), url("/src/public/austria-hero.jpg")',
+    'linear-gradient(90deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0.18) 100%), url("/src/public/austria-hero.jpeg")',
+
   backgroundSize: 'cover',
   backgroundPosition: 'center',
+
+  display: 'flex',
+  alignItems: 'flex-start',
+  justifyContent: 'flex-start',
+
+  padding: '16px',
+  boxSizing: 'border-box',
+  boxShadow: '0 10px 28px rgba(15, 23, 42, 0.12)',
+};
+const heroLogoStyle = {
+  width: '115px',
+  height: 'auto',
+  objectFit: 'contain',
 };
 
 const contentStyle = {
   padding: '16px',
-  marginTop: '-22px',
+  marginTop: '-10px',
   boxSizing: 'border-box',
 };
 
@@ -161,6 +179,8 @@ const gridStyle = {
 };
 
 const cardStyle = {
+  position: 'relative',
+  overflow: 'hidden',
   width: '100%',
   minHeight: '205px',
   padding: '22px',
@@ -175,9 +195,13 @@ const cardStyle = {
   boxShadow: '0 8px 20px rgba(15, 23, 42, 0.06)',
 };
 
-const logoStyle = {
-  width: '120px',
-  marginBottom: '22px',
+const watermarkStyle = {
+  position: 'absolute',
+  right: '10px',
+  bottom: '10px',
+  width: '54px',
+  opacity: 0.07,
+  pointerEvents: 'none',
 };
 
 const heroTitleStyle = {
@@ -216,6 +240,8 @@ const cardTextStyle = {
 };
 
 const popularStyle = {
+  position: 'relative',
+  overflow: 'hidden',
   marginTop: '18px',
   background: '#ffffff',
   border: '1px solid #bfdbfe',
@@ -225,6 +251,8 @@ const popularStyle = {
 };
 
 const aiBoxStyle = {
+  position: 'relative',
+  overflow: 'hidden',
   marginTop: '18px',
   background: '#ffffff',
   borderRadius: '22px',
@@ -242,6 +270,14 @@ const popularTextStyle = {
   margin: '6px 0',
   color: '#475569',
   fontSize: '15px',
+  lineHeight: '1.5',
+};
+
+const aiPlanStyle = {
+  marginTop: '12px',
+  color: '#2563eb',
+  fontWeight: '700',
+  fontSize: '14px',
   lineHeight: '1.5',
 };
 
