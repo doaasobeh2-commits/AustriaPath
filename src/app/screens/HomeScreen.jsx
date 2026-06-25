@@ -71,14 +71,14 @@ export function HomeScreen({ setActiveTab }) {
           </div>
 
           <div style={popularStyle}>
-            <Watermark />
+            
             <h2 style={sectionTitleStyle}>Beliebte Themen</h2>
             <p style={popularTextStyle}>📍 B1 Wien · Häufige Prüfungsthemen</p>
             <p style={popularTextStyle}>📖 Lesen · 🎧 Hören · 🖼️ Bildbeschreibung · 🗣️ Mündliche Prüfung</p>
           </div>
 
           <div style={aiBoxStyle}>
-            <Watermark />
+            
             <h2 style={sectionTitleStyle}>{homeT.aiTitle}</h2>
 
             <p style={cardTextStyle}>{homeT.aiText}</p>
