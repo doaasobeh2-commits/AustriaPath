@@ -52,7 +52,7 @@ export function HomeScreen({ setActiveTab }) {
       <div style={mobileAppStyle}>
         <div style={heroStyle}>
           <div style={heroImageStyle}>
-          <img src="/app-icon.png" alt="AustriaPath" style={watermarkStyle} />
+         <img src="/austria-hero.jpeg" alt="AustriaPath" style={heroImgStyle} />
           </div>
 
           <h1 style={heroTitleStyle}>Willkommen bei AustriaPath</h1>
@@ -146,7 +146,7 @@ const heroImageStyle = {
   marginBottom: '22px',
 
   backgroundImage:
-    'linear-gradient(90deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0.18) 100%), url("/src/public/austria-hero.jpeg")',
+    'linear-gradient(90deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0.18) 100%), url("/austria-hero.jpeg")',
 
   backgroundSize: 'cover',
   backgroundPosition: 'center',
