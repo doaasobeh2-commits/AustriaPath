@@ -103,7 +103,7 @@ export function HomeScreen({ setActiveTab }) {
 function Card({ icon, title, text, color, onClick }) {
   return (
     <button onClick={onClick} style={{ ...cardStyle, background: color }}>
-      <Watermark />
+      
       <div style={iconStyle}>{icon}</div>
       <h3 style={cardTitleStyle}>{title}</h3>
       <p style={cardTextStyle}>{text}</p>
