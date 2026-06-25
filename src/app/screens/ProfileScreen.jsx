@@ -200,16 +200,14 @@ const openPremiumExam = (exam) => {
 };
 
   return (
-    <div style={pageStyle}>
-      <div style={topBarStyle}>
-        <h2 style={logoStyle}>AustriaPath</h2>
-        <div style={{ fontSize: 24 }}>🔔 ☰</div>
-      </div>
+  <div style={pageStyle}>
+    <div style={profileTopActionsStyle}>
+      <button style={profileBellButtonStyle}>🔔</button>
+    </div>
 
-      <div style={heroCardStyle}>
-        <div style={heroLeftStyle}>
-          <div style={avatarStyle}>{userName.charAt(0).toUpperCase()}</div>
-
+    <div style={heroCardStyle}>
+      <div style={heroLeftStyle}>
+        <div style={avatarStyle}>👤</div>
           <div>
             <h1 style={nameStyle}>{userName}</h1>
             <p style={mutedStyle}>{userEmail}</p>
@@ -945,4 +943,15 @@ const createPlanButtonStyle = {
   fontWeight: 900,
   cursor: 'pointer',
   marginBottom: 16,
+};const profileTopActionsStyle = {
+  display: 'flex',
+  justifyContent: 'flex-end',
+  marginBottom: '12px',
+};
+
+const profileBellButtonStyle = {
+  border: 'none',
+  background: 'transparent',
+  fontSize: '22px',
+  cursor: 'pointer',
 };
