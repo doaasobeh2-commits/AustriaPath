@@ -52,7 +52,7 @@ export function HomeScreen({ setActiveTab }) {
       <div style={mobileAppStyle}>
         <div style={heroStyle}>
           <div style={heroImageStyle}>
-            <img src="/logo.png" alt="AustriaPath" style={heroLogoStyle} />
+            <img src="/app-icon.png" alt="AustriaPath" style={heroLogoStyle} />
           </div>
 
           <h1 style={heroTitleStyle}>Willkommen bei AustriaPath</h1>
