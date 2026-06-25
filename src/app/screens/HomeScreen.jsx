@@ -139,15 +139,17 @@ const heroStyle = {
 };
 const heroImageStyle = {
   width: '100%',
-  height: '185px',
+  height: '205px',
   borderRadius: '26px',
   marginBottom: '22px',
 
-  backgroundImage:
-  'linear-gradient(90deg, rgba(255,255,255,0.50) 0%, rgba(255,255,255,0.25) 45%, rgba(255,255,255,0.05) 100%), url("/austria-hero.jpeg")',
+ backgroundImage:
+  'linear-gradient(90deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.16) 42%, rgba(255,255,255,0.02) 100%), url("/austria-hero.jpeg")',
 
-  backgroundSize: 'cover',
-  backgroundPosition: 'center',
+  backgroundSize: '100% auto',
+backgroundPosition: 'center top',
+backgroundRepeat: 'no-repeat',
+
 
   display: 'flex',
   alignItems: 'flex-start',
@@ -203,13 +205,13 @@ const watermarkStyle = {
 };
 
 const heroTitleStyle = {
-  marginTop: '78px',
-  marginLeft: '18px',
-  color: '#1f2937',
-  fontSize: '22px',
+  margin: 0,
+  color: '#1e293b',
+  fontSize: '21px',
+  lineHeight: '1.15',
   fontWeight: '700',
-  lineHeight: '1.2',
-  textShadow: '0 1px 2px rgba(255,255,255,0.6)',
+  letterSpacing: '-0.3px',
+  textShadow: '0 1px 2px rgba(255,255,255,0.55)',
 };
 
 
@@ -295,8 +297,8 @@ const footerStyle = {
 };
 const heroTextInsideImageStyle = {
   maxWidth: '220px',
-  marginTop: '12px',
-  marginLeft: '10px',
+  marginTop: '56px',
+  marginLeft: '4px',
 };
 
 const heroProtectedStyle = {
