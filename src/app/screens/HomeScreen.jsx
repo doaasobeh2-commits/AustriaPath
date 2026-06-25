@@ -51,15 +51,15 @@ export function HomeScreen({ setActiveTab }) {
     <div style={pageStyle}>
       <div style={mobileAppStyle}>
         <div style={heroStyle}>
-          <div style={heroImageStyle}>
-         {/* <img src="/app-icon.png" alt="AustriaPath" style={heroLogoStyle} /> */}
-          </div>
+         <div style={heroImageStyle}>
+  <div style={heroTextInsideImageStyle}>
+    <h1 style={heroTitleStyle}>Willkommen bei AustriaPath</h1>
 
-          <h1 style={heroTitleStyle}>Willkommen bei AustriaPath</h1>
+    <p style={heroProtectedStyle}>🛡️ Das Programm ist geschützt.</p>
 
-          <p style={heroTextStyle}>
-            Dein Begleiter für Deutsch, Prüfungsvorbereitung und Alltag in Österreich.
-          </p>
+    <p style={heroCopyrightStyle}>© 2026 AustriaPath</p>
+  </div>
+</div>
         </div>
 
         <div style={contentStyle}>
@@ -212,13 +212,7 @@ const heroTitleStyle = {
   fontWeight: '800',
 };
 
-const heroTextStyle = {
-  color: '#334155',
-  fontSize: '16px',
-  lineHeight: '1.5',
-  maxWidth: '310px',
-  marginTop: '14px',
-};
+
 
 const iconStyle = {
   fontSize: '30px',
@@ -299,4 +293,20 @@ const footerStyle = {
   color: '#94a3b8',
   fontSize: '13px',
   lineHeight: '1.5',
+};
+const heroTextInsideImageStyle = {
+  maxWidth: '260px',
+};
+
+const heroProtectedStyle = {
+  margin: '14px 0 0',
+  color: '#166534',
+  fontSize: '14px',
+  fontWeight: '700',
+};
+
+const heroCopyrightStyle = {
+  margin: '8px 0 0',
+  color: '#475569',
+  fontSize: '13px',
 };
