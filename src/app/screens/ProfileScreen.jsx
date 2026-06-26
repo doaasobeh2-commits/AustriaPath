@@ -201,9 +201,7 @@ const openPremiumExam = (exam) => {
 
   return (
   <div style={pageStyle}>
-    <div style={profileTopActionsStyle}>
-      <button style={profileBellButtonStyle}>🔔</button>
-    </div>
+    
 
     <div style={heroCardStyle}>
       <div style={heroLeftStyle}>
@@ -943,15 +941,4 @@ const createPlanButtonStyle = {
   fontWeight: 900,
   cursor: 'pointer',
   marginBottom: 16,
-};const profileTopActionsStyle = {
-  display: 'flex',
-  justifyContent: 'flex-end',
-  marginBottom: '12px',
-};
-
-const profileBellButtonStyle = {
-  border: 'none',
-  background: 'transparent',
-  fontSize: '22px',
-  cursor: 'pointer',
 };

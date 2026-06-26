@@ -1,252 +1,492 @@
 export const a2Images = [
   {
     id: 1,
-    title: "Familie im Park",
-    shortText: "Eine Familie verbringt Zeit im Park.",
+    title: "Paketlieferant",
+   image: "/images/a2/paketlieferant.jpeg",
+    shortText: "Ein Paketlieferant bringt einer Frau ein Paket.",
     description: [
-      "Auf dem Bild sehe ich eine Familie im Park.",
-      "Die Familie sitzt auf einer Decke.",
-      "Die Eltern sprechen mit ihren Kindern.",
-      "Vor ihnen liegen Obst und ein Ball.",
-      "Das Wetter ist schön und die Sonne scheint."
-    ],
-    words: ["die Familie", "der Park", "die Decke", "das Kind", "die Eltern", "das Obst", "der Ball", "das Wetter"],
-    verbs: ["sitzen", "sprechen", "spielen", "liegen", "essen", "sehen"],
-    sentences: [
-      "Auf dem Bild sehe ich eine Familie.",
-      "Die Familie sitzt im Park.",
-      "Die Kinder spielen zusammen.",
+      "Auf dem Bild sehe ich einen Paketlieferanten und eine Frau.",
+      "Der Mann bringt ein Paket.",
+      "Die Frau steht vor der Tür.",
+      "Sie nimmt das Paket.",
+      "Der Mann ist freundlich.",
       "Das Wetter ist schön."
     ],
-    opinion: [
-      "Ich finde das Bild schön.",
-      "Die Familie hat Spaß zusammen.",
-      "Ich mag solche Tage."
-    ]
-  },
-  {
-    id: 2,
-    title: "Einkaufen im Supermarkt",
-    shortText: "Eine Frau kauft Lebensmittel im Supermarkt.",
-    description: [
-      "Auf dem Bild sehe ich eine Frau im Supermarkt.",
-      "Sie hat einen Einkaufswagen.",
-      "Sie schaut auf ein Produkt.",
-      "Im Wagen sind viele Lebensmittel.",
-      "Der Supermarkt ist groß und hell."
+    words: [
+      "der Paketlieferant",
+      "das Paket",
+      "die Frau",
+      "die Tür",
+      "das Haus",
+      "das Fahrrad",
+      "das Wetter"
     ],
-    words: ["der Supermarkt", "der Einkaufswagen", "das Produkt", "die Lebensmittel", "das Regal", "der Preis"],
-    verbs: ["einkaufen", "schauen", "wählen", "kaufen", "bezahlen"],
+    verbs: [
+      "bringen",
+      "geben",
+      "nehmen",
+      "stehen",
+      "lächeln",
+      "fahren"
+    ],
     sentences: [
-      "Auf dem Bild sehe ich eine Frau.",
-      "Sie ist im Supermarkt.",
-      "Sie kauft Lebensmittel.",
-      "Im Hintergrund sehe ich Regale."
-    ],
-    opinion: [
-      "Ich finde das Bild gut.",
-      "Einkaufen ist wichtig.",
-      "Frisches Essen ist gesund."
-    ]
-  },
-  {
-    id: 3,
-    title: "Im Restaurant",
-    shortText: "Ein Paar isst zusammen im Restaurant.",
-    description: [
-      "Auf dem Bild sehe ich zwei Personen im Restaurant.",
-      "Sie sitzen an einem Tisch.",
-      "Vor ihnen stehen zwei Teller mit Essen.",
-      "Sie sprechen und lachen.",
-      "Das Restaurant ist gemütlich."
-    ],
-    words: ["das Restaurant", "der Tisch", "der Teller", "das Essen", "das Glas", "die Speisekarte"],
-    verbs: ["sitzen", "essen", "sprechen", "trinken", "bezahlen"],
-    sentences: [
-      "Auf dem Bild sehe ich zwei Personen.",
-      "Sie sitzen im Restaurant.",
-      "Sie essen zusammen.",
-      "Das Restaurant ist schön."
-    ],
-    opinion: [
-      "Ich finde das Bild schön.",
-      "Ich esse gern im Restaurant.",
-      "Das Essen sieht lecker aus."
-    ]
-  },
-  {
-    id: 4,
-    title: "Im Café",
-    shortText: "Eine Frau trinkt Kaffee im Café.",
-    description: [
-      "Auf dem Bild sehe ich eine Frau im Café.",
-      "Sie sitzt an einem Tisch am Fenster.",
-      "Sie trinkt einen Kaffee.",
-      "Vor ihr steht ein Stück Kuchen.",
-      "Draußen sieht man eine Straße."
-    ],
-    words: ["das Café", "der Kaffee", "der Kuchen", "der Tisch", "das Fenster", "die Straße"],
-    verbs: ["sitzen", "trinken", "essen", "schauen", "genießen"],
-    sentences: [
-      "Auf dem Bild sehe ich eine Frau.",
-      "Sie sitzt im Café.",
-      "Sie trinkt Kaffee.",
-      "Das Café ist ruhig."
-    ],
-    opinion: [
-      "Ich finde das Bild ruhig.",
-      "Kaffee am Morgen ist gut.",
-      "Ich mag Cafés."
-    ]
-  },
-  {
-    id: 5,
-    title: "Am Bahnhof",
-    shortText: "Eine Frau wartet auf den Zug am Bahnhof.",
-    description: [
-      "Auf dem Bild sehe ich einen Bahnhof.",
-      "Eine Frau steht am Gleis.",
-      "Sie hat einen Koffer.",
-      "Ein Zug steht auf dem Gleis.",
-      "Viele Menschen warten."
-    ],
-    words: ["der Bahnhof", "der Zug", "das Gleis", "der Koffer", "die Uhr", "der Fahrplan"],
-    verbs: ["warten", "gehen", "fahren", "ankommen", "abfahren"],
-    sentences: [
-      "Auf dem Bild sehe ich einen Bahnhof.",
-      "Eine Frau wartet auf den Zug.",
-      "Sie hat einen Koffer.",
-      "Der Zug ist am Gleis."
-    ],
-    opinion: [
-      "Ich finde das Bild interessant.",
-      "Reisen macht Spaß.",
-      "Ich fahre oft mit dem Zug."
-    ]
-  },
-  {
-    id: 6,
-    title: "An der Bushaltestelle",
-    shortText: "Eine Frau wartet auf den Bus.",
-    description: [
-      "Auf dem Bild sehe ich eine Bushaltestelle.",
-      "Eine Frau wartet auf den Bus.",
-      "Der Bus kommt gerade.",
-      "Neben der Frau steht ein Schild.",
-      "Die Straße ist sauber."
-    ],
-    words: ["die Bushaltestelle", "der Bus", "die Frau", "das Schild", "die Straße", "der Fahrplan"],
-    verbs: ["warten", "kommen", "fahren", "einsteigen", "aussteigen"],
-    sentences: [
-      "Auf dem Bild sehe ich eine Bushaltestelle.",
-      "Eine Frau wartet auf den Bus.",
-      "Der Bus kommt.",
-      "Die Straße ist sauber."
-    ],
-    opinion: [
-      "Ich finde das Bild schön.",
-      "Busse sind praktisch.",
-      "Öffentliche Verkehrsmittel sind gut."
-    ]
-  },
-  {
-    id: 7,
-    title: "Beim Arzt",
-    shortText: "Eine Frau spricht mit der Ärztin.",
-    description: [
-      "Auf dem Bild sehe ich eine Ärztin und eine Patientin.",
-      "Die Ärztin spricht mit der Patientin.",
-      "Sie hat ein Klemmbrett in der Hand.",
-      "Das Zimmer ist hell und sauber.",
-      "Die Patientin hört zu."
-    ],
-    words: ["die Ärztin", "die Patientin", "das Zimmer", "das Klemmbrett", "der Termin", "die Gesundheit"],
-    verbs: ["sprechen", "fragen", "antworten", "zuhören", "helfen"],
-    sentences: [
-      "Auf dem Bild sehe ich eine Ärztin.",
-      "Die Ärztin spricht mit der Patientin.",
-      "Das Zimmer ist hell.",
-      "Die Patientin sitzt."
+      "Auf dem Bild sehe ich einen Paketlieferanten.",
+      "Er bringt ein Paket.",
+      "Die Frau nimmt das Paket.",
+      "Beide Personen sind freundlich.",
+      "Das Bild ist schön."
     ],
     opinion: [
       "Ich finde das Bild freundlich.",
-      "Ärzte helfen uns.",
-      "Gesundheit ist wichtig."
+      "Pakete bekommen ist praktisch.",
+      "Ich bestelle manchmal online."
+    ],
+    mistakes: [
+      "Nicht: Der Mann gebt ein Paket.",
+      "Richtig: Der Mann gibt ein Paket.",
+      "Nicht: Die Frau nimmt der Paket.",
+      "Richtig: Die Frau nimmt das Paket."
     ]
   },
+
+  {
+    id: 2,
+    title: "Buchhandlung",
+    image: "/images/a2/buchhandlung.jpeg",
+    shortText: "Eine Frau kauft ein Buch in einer Buchhandlung.",
+    description: [
+      "Auf dem Bild sehe ich eine Buchhandlung.",
+      "Eine Frau steht vor einem Regal.",
+      "Sie schaut ein Buch an.",
+      "Im Regal stehen viele Bücher.",
+      "Der Verkäufer steht an der Kasse.",
+      "Die Buchhandlung ist ruhig."
+    ],
+    words: [
+      "die Buchhandlung",
+      "das Buch",
+      "das Regal",
+      "die Kasse",
+      "der Verkäufer",
+      "die Frau",
+      "der Preis"
+    ],
+    verbs: [
+      "lesen",
+      "kaufen",
+      "schauen",
+      "stehen",
+      "suchen",
+      "bezahlen"
+    ],
+    sentences: [
+      "Auf dem Bild sehe ich eine Buchhandlung.",
+      "Die Frau sucht ein Buch.",
+      "Im Regal sind viele Bücher.",
+      "Sie möchte ein Buch kaufen."
+    ],
+    opinion: [
+      "Ich finde das Bild ruhig.",
+      "Bücher sind wichtig.",
+      "Ich lese manchmal gern."
+    ],
+    mistakes: [
+      "Nicht: Ich kaufe ein Bücher.",
+      "Richtig: Ich kaufe ein Buch.",
+      "Nicht: Die Frau schaut auf ein Buch.",
+      "Besser: Die Frau schaut ein Buch an."
+    ]
+  },
+
+  {
+    id: 3,
+    title: "Tierarztpraxis",
+    image: "/images/a2/tierarztpraxis.jpeg",
+    shortText: "Eine Frau ist mit ihrem Hund beim Tierarzt.",
+    description: [
+      "Auf dem Bild sehe ich eine Tierarztpraxis.",
+      "Eine Frau sitzt mit ihrem Hund.",
+      "Der Tierarzt untersucht den Hund.",
+      "Der Hund ist ruhig.",
+      "Auf dem Tisch liegen Papiere.",
+      "Das Zimmer ist sauber."
+    ],
+    words: [
+      "der Tierarzt",
+      "die Tierarztpraxis",
+      "der Hund",
+      "die Frau",
+      "der Tisch",
+      "die Untersuchung",
+      "die Gesundheit"
+    ],
+    verbs: [
+      "untersuchen",
+      "helfen",
+      "sitzen",
+      "warten",
+      "sprechen",
+      "fragen"
+    ],
+    sentences: [
+      "Auf dem Bild sehe ich einen Tierarzt.",
+      "Die Frau ist mit ihrem Hund dort.",
+      "Der Tierarzt untersucht den Hund.",
+      "Der Hund ist ruhig."
+    ],
+    opinion: [
+      "Ich finde das Bild schön.",
+      "Tiere brauchen Hilfe.",
+      "Ein Tierarzt ist wichtig."
+    ],
+    mistakes: [
+      "Nicht: Der Arzt untersucht der Hund.",
+      "Richtig: Der Arzt untersucht den Hund.",
+      "Nicht: Die Frau ist mit sein Hund.",
+      "Richtig: Die Frau ist mit ihrem Hund."
+    ]
+  },
+
+  {
+    id: 4,
+    title: "Flughafen",
+    image: "/images/a2/flughafen.jpeg",
+    shortText: "Menschen warten am Flughafen.",
+    description: [
+      "Auf dem Bild sehe ich einen Flughafen.",
+      "Viele Menschen stehen mit Koffern.",
+      "Eine Frau schaut auf ihr Ticket.",
+      "Im Hintergrund sieht man Schalter.",
+      "Die Menschen möchten reisen.",
+      "Der Flughafen ist groß und hell."
+    ],
+    words: [
+      "der Flughafen",
+      "der Koffer",
+      "das Ticket",
+      "der Schalter",
+      "die Reise",
+      "das Flugzeug",
+      "die Menschen"
+    ],
+    verbs: [
+      "reisen",
+      "warten",
+      "fliegen",
+      "stehen",
+      "zeigen",
+      "einchecken"
+    ],
+    sentences: [
+      "Auf dem Bild sehe ich einen Flughafen.",
+      "Die Menschen warten.",
+      "Sie haben Koffer.",
+      "Sie möchten fliegen."
+    ],
+    opinion: [
+      "Ich finde das Bild interessant.",
+      "Reisen ist schön.",
+      "Fliegen ist schnell."
+    ],
+    mistakes: [
+      "Nicht: Ich gehe in Flughafen.",
+      "Richtig: Ich gehe zum Flughafen.",
+      "Nicht: Die Leute wartet.",
+      "Richtig: Die Leute warten."
+    ]
+  },
+
+  {
+    id: 5,
+    title: "Zugkontrolle",
+    image: "/images/a2/zugkontrolle.jpeg",
+    shortText: "Ein Kontrolleur kontrolliert ein Ticket im Zug.",
+    description: [
+      "Auf dem Bild sehe ich einen Zug.",
+      "Ein Kontrolleur steht im Zug.",
+      "Er kontrolliert ein Ticket.",
+      "Eine Frau sitzt auf ihrem Platz.",
+      "Sie zeigt dem Kontrolleur das Ticket.",
+      "Der Zug ist sauber."
+    ],
+    words: [
+      "der Zug",
+      "der Kontrolleur",
+      "das Ticket",
+      "der Platz",
+      "die Frau",
+      "die Kontrolle",
+      "die Fahrt"
+    ],
+    verbs: [
+      "fahren",
+      "kontrollieren",
+      "zeigen",
+      "sitzen",
+      "fragen",
+      "antworten"
+    ],
+    sentences: [
+      "Auf dem Bild sehe ich einen Zug.",
+      "Der Kontrolleur kontrolliert ein Ticket.",
+      "Die Frau zeigt ihr Ticket.",
+      "Sie sitzt im Zug."
+    ],
+    opinion: [
+      "Ich finde das Bild normal.",
+      "Mit dem Zug fahren ist praktisch.",
+      "Ein Ticket ist wichtig."
+    ],
+    mistakes: [
+      "Nicht: Ich fahre mit der Zug.",
+      "Richtig: Ich fahre mit dem Zug.",
+      "Nicht: Sie zeigt der Ticket.",
+      "Richtig: Sie zeigt das Ticket."
+    ]
+  },
+
+  {
+    id: 6,
+    title: "Koffergeschäft",
+    image: "/images/a2/koffergeschaeft.jpeg",
+    shortText: "Eine Frau kauft einen Koffer.",
+    description: [
+      "Auf dem Bild sehe ich ein Koffergeschäft.",
+      "Eine Frau schaut einen Koffer an.",
+      "Neben ihr stehen viele Koffer.",
+      "Ein Verkäufer hilft ihr.",
+      "Die Frau möchte reisen.",
+      "Das Geschäft ist hell."
+    ],
+    words: [
+      "das Koffergeschäft",
+      "der Koffer",
+      "die Tasche",
+      "der Verkäufer",
+      "die Frau",
+      "die Reise",
+      "der Preis"
+    ],
+    verbs: [
+      "kaufen",
+      "suchen",
+      "zeigen",
+      "helfen",
+      "reisen",
+      "bezahlen"
+    ],
+    sentences: [
+      "Auf dem Bild sehe ich ein Geschäft.",
+      "Die Frau sucht einen Koffer.",
+      "Der Verkäufer hilft ihr.",
+      "Sie möchte einen Koffer kaufen."
+    ],
+    opinion: [
+      "Ich finde das Bild praktisch.",
+      "Ein guter Koffer ist wichtig.",
+      "Ich brauche einen Koffer für Reisen."
+    ],
+    mistakes: [
+      "Nicht: Ich kaufe eine Koffer.",
+      "Richtig: Ich kaufe einen Koffer.",
+      "Nicht: Der Verkäufer helfen.",
+      "Richtig: Der Verkäufer hilft."
+    ]
+  },
+
+  {
+    id: 7,
+    title: "Friseursalon",
+    image: "/images/a2/friseursalon.jpeg",
+    shortText: "Eine Frau ist beim Friseur.",
+    description: [
+      "Auf dem Bild sehe ich einen Friseursalon.",
+      "Eine Frau sitzt auf einem Stuhl.",
+      "Die Friseurin schneidet ihre Haare.",
+      "Vor der Frau ist ein Spiegel.",
+      "Im Salon sind viele Sachen für Haare.",
+      "Die Frau sieht zufrieden aus."
+    ],
+    words: [
+      "der Friseursalon",
+      "die Friseurin",
+      "die Haare",
+      "der Spiegel",
+      "der Stuhl",
+      "die Schere",
+      "der Termin"
+    ],
+    verbs: [
+      "schneiden",
+      "sitzen",
+      "waschen",
+      "kämmen",
+      "fragen",
+      "bezahlen"
+    ],
+    sentences: [
+      "Auf dem Bild sehe ich einen Friseursalon.",
+      "Die Frau sitzt auf einem Stuhl.",
+      "Die Friseurin schneidet die Haare.",
+      "Die Frau ist zufrieden."
+    ],
+    opinion: [
+      "Ich finde das Bild schön.",
+      "Ein Friseurbesuch ist angenehm.",
+      "Gepflegte Haare sind wichtig."
+    ],
+    mistakes: [
+      "Nicht: Ich gehe bei Friseur.",
+      "Richtig: Ich gehe zum Friseur.",
+      "Nicht: Sie schneidet die Haar.",
+      "Richtig: Sie schneidet die Haare."
+    ]
+  },
+
   {
     id: 8,
-    title: "In der Schule",
-    shortText: "Schüler lernen im Klassenzimmer.",
+    title: "Wohnungsbesichtigung",
+    image: "/images/a2/wohnungsbesichtigung.jpeg",
+    shortText: "Eine Frau besichtigt eine Wohnung.",
     description: [
-      "Auf dem Bild sehe ich eine Klasse.",
-      "Die Schüler sitzen an ihren Tischen.",
-      "Ein Junge schreibt in sein Heft.",
-      "An der Tafel steht ein Satz.",
-      "Die Schüler lernen Deutsch."
+      "Auf dem Bild sehe ich eine Wohnung.",
+      "Eine Frau schaut sich die Wohnung an.",
+      "Ein Mann zeigt ihr das Zimmer.",
+      "Das Zimmer ist hell und sauber.",
+      "Es gibt ein Fenster und Möbel.",
+      "Die Frau interessiert sich für die Wohnung."
     ],
-    words: ["die Schule", "die Klasse", "der Schüler", "der Tisch", "das Heft", "die Tafel"],
-    verbs: ["lernen", "schreiben", "lesen", "hören", "fragen", "üben"],
+    words: [
+      "die Wohnung",
+      "das Zimmer",
+      "das Fenster",
+      "die Möbel",
+      "die Besichtigung",
+      "die Miete",
+      "der Vermieter"
+    ],
+    verbs: [
+      "besichtigen",
+      "zeigen",
+      "schauen",
+      "fragen",
+      "mieten",
+      "wohnen"
+    ],
     sentences: [
-      "Auf dem Bild sehe ich Schüler.",
-      "Die Schüler sitzen im Klassenzimmer.",
-      "Ein Junge schreibt.",
-      "Die Schüler lernen Deutsch."
+      "Auf dem Bild sehe ich eine Wohnung.",
+      "Die Frau besichtigt die Wohnung.",
+      "Der Mann zeigt das Zimmer.",
+      "Das Zimmer ist hell."
     ],
     opinion: [
-      "Ich finde das Bild gut.",
-      "Lernen ist wichtig.",
-      "Deutsch ist eine tolle Sprache."
+      "Ich finde das Bild wichtig.",
+      "Eine gute Wohnung ist sehr wichtig.",
+      "Ich mag helle Wohnungen."
+    ],
+    mistakes: [
+      "Nicht: Ich suche eine Wohnung mit hell.",
+      "Richtig: Ich suche eine helle Wohnung.",
+      "Nicht: Der Mann zeigt ihr die Zimmer.",
+      "Richtig: Der Mann zeigt ihr das Zimmer."
     ]
   },
+
   {
     id: 9,
-    title: "Fahrradfahren",
-    shortText: "Eine Frau fährt mit dem Fahrrad.",
+    title: "Bank",
+    image: "/images/a2/bank.jpeg",
+    shortText: "Ein Mann ist in der Bank.",
     description: [
-      "Auf dem Bild sehe ich eine Frau auf dem Fahrrad.",
-      "Sie fährt auf einem Weg.",
-      "Sie trägt einen Helm.",
-      "Neben dem Weg ist ein Fluss.",
-      "Das Wetter ist schön."
+      "Auf dem Bild sehe ich eine Bank.",
+      "Ein Mann steht am Schalter.",
+      "Eine Mitarbeiterin spricht mit ihm.",
+      "Der Mann hat Papiere in der Hand.",
+      "Er möchte vielleicht Geld abheben oder ein Konto öffnen.",
+      "Die Bank ist ruhig und sauber."
     ],
-    words: ["das Fahrrad", "der Weg", "der Helm", "der Fluss", "der Baum", "das Wetter"],
-    verbs: ["fahren", "tragen", "sehen", "genießen", "trainieren"],
+    words: [
+      "die Bank",
+      "der Schalter",
+      "das Konto",
+      "das Geld",
+      "die Karte",
+      "die Mitarbeiterin",
+      "die Papiere"
+    ],
+    verbs: [
+      "sprechen",
+      "fragen",
+      "abheben",
+      "einzahlen",
+      "öffnen",
+      "unterschreiben"
+    ],
     sentences: [
-      "Auf dem Bild sehe ich eine Frau.",
-      "Sie fährt Fahrrad.",
-      "Sie trägt einen Helm.",
-      "Das Wetter ist schön."
+      "Auf dem Bild sehe ich eine Bank.",
+      "Der Mann steht am Schalter.",
+      "Die Mitarbeiterin hilft ihm.",
+      "Er hat Papiere in der Hand."
     ],
     opinion: [
-      "Ich finde das Bild aktiv.",
-      "Fahrradfahren ist gesund.",
-      "Bewegung ist wichtig."
+      "Ich finde das Bild wichtig.",
+      "Eine Bank braucht man im Alltag.",
+      "Ein Konto ist sehr praktisch."
+    ],
+    mistakes: [
+      "Nicht: Ich gehe in die Bank Geld.",
+      "Richtig: Ich gehe zur Bank.",
+      "Nicht: Ich mache ein Konto.",
+      "Besser: Ich eröffne ein Konto."
     ]
   },
+
   {
     id: 10,
-    title: "Kochen in der Küche",
-    shortText: "Ein Mann kocht in der Küche.",
+    title: "Küche und Salat",
+    image: "/images/a2/kueche-salat.jpeg",
+    shortText: "Eine Frau macht Salat in der Küche.",
     description: [
-      "Auf dem Bild sehe ich einen Mann in der Küche.",
-      "Er schneidet Gemüse auf einem Brett.",
-      "Auf dem Tisch sind Tomaten und Paprika.",
-      "Im Hintergrund sehe ich Regale und Pflanzen.",
-      "Die Küche ist modern und sauber."
+      "Auf dem Bild sehe ich eine Küche.",
+      "Eine Frau steht am Tisch.",
+      "Sie macht einen Salat.",
+      "Auf dem Tisch liegen Tomaten, Gurken und Paprika.",
+      "Die Küche ist sauber.",
+      "Das Essen sieht gesund aus."
     ],
-    words: ["die Küche", "der Mann", "das Gemüse", "das Brett", "die Tomate", "die Paprika"],
-    verbs: ["kochen", "schneiden", "waschen", "zubereiten", "essen"],
+    words: [
+      "die Küche",
+      "der Salat",
+      "die Tomate",
+      "die Gurke",
+      "die Paprika",
+      "das Gemüse",
+      "der Tisch"
+    ],
+    verbs: [
+      "kochen",
+      "schneiden",
+      "waschen",
+      "machen",
+      "essen",
+      "vorbereiten"
+    ],
     sentences: [
-      "Auf dem Bild sehe ich einen Mann.",
-      "Er kocht in der Küche.",
-      "Er schneidet Gemüse.",
-      "Die Küche ist sauber."
+      "Auf dem Bild sehe ich eine Küche.",
+      "Die Frau macht einen Salat.",
+      "Sie schneidet Gemüse.",
+      "Das Essen ist gesund."
     ],
     opinion: [
-      "Ich finde das Bild toll.",
-      "Kochen macht Spaß.",
-      "Gesundes Essen ist wichtig."
+      "Ich finde das Bild schön.",
+      "Gesundes Essen ist wichtig.",
+      "Ich esse gern Salat."
+    ],
+    mistakes: [
+      "Nicht: Die Frau macht eine Salat.",
+      "Richtig: Die Frau macht einen Salat.",
+      "Nicht: Sie schneidet Gemüse mit Messer.",
+      "Richtig: Sie schneidet Gemüse mit einem Messer."
     ]
   }
 ];

@@ -186,15 +186,15 @@ export function ImageTrainingScreen({
         )}
 
         <div style={imageBox}>
-          {selectedImage.imageUrl ? (
-            <img
-              src={selectedImage.imageUrl}
-              alt={selectedImage.title}
-              style={realImageStyle}
-            />
-          ) : (
-            selectedImage.imageText || selectedImage.title
-          )}
+         {(selectedImage.imageUrl || selectedImage.image) ? (
+  <img
+    src={selectedImage.imageUrl || selectedImage.image}
+    alt={selectedImage.title}
+    style={realImageStyle}
+  />
+) : (
+    selectedImage.imageText || selectedImage.title
+)}
         </div>
 
         <Card title="📷 Beschreibung">
