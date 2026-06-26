@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { a2Images } from '../../data/a2Images';
 import { b1Images } from '../../data/b1Images';
+import { b2Images } from '../../data/b2Images';
 import { getSmartPremiumMessage } from '../../data/smartPremiumMessages';
-
+import { b2Grafiken } from '../../data/b2Grafiken';
 const PREMIUM_HINT_COOLDOWN_DAYS = 3;
 const PREMIUM_HINT_COOLDOWN_MS =
   PREMIUM_HINT_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
@@ -10,22 +11,8 @@ const PREMIUM_HINT_COOLDOWN_MS =
 const imageModels = {
   A2: a2Images,
   B1: b1Images,
-
-  B2: [
-    {
-      title: 'Grafikbeschreibung B2 kommt bald',
-      imageText: '🔒 B2 · Bald verfügbar',
-      description: 'Dieser Bereich wird später erweitert.',
-      impression: 'AustriaPath startet zuerst mit A2 und B1.',
-      experience: 'B2-Bildbeschreibungen kommen später.',
-      words: ['bald verfügbar'],
-      verbs: ['erweitern'],
-      sentences: ['B2 Inhalte folgen später.'],
-      mistakes: ['Noch keine Fehlerliste verfügbar.']
-    }
-  ]
+ B2: [...b2Images, ...b2Grafiken]
 };
-
 const splitLines = (value) => {
   if (!value) return [];
   return String(value)
@@ -212,23 +199,45 @@ export function ImageTrainingScreen({
             </p>
           )}
         </Card>
+{selectedImage.analysis && (
+  <Card title="📊 Analyse">
+    <p style={{ whiteSpace: 'pre-line' }}>{selectedImage.analysis}</p>
+  </Card>
+)}
 
+{selectedImage.interpretation && (
+  <Card title="🔍 Interpretation">
+    <p style={{ whiteSpace: 'pre-line' }}>{selectedImage.interpretation}</p>
+  </Card>
+)}
         <Card
           title={
             level === 'A2'
               ? '💬 Persönliche Meinung'
-              : '😊 Persönlicher Eindruck'
+              : '💬 Eigene Stellungnahme'
           }
         >
-          {Array.isArray(selectedImage.opinion || selectedImage.impression) ? (
-            (selectedImage.opinion || selectedImage.impression).map((line, i) => (
-              <p key={i}>{line}</p>
-            ))
-          ) : (
-            <p style={{ whiteSpace: 'pre-line' }}>
-              {selectedImage.opinion || selectedImage.impression}
-            </p>
-          )}
+       {Array.isArray(
+  selectedImage.personalOpinion ||
+  selectedImage.opinion ||
+  selectedImage.impression
+) ? (
+  (
+    selectedImage.personalOpinion ||
+    selectedImage.opinion ||
+    selectedImage.impression
+  ).map((line, i) => (
+    <p key={i}>{line}</p>
+  ))
+) : (
+  <p style={{ whiteSpace: 'pre-line' }}>
+    {
+      selectedImage.personalOpinion ||
+      selectedImage.opinion ||
+      selectedImage.impression
+    }
+  </p>
+)}
         </Card>
 
         {level !== 'A2' && selectedImage.homeland && (
@@ -248,7 +257,17 @@ export function ImageTrainingScreen({
         <Card title="🗣️ Nützliche Sätze">
           <List items={selectedImage.sentences || selectedImage.grammar} />
         </Card>
+{selectedImage.possibleSolutions && selectedImage.possibleSolutions.length > 0 && (
+  <Card title="💡 Mögliche Lösungen">
+    <List items={selectedImage.possibleSolutions} />
+  </Card>
+)}
 
+{selectedImage.examinerQuestions && selectedImage.examinerQuestions.length > 0 && (
+  <Card title="❓ Prüferfragen">
+    <List items={selectedImage.examinerQuestions} />
+  </Card>
+)}
         {selectedImage.mistakes && selectedImage.mistakes.length > 0 && (
           <Card title="⚠️ Häufige Fehler">
             <List items={selectedImage.mistakes} />
@@ -268,13 +287,13 @@ export function ImageTrainingScreen({
 
       <h1 style={titleStyle}>
         {level === 'B2'
-          ? '📊 Grafikbeschreibung Trainer'
+          ? '🖼️ B2 Bild- und Grafikbeschreibung'
           : '🖼️ Bildbeschreibung Trainer'}
       </h1>
 
       <p style={subtitleStyle}>
         {level === 'B2'
-          ? 'Wähle eine Grafik und lerne professionelle Analysen und Beschreibungen.'
+          ? 'Wähle ein B2-Thema und trainiere Beschreibung, Interpretation und eigene Meinung.'
           : 'Wähle ein Bild und lerne einfache Sätze für die Beschreibung.'}
       </p>
 
@@ -316,16 +335,16 @@ export function ImageTrainingScreen({
 
       <div style={infoBox}>
         {level === 'B2'
-          ? 'Hier lernst du Grafiken und Statistiken Schritt für Schritt zu analysieren.'
+          ? 'Hier lernst du B2-Bilder und später auch Grafiken professionell zu analysieren.'
           : 'Hier lernst du Bilder Schritt für Schritt zu beschreiben.'}
       </div>
 
       {models.map((item, i) => (
         <div key={i} style={listCard} onClick={() => openImage(item)}>
           <div style={thumbBox}>
-            {item.imageUrl ? (
+            {(item.imageUrl || item.image) ? (
               <img
-                src={item.imageUrl}
+                src={item.imageUrl || item.image}
                 alt={item.title}
                 style={thumbImageStyle}
               />
