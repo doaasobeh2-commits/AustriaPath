@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { b2Models } from '../../data/modelsB2';
 import { getSmartPremiumMessage } from '../../data/smartPremiumMessages';
-
+import { B2LesenScreen } from './B2LesenScreen';
 const PREMIUM_HINT_COOLDOWN_DAYS = 3;
 const PREMIUM_HINT_COOLDOWN_MS =
   PREMIUM_HINT_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
@@ -200,6 +200,9 @@ export function LesenScreen({
   userLevel = localStorage.getItem('userLevel') || 'B1'
 }) {
   const level = userLevel;
+  if (level === 'B2') {
+  return <B2LesenScreen setActiveTab={setActiveTab} />;
+}
   const [index, setIndex] = useState(0);
   const [showQuestions, setShowQuestions] = useState(false);
   const [showPremiumHint, setShowPremiumHint] = useState(false);
