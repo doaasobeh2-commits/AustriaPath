@@ -174,7 +174,7 @@ const contentStyle = {
 
 const gridStyle = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
   gap: '18px',
   width: '100%',
 };
@@ -183,7 +183,7 @@ const cardStyle = {
   position: 'relative',
   overflow: 'hidden',
   width: '100%',
-  minHeight: '180px',
+  minHeight: '205px',
   padding: '22px',
   border: 'none',
   borderRadius: '22px',
