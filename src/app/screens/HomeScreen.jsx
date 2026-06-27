@@ -125,9 +125,9 @@ const pageStyle = {
 };
 
 const mobileAppStyle = {
-  width: '100%',
-  maxWidth: '1100px',
-  minHeight: '100vh',
+  width: '430px',
+  maxWidth: '100%',
+  minHeight: '844px',
   background: '#ffffff',
   overflowX: 'hidden',
   boxSizing: 'border-box',

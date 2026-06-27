@@ -256,8 +256,7 @@ const pageStyle = {
 };
 
 const mobileStyle = {
-  width: '100%',
-  maxWidth: '1100px',
+  width: '390px',
   minHeight: '100vh',
   background: '#f8fafc',
   padding: '22px',
