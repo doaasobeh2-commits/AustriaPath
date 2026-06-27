@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { b1PlanningModels } from '../../data/modelsb1';
-import { b2Models } from '../../data/modelsB2';
 import { getSmartPremiumMessage } from '../../data/smartPremiumMessages';
 
 const STORAGE_KEY = 'austriaPathAdminData';
@@ -28,52 +27,177 @@ function markPremiumHintShown(storageKey) {
   localStorage.setItem(storageKey, String(Date.now()));
 }
 
-const b2SpeakingModels = b2Models.flatMap((model) => [
+const b2SpeakingModels = [
   {
-    title: model.diskussion || 'Diskussion B2',
+    title: 'Künstliche Intelligenz',
     type: 'Diskussion',
     level: 'B2',
-    situation: `Diskutieren Sie über das Thema: ${
-      model.diskussion || 'Diskussion'
-    }`,
+    situation:
+      'In einem Sprachkurs diskutieren Sie über künstliche Intelligenz im Alltag.',
     task:
-      'Nennen Sie Vorteile und Nachteile. Begründen Sie Ihre Meinung mit Beispielen.',
-    example: '',
-    words: model.words || [],
-    verbs: model.verbs || [],
+      'Diskutieren Sie mit Ihrer Partnerin / Ihrem Partner. Sprechen Sie über Vorteile, Nachteile, persönliche Erfahrungen und Ihre Meinung.',
+    example:
+      'Meiner Meinung nach spielt künstliche Intelligenz heute eine immer größere Rolle. Einerseits kann KI den Alltag erleichtern, zum Beispiel beim Übersetzen, Lernen oder bei der Arbeit. Andererseits gibt es auch Risiken, weil Menschen zu abhängig von Technik werden können. Ich finde, man sollte KI sinnvoll nutzen, aber trotzdem selbstständig denken.',
+    words: ['künstliche Intelligenz', 'Datenschutz', 'Technik', 'Alltag', 'Risiko', 'Vorteil'],
+    verbs: ['erleichtern', 'ersetzen', 'unterstützen', 'beeinflussen', 'nutzen'],
     sentences: [
-      'Meiner Meinung nach ...',
-      'Ein wichtiger Vorteil ist ...',
-      'Ein möglicher Nachteil besteht darin, dass ...',
-      'Andererseits muss man sagen, dass ...',
-      'Aus meiner Sicht ...'
+      'Einerseits bietet KI viele Möglichkeiten, andererseits gibt es auch Risiken.',
+      'Man sollte berücksichtigen, dass Datenschutz sehr wichtig ist.',
+      'Aus meiner Sicht kann KI den Alltag erleichtern.'
     ],
-    grammar: model.grammar || [],
-    mistakes: [],
-    tip: 'Bei B2: Begründen Sie Ihre Meinung klar und nennen Sie Beispiele.'
+    grammar: ['einerseits ... andererseits', 'dass-Satz', 'Modalverben: sollte / kann'],
+    mistakes: ['❌ KI ist immer gut.', '✅ KI hat Vorteile, aber auch Risiken.'],
+    tip: 'Nennen Sie immer beide Seiten und geben Sie ein Beispiel.'
   },
   {
-    title: model.planung || 'Planung B2',
-    type: 'Planung',
+    title: 'Mit den Eltern wohnen oder allein leben',
+    type: 'Diskussion',
     level: 'B2',
-    situation: `Planen Sie gemeinsam: ${model.planung || 'Planung'}`,
-    task: 'Besprechen Sie Ort, Zeit, Aufgaben, Kosten und Organisation.',
-    example: '',
-    words: model.words || [],
-    verbs: model.verbs || [],
+    situation:
+      'Viele junge Erwachsene wohnen lange bei ihren Eltern. Andere möchten früh unabhängig leben.',
+    task:
+      'Diskutieren Sie Vor- und Nachteile. Begründen Sie Ihre Meinung und nennen Sie Beispiele.',
+    example:
+      'Ich denke, dass beide Lebensformen Vorteile haben. Wenn man bei den Eltern wohnt, spart man Geld und bekommt Unterstützung. Andererseits lernt man beim Alleinleben, Verantwortung zu übernehmen und selbstständiger zu werden. Meiner Meinung nach hängt die Entscheidung von der persönlichen Situation ab.',
+    words: ['Unabhängigkeit', 'Verantwortung', 'Familie', 'Kosten', 'Unterstützung'],
+    verbs: ['sparen', 'übernehmen', 'unterstützen', 'entscheiden', 'abhängen von'],
     sentences: [
-      'Was hältst du davon, wenn wir ...?',
-      'Wir könnten zuerst ...',
-      'Ich würde vorschlagen, dass ...',
-      'Wer übernimmt diese Aufgabe?',
-      'Dann einigen wir uns auf ...'
+      'Das hängt von der persönlichen Situation ab.',
+      'Ein Vorteil besteht darin, dass man Geld sparen kann.',
+      'Andererseits wird man selbstständiger.'
     ],
-    grammar: model.grammar || [],
-    mistakes: [],
-    tip:
-      'Bei der Planung: Fragen stellen, Vorschläge machen und sich einigen.'
+    grammar: ['abhängen von + Dativ', 'dass-Satz', 'Infinitiv mit zu'],
+    mistakes: ['❌ Ich wohne mit meine Eltern.', '✅ Ich wohne bei meinen Eltern.'],
+    tip: 'Bei B2 ist wichtig: nicht nur Meinung sagen, sondern begründen.'
+  },
+  {
+    title: 'Studium oder Ausbildung',
+    type: 'Diskussion',
+    level: 'B2',
+    situation:
+      'Nach der Schule entscheiden sich viele Menschen zwischen Studium und Berufsausbildung.',
+    task:
+      'Diskutieren Sie, welche Vorteile ein Studium und welche Vorteile eine Ausbildung haben.',
+    example:
+      'Meiner Ansicht nach haben sowohl Studium als auch Ausbildung Vorteile. Ein Studium bietet oft bessere Karrierechancen, aber es dauert länger. Eine Ausbildung ist praktischer und man verdient früher Geld. Deshalb sollte jeder nach seinen Fähigkeiten und Zielen entscheiden.',
+    words: ['Studium', 'Ausbildung', 'Beruf', 'Karrierechancen', 'Praxis', 'Zukunft'],
+    verbs: ['studieren', 'ausbilden', 'verdienen', 'entscheiden', 'sich eignen für'],
+    sentences: [
+      'Ein Studium bietet langfristig gute Chancen.',
+      'Eine Ausbildung ist oft praxisnäher.',
+      'Es kommt darauf an, welche Ziele man hat.'
+    ],
+    grammar: ['sowohl ... als auch', 'Relativsatz', 'es kommt darauf an'],
+    mistakes: ['❌ Ich mache ein Studium in Firma.', '✅ Ich mache eine Ausbildung in einer Firma.'],
+    tip: 'Vergleichen Sie beide Möglichkeiten klar.'
+  },
+  {
+    title: 'Sozialhilfe und Arbeit',
+    type: 'Diskussion',
+    level: 'B2',
+    situation:
+      'In vielen Ländern wird diskutiert, ob Menschen mehr staatliche Unterstützung bekommen sollten.',
+    task:
+      'Diskutieren Sie über Sozialhilfe, Arbeit, Verantwortung und Unterstützung durch den Staat.',
+    example:
+      'Ich finde, dass der Staat Menschen in schwierigen Situationen unterstützen sollte. Gleichzeitig ist es wichtig, dass Menschen motiviert bleiben, eine Arbeit zu suchen. Sozialhilfe sollte also helfen, aber keine dauerhafte Lösung sein. Entscheidend ist eine gute Balance zwischen Hilfe und Eigenverantwortung.',
+    words: ['Sozialhilfe', 'Staat', 'Arbeit', 'Verantwortung', 'Unterstützung', 'Motivation'],
+    verbs: ['unterstützen', 'fördern', 'helfen', 'motivieren', 'arbeiten'],
+    sentences: [
+      'Der Staat sollte Menschen in Not unterstützen.',
+      'Gleichzeitig muss Eigenverantwortung gefördert werden.',
+      'Eine gute Balance ist wichtig.'
+    ],
+    grammar: ['Passiv: gefördert werden', 'dass-Satz', 'gleichzeitig'],
+    mistakes: ['❌ Staat muss alles bezahlen.', '✅ Der Staat sollte Menschen in Not unterstützen.'],
+    tip: 'Formulieren Sie ausgewogen und vermeiden Sie extreme Aussagen.'
+  },
+
+  {
+    title: 'Sporttag für Kinder organisieren',
+    type: 'Gemeinsame Lösung',
+    level: 'B2',
+    situation:
+      'Ihr Kurs möchte einen Sporttag für Kinder organisieren.',
+    task:
+      'Planen Sie gemeinsam. Sprechen Sie über Ort, Datum, Programm, Aufgaben, Essen, Sicherheit und Werbung.',
+    example:
+      'Ich schlage vor, dass wir den Sporttag an einem Samstag im Park organisieren. Dort gibt es genug Platz. Wir könnten verschiedene Stationen planen, zum Beispiel Fußball, Laufen und kleine Spiele. Wichtig ist auch, dass jemand für Getränke und Sicherheit verantwortlich ist. Am Ende könnten alle Kinder eine kleine Urkunde bekommen.',
+    words: ['Sporttag', 'Kinder', 'Programm', 'Sicherheit', 'Getränke', 'Organisation'],
+    verbs: ['organisieren', 'planen', 'vorbereiten', 'übernehmen', 'einladen'],
+    sentences: [
+      'Ich schlage vor, dass wir ...',
+      'Wer übernimmt diese Aufgabe?',
+      'Wir sollten auch an die Sicherheit denken.'
+    ],
+    grammar: ['Konjunktiv II: könnten', 'dass-Satz', 'Modalverben'],
+    mistakes: ['❌ Wir machen Sporttag irgendwo.', '✅ Wir organisieren den Sporttag im Park.'],
+    tip: 'Bei Planung: Vorschläge machen, Aufgaben verteilen und sich einigen.'
+  },
+  {
+    title: 'Museumsbesuch planen',
+    type: 'Gemeinsame Lösung',
+    level: 'B2',
+    situation:
+      'Sie möchten mit Ihrem Deutschkurs einen Museumsbesuch in Wien planen.',
+    task:
+      'Besprechen Sie Museum, Termin, Treffpunkt, Kosten, Anreise und Aufgabenverteilung.',
+    example:
+      'Wir könnten ein Museum auswählen, das für alle interessant ist. Ich würde vorschlagen, dass wir uns am Bahnhof treffen und gemeinsam hinfahren. Vorher sollten wir prüfen, wie viel der Eintritt kostet. Eine Person kann die Tickets reservieren, und eine andere informiert die Gruppe.',
+    words: ['Museum', 'Eintritt', 'Treffpunkt', 'Anreise', 'Reservierung', 'Gruppe'],
+    verbs: ['auswählen', 'reservieren', 'informieren', 'prüfen', 'hinfahren'],
+    sentences: [
+      'Wie wäre es, wenn wir ...?',
+      'Wir sollten vorher die Kosten prüfen.',
+      'Dann einigen wir uns auf einen Termin.'
+    ],
+    grammar: ['wenn-Satz', 'Konjunktiv II', 'trennbare Verben'],
+    mistakes: ['❌ Wir gehen in Museum.', '✅ Wir gehen ins Museum.'],
+    tip: 'Denken Sie an praktische Punkte: Zeit, Kosten, Treffpunkt.'
+  },
+  {
+    title: 'Freiwillig im Umweltschutz engagieren',
+    type: 'Gemeinsame Lösung',
+    level: 'B2',
+    situation:
+      'Ihr Kurs möchte sich freiwillig für den Umweltschutz engagieren.',
+    task:
+      'Planen Sie eine Aktion. Sprechen Sie über Ziel, Ort, Material, Teilnehmer, Werbung und Aufgaben.',
+    example:
+      'Ich finde die Idee sehr gut, weil Umweltschutz alle betrifft. Wir könnten eine Müllsammelaktion im Park organisieren. Dafür brauchen wir Handschuhe, Müllsäcke und vielleicht eine Genehmigung. Außerdem sollten wir Plakate machen, damit mehr Menschen mitmachen.',
+    words: ['Umweltschutz', 'Müll', 'Aktion', 'Teilnehmer', 'Material', 'Genehmigung'],
+    verbs: ['sich engagieren', 'sammeln', 'organisieren', 'mitmachen', 'vorbereiten'],
+    sentences: [
+      'Wir könnten eine Müllsammelaktion organisieren.',
+      'Dafür brauchen wir ...',
+      'Außerdem sollten wir Werbung machen.'
+    ],
+    grammar: ['sich engagieren für + Akkusativ', 'Finalsatz: damit', 'Konjunktiv II'],
+    mistakes: ['❌ Ich engagiere mich für Umweltschutz freiwillig.', '✅ Ich engagiere mich freiwillig für den Umweltschutz.'],
+    tip: 'Verwenden Sie Wörter wie zuerst, danach, außerdem, am Ende.'
+  },
+  {
+    title: 'Kulturwettbewerb organisieren',
+    type: 'Gemeinsame Lösung',
+    level: 'B2',
+    situation:
+      'Ein Kulturverein möchte einen kleinen Kulturwettbewerb organisieren.',
+    task:
+      'Planen Sie gemeinsam Thema, Ort, Teilnehmer, Programm, Preise, Werbung und Aufgaben.',
+    example:
+      'Zuerst sollten wir ein Thema festlegen, zum Beispiel Musik, Sprache oder Traditionen. Der Wettbewerb könnte im Kulturzentrum stattfinden. Wir brauchen eine Jury, kleine Preise und Werbung in sozialen Medien. Ich könnte die Einladungen schreiben, und du könntest das Programm vorbereiten.',
+    words: ['Kulturverein', 'Wettbewerb', 'Teilnehmer', 'Jury', 'Preis', 'Werbung'],
+    verbs: ['festlegen', 'stattfinden', 'vorbereiten', 'einladen', 'bewerten'],
+    sentences: [
+      'Zuerst sollten wir das Thema festlegen.',
+      'Der Wettbewerb könnte im Kulturzentrum stattfinden.',
+      'Ich könnte die Einladungen übernehmen.'
+    ],
+    grammar: ['Konjunktiv II', 'trennbares Verb: stattfinden', 'Infinitiv mit zu'],
+    mistakes: ['❌ Der Wettbewerb ist in Kulturzentrum.', '✅ Der Wettbewerb findet im Kulturzentrum statt.'],
+    tip: 'Zeigen Sie Zusammenarbeit: fragen, reagieren, zustimmen, entscheiden.'
   }
-]);
+];
 
 const speakingModels = {
   A2: [
@@ -167,7 +291,7 @@ const normalizeText = (value) => String(value || '').trim().toLowerCase();
 const getTypeByLevel = (level) => {
   if (level === 'A2') return 'Aufgabe lösen';
   if (level === 'B1') return 'Etwas planen';
-  return 'Diskussion & Planung';
+return 'Diskussion & Gemeinsame Lösung';
 };
 
 const getDefaultTask = (level) => {
