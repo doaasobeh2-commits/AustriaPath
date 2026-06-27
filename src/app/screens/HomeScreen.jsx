@@ -121,12 +121,13 @@ const pageStyle = {
   display: 'flex',
   justifyContent: 'center',
   fontFamily: 'system-ui, sans-serif',
+  width: '100%',
 };
 
 const mobileAppStyle = {
-  width: '430px',
-  maxWidth: '100%',
-  minHeight: '844px',
+  width: '100%',
+  maxWidth: '1100px',
+  minHeight: '100vh',
   background: '#ffffff',
   overflowX: 'hidden',
   boxSizing: 'border-box',
@@ -173,7 +174,7 @@ const contentStyle = {
 
 const gridStyle = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
   gap: '18px',
   width: '100%',
 };
@@ -182,7 +183,7 @@ const cardStyle = {
   position: 'relative',
   overflow: 'hidden',
   width: '100%',
-  minHeight: '205px',
+  minHeight: '180px',
   padding: '22px',
   border: 'none',
   borderRadius: '22px',

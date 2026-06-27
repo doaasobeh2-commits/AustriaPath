@@ -354,10 +354,10 @@ const pageStyle = {
 const mobileAppStyle = {
   position: 'relative',
   width: '100%',
-  maxWidth: '430px',
+  maxWidth: '1100px',
   minHeight: '100vh',
   backgroundColor: '#f8fafc',
-  boxShadow: '0 0 30px rgba(15, 23, 42, 0.18)',
+  boxShadow: '0 0 30px rgba(15, 23, 42, 0.10)',
   overflowX: 'hidden',
   fontFamily: 'system-ui, sans-serif',
 };
