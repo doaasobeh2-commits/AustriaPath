@@ -834,6 +834,7 @@ export function getPlacementModelsBySkill(skill) {
 export function getPlacementFlow(startLevel = 'A2') {
   if (startLevel === 'A2') {
     return [
+      
       getPlacementModel('a2_self_mittel'),
       getPlacementModel('a2_bild_mittel'),
       getPlacementModel('a2_hoeren_mittel'),
@@ -861,4 +862,67 @@ export function getPlacementFlow(startLevel = 'A2') {
   }
 
   return [];
+}
+
+export function getNextPlacementModel({
+  startLevel = 'A2',
+  completedSkills = {},
+  lastSkill = null,
+  lastAiLevel = null,
+}) {
+  const hasSkill = (skill) => Boolean(completedSkills?.[skill]);
+
+  if (!hasSkill('selbstvorstellung')) {
+    if (startLevel === 'B2') return getPlacementModel('b2_self_mittel');
+    if (startLevel === 'B1') return getPlacementModel('b1_self_mittel');
+    return getPlacementModel('a2_self_mittel');
+  }
+
+  if (!hasSkill('bildbeschreibung') && !hasSkill('grafikbeschreibung')) {
+    if (lastAiLevel === 'B2' || startLevel === 'B2') {
+      return getPlacementModel('b2_grafik_mittel');
+    }
+
+    if (lastAiLevel === 'B1' || lastAiLevel === 'B1+') {
+      return getPlacementModel('b1_bild_mittel');
+    }
+
+    return getPlacementModel('a2_bild_mittel');
+  }
+
+  if (!hasSkill('hoeren')) {
+    if (lastAiLevel === 'B2' || startLevel === 'B2') {
+      return getPlacementModel('b2_hoeren_mittel');
+    }
+
+    if (lastAiLevel === 'B1' || lastAiLevel === 'B1+') {
+      return getPlacementModel('b1_hoeren_mittel');
+    }
+
+    return getPlacementModel('a2_hoeren_mittel');
+  }
+
+  if (!hasSkill('planung') && !hasSkill('diskussion')) {
+    const scores = Object.values(completedSkills || {});
+
+    const hasB2Signal = scores.includes('B2');
+    const hasB1Signal = scores.includes('B1') || scores.includes('B1+');
+    const weakA2 = scores.filter((v) => v === 'A2').length >= 2;
+
+    if (hasB2Signal || startLevel === 'B2') {
+      return getPlacementModel('b2_diskussion_mittel');
+    }
+
+    if (hasB1Signal && !weakA2) {
+      return getPlacementModel('b1_planung_mittel');
+    }
+
+    if (hasB1Signal || scores.includes('A2+')) {
+      return getPlacementModel('b1_planung_schwach');
+    }
+
+    return getPlacementModel('a2_planung_mittel');
+  }
+
+  return null;
 }

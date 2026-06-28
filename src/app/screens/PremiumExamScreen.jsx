@@ -1,6 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { models } from '../../data/models';
 import { placementBank } from '../../data/src/placementBank';
+import {
+  buildPremiumExamPackage,
+  savePremiumExamPackage,
+} from '../../data/premiumExamBuilder';
 function getUserLanguage() {
   return localStorage.getItem('userLanguage') || 'Deutsch';
 }
@@ -208,7 +212,7 @@ const plans = [
   }
 ];
 
-export function PremiumExamScreen() {
+export function PremiumExamScreen({ setActiveTab }) {
   const [level, setLevel] = useState('B1');
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [started, setStarted] = useState(false);
@@ -247,41 +251,58 @@ const localizedPlans = getLocalizedPlans(userLanguage);
     if (!items || items.length === 0) return null;
     return items[Math.floor(Math.random() * items.length)];
   };
+const startExam = () => {
+  if (!selectedPlan) {
+    alert(t.chooseAlert);
+    return;
+  }
 
-  const startExam = () => {
-    if (!selectedPlan) {
-     alert(t.chooseAlert);
-      return;
-    }
-
-    if (premiumLocked) {
+  if (premiumLocked) {
     alert(t.lockedAlert);
-      return;
-    }
+    return;
+  }
 
-    const allModels = models.filter((item) => item.level === level);
-    const selectedModel = getRandomItem(allModels);
+  const packageType =
+    selectedPlan.price === '9,99 €'
+      ? 'single_exam'
+      : selectedPlan.price === '24,99 €'
+      ? 'intensive_week'
+      : selectedPlan.price === '39,99 €'
+      ? 'premium_month'
+      : 'placement_test';
 
-    if (!selectedModel) {
-      alert('لا توجد نماذج لهذا المستوى حالياً.');
-      return;
-    }
-
-    setExam({
-      level,
-      sourceTitle: selectedModel.title,
-      imageGroup: getRandomItem(selectedModel.imageGroups),
-      planning: getRandomItem(selectedModel.planning),
-      speaking: getRandomItem(selectedModel.speaking),
-      plan: selectedPlan,
-    });
-
+  if (packageType === 'placement_test') {
     setStarted(true);
     setStep(0);
     setAnswers({});
     setShowResult(false);
-  };
+    
+    return;
+  }
 
+  const packageData = buildPremiumExamPackage({
+    level,
+    packageType,
+  });
+
+  savePremiumExamPackage(packageData);
+
+  const firstExam = packageData.exams[0];
+
+  setExam({
+    level,
+    plan: selectedPlan,
+    packageData,
+    currentExam: firstExam,
+    parts: firstExam.parts,
+  });
+
+  setStarted(true);
+  setStep(0);
+  setAnswers({});
+  setShowResult(false);
+  setActiveTab('premiumExamSession');
+};
   const updateAnswer = (key, value) => {
     setAnswers({ ...answers, [key]: value });
   };
@@ -340,11 +361,11 @@ const localizedPlans = getLocalizedPlans(userLanguage);
 />
         ))}
 
-        {selectedPlan && (
-          <button style={startButtonStyle} onClick={startExam}>
-          {t.soon}
-          </button>
-        )}
+       {selectedPlan && (
+  <button style={startButtonStyle} onClick={startExam}>
+    Prüfung starten
+  </button>
+)}
 
         <div style={cardStyle}>
           <h3>{t.noteTitle}</h3>

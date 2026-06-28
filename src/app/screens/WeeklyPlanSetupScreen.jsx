@@ -31,6 +31,8 @@ export default function WeeklyPlanSetupScreen({ setActiveTab }) {
   const weaknessOptions = [
     { key: 'selbstvorstellung', label: 'Selbstvorstellung' },
     { key: 'bildbeschreibung', label: 'Bildbeschreibung' },
+    { key: 'grafikbeschreibung', label: 'Grafikbeschreibung' },
+{ key: 'diskussion', label: 'Diskussion' },
     { key: 'hoeren', label: 'Hören' },
     { key: 'lesen', label: 'Lesen' },
     { key: 'schreiben', label: 'Schreiben / E-Mail' },
@@ -124,7 +126,7 @@ const handleStartAISession = () => {
 
   const sessionParts = buildWeeklySession({
     level: savedPlan.level,
-    weaknesses: savedPlan.weaknesses,
+   weaknesses: savedPlan.weaknesses || savedPlan.focusAreas || [],
     maxMinutes: 20,
   });
 
@@ -136,7 +138,8 @@ const handleStartAISession = () => {
       title: 'KI-Wochentraining',
       level: savedPlan.level,
       parts: sessionParts,
-      weaknesses: savedPlan.weaknesses || [],
+     weaknesses: savedPlan.weaknesses || savedPlan.focusAreas || [],
+
       startedAt: new Date().toISOString(),
     })
   );

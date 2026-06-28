@@ -190,3 +190,72 @@ export function buildPremiumExamParts(level = 'B1') {
     },
   ];
 }
+
+export function buildPremiumExamPackage({
+  level = 'B1',
+  packageType = 'single_exam',
+}) {
+  const examLevel = cleanLevel(level);
+
+  const settings = {
+    single_exam: {
+      title: 'AI Probeprüfung',
+      price: '9,99 €',
+      examCount: 1,
+      validDays: 1,
+    },
+    intensive_week: {
+      title: 'Intensive Woche',
+      price: '24,99 €',
+      examCount: 3,
+      validDays: 7,
+    },
+    premium_month: {
+      title: 'Premium Monat',
+      price: '39,99 €',
+      examCount: 5,
+      validDays: 30,
+    },
+  };
+
+  const plan = settings[packageType] || settings.single_exam;
+
+  const exams = Array.from({ length: plan.examCount }).map((_, index) => ({
+    id: `${packageType}_${examLevel}_${Date.now()}_${index + 1}`,
+    number: index + 1,
+    level: examLevel,
+    title: `${plan.title} ${index + 1}`,
+    status: index === 0 ? 'available' : 'locked',
+    parts: buildPremiumExamParts(examLevel),
+    createdAt: new Date().toISOString(),
+  }));
+
+  return {
+    id: `${packageType}_${Date.now()}`,
+    type: packageType,
+    title: plan.title,
+    price: plan.price,
+    level: examLevel,
+    examCount: plan.examCount,
+    validDays: plan.validDays,
+    status: 'pending-payment',
+    createdAt: new Date().toISOString(),
+    exams,
+    reports: [],
+  };
+}
+
+export function savePremiumExamPackage(packageData) {
+  localStorage.setItem(
+    'austriaPathPremiumExamPackage',
+    JSON.stringify(packageData)
+  );
+}
+
+export function getPremiumExamPackage() {
+  try {
+    return JSON.parse(localStorage.getItem('austriaPathPremiumExamPackage'));
+  } catch {
+    return null;
+  }
+}

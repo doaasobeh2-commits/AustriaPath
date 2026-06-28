@@ -1,6 +1,6 @@
 // src/data/utils/placementEngine.js
 
-export function evaluateSkillLevel({ selectedLevel = 'A2', skillScores = {} }) {
+export function evaluateSkillLevel({ skillScores = {} }) {
   const values = Object.values(skillScores || {});
 
   const count = {
@@ -17,14 +17,11 @@ export function evaluateSkillLevel({ selectedLevel = 'A2', skillScores = {} }) {
   if (count.B1 >= 2 || count.B1PLUS >= 1) return 'B1';
   if (count.A2PLUS >= 2 || count.B1 === 1) return 'A2+';
 
-  if (selectedLevel === 'B1' && count.A2 >= 3) return 'A2+';
-  if (selectedLevel === 'B2' && count.B1 >= 2) return 'B1+';
-
   return 'A2';
 }
 
 export function buildPlacementProfile({ selectedLevel = 'A2', skillScores = {} }) {
-  const level = evaluateSkillLevel({ selectedLevel, skillScores });
+ const level = evaluateSkillLevel({ skillScores });
 
   const strengths = [];
   const weaknesses = [];

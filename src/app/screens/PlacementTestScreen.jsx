@@ -18,26 +18,26 @@ export default function PlacementTestScreen({ setActiveTab }) {
   const totalMinutes = 8;
   const skillName = getStudentSkillName(currentModel?.skill);
 
-  const saveSkill = (value) => {
-    const updated = {
-      ...skillScores,
-      [currentModel.skill]: value,
-    };
-
-    setSkillScores(updated);
-
-    if (step + 1 < flow.length) {
-      setStep(step + 1);
-    } else {
-      const profile = buildPlacementProfile({
-        selectedLevel,
-        skillScores: updated,
-      });
-
-      savePlacementProfile(profile);
-      setResult(profile);
-    }
+const saveAiEvaluation = (aiEvaluation) => {
+  const updated = {
+    ...skillScores,
+    [currentModel.skill]: aiEvaluation,
   };
+
+  setSkillScores(updated);
+
+  if (step + 1 < flow.length) {
+    setStep(step + 1);
+  } else {
+    const profile = buildPlacementProfile({
+      selectedLevel,
+      skillScores: updated,
+    });
+
+    savePlacementProfile(profile);
+    setResult(profile);
+  }
+};
 
   if (result) {
     return (
@@ -139,20 +139,29 @@ export default function PlacementTestScreen({ setActiveTab }) {
       </div>
 
       <div style={cardStyle}>
-        <h3>Testmodus intern</h3>
-        <p>Nur für Admin-Test. Später bewertet OpenAI automatisch.</p>
+       <h3>KI-Simulation intern</h3>
 
-        <div style={levelRowStyle}>
-          {['A2', 'A2+', 'B1', 'B1+', 'B2'].map((value) => (
-            <button
-              key={value}
-              style={levelButtonStyle}
-              onClick={() => saveSkill(value)}
-            >
-              {value}
-            </button>
-          ))}
-        </div>
+<p>
+  Nur für Testphase. Diese Bewertung wird später automatisch von OpenAI übernommen.
+</p>
+
+<div style={levelRowStyle}>
+  {[
+    { level: 'A2', label: 'AI bewertet: A2' },
+    { level: 'A2+', label: 'AI bewertet: A2+' },
+    { level: 'B1', label: 'AI bewertet: B1' },
+    { level: 'B1+', label: 'AI bewertet: B1+' },
+    { level: 'B2', label: 'AI bewertet: B2' },
+  ].map((item) => (
+    <button
+      key={item.level}
+      style={levelButtonStyle}
+      onClick={() => saveAiEvaluation(item.level)}
+    >
+      {item.label}
+    </button>
+  ))}
+</div>
       </div>
     </div>
   );

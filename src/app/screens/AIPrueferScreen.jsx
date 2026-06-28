@@ -70,9 +70,14 @@ export default function AIPrueferScreen({ setActiveTab }) {
       const skillOk = skill === 'Alle' || item.skill === skill;
      const difficultyOk = difficulty === 'Alle' || item.difficulty === difficulty;
 
+const itemServices = Array.isArray(item.service)
+  ? item.service
+  : item.service
+  ? [item.service]
+  : [];
+
 const serviceOk =
-  service === 'Alle' ||
-  (Array.isArray(item.service) && item.service.includes(service));
+  service === 'Alle' || itemServices.includes(service);
 
 return levelOk && skillOk && difficultyOk && serviceOk;
     });

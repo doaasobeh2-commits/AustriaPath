@@ -25,7 +25,6 @@ import PlacementTestScreen from './screens/PlacementTestScreen';
 import WeeklyPlanSessionScreen from './screens/WeeklyPlanSessionScreen';
 import AISessionScreen from "./screens/AISessionScreen";
 import PremiumExamSessionScreen from './screens/PremiumExamSessionScreen';
-import { buildPremiumExamParts } from '../data/premiumExamBuilder';
 export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [selectedLevel, setSelectedLevel] = useState(null);
@@ -273,38 +272,9 @@ export default function App() {
     />
   );
 })()}
-{activeTab === 'premiumExamSession' && (() => {
-  const exam = JSON.parse(
-    localStorage.getItem('austriaPathActivePremiumExam') || '{}'
-  );
-
-  const profile = JSON.parse(
-    localStorage.getItem('austriaPathPlacementProfile') || 'null'
-  );
-
-  const level =
-    exam.level ||
-    profile?.level?.replace('+', '') ||
-    localStorage.getItem('userLevel') ||
-    'B1';
-
-  const parts = buildPremiumExamParts(level);
-
-  return (
-    <AISessionScreen
-      sessionType="ai_exam"
-      mode="exam"
-      title={exam.title || 'AI Probeprüfung'}
-      level={level}
-      parts={parts}
-      onBack={() => setActiveTab('profile')}
-      onFinish={() => {
-        alert('Prüfung beendet. Bericht wurde im Profil gespeichert.');
-        setActiveTab('profile');
-      }}
-    />
-  );
-})()}
+{activeTab === 'premiumExamSession' && (
+  <PremiumExamSessionScreen setActiveTab={setActiveTab} />
+)}
 
 </main>
 

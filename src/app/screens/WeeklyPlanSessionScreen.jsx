@@ -86,7 +86,11 @@ function buildStartMessages(sessionTasks) {
   return [
     {
       role: 'ai',
-      text: firstTask.task || firstTask.title || 'Bitte beginnen Sie mit der ersten Aufgabe.',
+      text:
+        firstTask?.task ||
+        firstTask?.text ||
+        firstTask?.title ||
+        'Bitte stellen Sie sich kurz vor.',
     },
   ];
 }
@@ -94,7 +98,7 @@ function buildStartMessages(sessionTasks) {
 export default function WeeklyPlanSessionScreen({ setActiveTab }) {
   const session = useMemo(() => {
     try {
-      return JSON.parse(localStorage.getItem('austriaPathActiveWeeklySession'));
+      return JSON.parse(localStorage.getItem('austriaPathCurrentAISession'));
     } catch {
       return null;
     }

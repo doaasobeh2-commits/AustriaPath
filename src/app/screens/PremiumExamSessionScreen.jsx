@@ -3,7 +3,22 @@ import React, { useMemo, useState } from 'react';
 export default function PremiumExamSessionScreen({ setActiveTab }) {
   const exam = useMemo(() => {
     try {
-      return JSON.parse(localStorage.getItem('austriaPathActivePremiumExam'));
+      const packageData = JSON.parse(
+        localStorage.getItem('austriaPathPremiumExamPackage') || 'null'
+      );
+
+      const activeExam =
+        packageData?.exams?.find((item) => item.status === 'available') ||
+        packageData?.exams?.[0];
+
+      return activeExam
+        ? {
+            ...activeExam,
+            packageData,
+            used: activeExam.number,
+            total: packageData.examCount,
+          }
+        : null;
     } catch {
       return null;
     }
@@ -13,14 +28,9 @@ export default function PremiumExamSessionScreen({ setActiveTab }) {
   const [step, setStep] = useState(0);
   const [finished, setFinished] = useState(false);
 
-  const parts = [
-  'E-Mail schreiben',
-  'Lesen',
-  'Hören',
-  'Selbstvorstellung',
-  'Bildbeschreibung',
-  'Planung',
-];
+  const parts = exam?.parts || [];
+  const currentPart = parts[step];
+
   if (!exam) {
     return (
       <div style={pageStyle}>
@@ -39,6 +49,10 @@ export default function PremiumExamSessionScreen({ setActiveTab }) {
       date: new Date().toLocaleDateString('de-DE'),
       summary: 'AI-Prüfung abgeschlossen. Bericht wurde gespeichert.',
       type: 'premium-exam',
+      level: exam.level,
+      packageType: exam.packageData?.type,
+      examNumber: exam.number,
+      total: exam.total,
     };
 
     const oldReports = JSON.parse(localStorage.getItem('austriaPathAIReports') || '[]');
@@ -55,31 +69,69 @@ export default function PremiumExamSessionScreen({ setActiveTab }) {
 
       <div style={heroStyle}>
         <h1>🧪 {exam.title}</h1>
-        <p>{exam.level} · Fortschritt {exam.used}/{exam.total}</p>
+        <p>
+          {exam.level} · Prüfung {exam.used}/{exam.total}
+        </p>
       </div>
 
       {!started && !finished && (
         <div style={cardStyle}>
           <h2>Prüfung bereit</h2>
           <p>
-            Diese Prüfung simuliert einen mündlichen AI-Prüfer.
-            Während der Prüfung wird nicht ausführlich erklärt. Am Ende bekommst du einen Bericht.
+            Diese Prüfung simuliert einen vollständigen AI-Prüfer. Während der Prüfung wird
+            nicht ausführlich erklärt. Am Ende bekommst du einen Bericht.
           </p>
 
           <button style={primaryButtonStyle} onClick={() => setStarted(true)}>
-            ▶ Prüfung starten
+            ▶️ Prüfung starten
           </button>
         </div>
       )}
 
       {started && !finished && (
         <div style={cardStyle}>
-          <p style={badgeStyle}>Teil {step + 1} / {parts.length}</p>
-          <h2>{parts[step]}</h2>
+          <p style={badgeStyle}>
+            Teil {step + 1} / {parts.length}
+          </p>
+
+          <h2>{currentPart?.label || currentPart?.title || 'Prüfungsteil'}</h2>
+
+          {currentPart?.title && <h3>{currentPart.title}</h3>}
 
           <div style={aiBoxStyle}>
-            <b>AI Prüfer:</b> Bitte beginne mit diesem Prüfungsteil.
-            Später stellt hier die echte KI passende Nachfragen.
+            <b>AI Prüfer:</b>{' '}
+            {currentPart?.instruction || 'Bitte beginnen Sie mit diesem Prüfungsteil.'}
+
+            {currentPart?.text && (
+              <p>
+                <b>Text:</b> {currentPart.text}
+              </p>
+            )}
+
+            {currentPart?.audioText && (
+              <p>
+                <b>Hörtext:</b> {currentPart.audioText}
+              </p>
+            )}
+
+            {currentPart?.points?.length ? (
+              <ul>
+                {currentPart.points.map((point, index) => (
+                  <li key={index}>{point}</li>
+                ))}
+              </ul>
+            ) : null}
+
+            {currentPart?.questions?.length ? (
+              <div>
+                <b>Fragen:</b>
+                <ul>
+                  {currentPart.questions.map((question, index) => (
+                    <li key={index}>{question.q}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </div>
 
           {step < parts.length - 1 ? (
