@@ -192,70 +192,51 @@ export function buildPremiumExamParts(level = 'B1') {
 }
 
 export function buildPremiumExamPackage({
-  level = 'B1',
-  packageType = 'single_exam',
-}) {
-  const examLevel = cleanLevel(level);
-
-  const settings = {
-    single_exam: {
-      title: 'AI Probeprüfung',
-      price: '9,99 €',
-      examCount: 1,
-      validDays: 1,
-    },
-    intensive_week: {
-      title: 'Intensive Woche',
-      price: '24,99 €',
-      examCount: 3,
-      validDays: 7,
-    },
-    premium_month: {
-      title: 'Premium Monat',
-      price: '39,99 €',
-      examCount: 5,
-      validDays: 30,
-    },
-  };
-
-  const plan = settings[packageType] || settings.single_exam;
-
-  const exams = Array.from({ length: plan.examCount }).map((_, index) => ({
-    id: `${packageType}_${examLevel}_${Date.now()}_${index + 1}`,
-    number: index + 1,
-    level: examLevel,
-    title: `${plan.title} ${index + 1}`,
-    status: index === 0 ? 'available' : 'locked',
-    parts: buildPremiumExamParts(examLevel),
-    createdAt: new Date().toISOString(),
-  }));
-
+  level = "B1",
+  packageType = "probe",
+  userProfile = null,
+} = {}) {
   return {
-    id: `${packageType}_${Date.now()}`,
-    type: packageType,
-    title: plan.title,
-    price: plan.price,
-    level: examLevel,
-    examCount: plan.examCount,
-    validDays: plan.validDays,
-    status: 'pending-payment',
-    createdAt: new Date().toISOString(),
-    exams,
-    reports: [],
+    level,
+    packageType,
+    userProfile,
+    title: `AI Probeprüfung ${level}`,
+    durationMinutes:
+      level === "A2" ? 12 :
+      level === "B1" ? 20 :
+      25,
+    sections: [
+      {
+        id: "self-introduction",
+        skill: "speaking",
+        title: "Selbstvorstellung",
+        instruction: "Bitte stellen Sie sich kurz vor.",
+      },
+      {
+        id: "image-description",
+        skill: "bildbeschreibung",
+        title: "Bildbeschreibung",
+        instruction: "Beschreiben Sie das Bild und sagen Sie Ihre Meinung.",
+      },
+      {
+        id: "planning",
+        skill: "planung",
+        title: "Planung / Diskussion",
+        instruction: "Bearbeiten Sie die Aufgabe und reagieren Sie auf Nachfragen.",
+      },
+    ],
   };
 }
 
-export function savePremiumExamPackage(packageData) {
-  localStorage.setItem(
-    'austriaPathPremiumExamPackage',
-    JSON.stringify(packageData)
-  );
-}
-
-export function getPremiumExamPackage() {
+export function savePremiumExamPackage(examPackage) {
   try {
-    return JSON.parse(localStorage.getItem('austriaPathPremiumExamPackage'));
-  } catch {
-    return null;
+    localStorage.setItem(
+      "austriaPathPremiumExamPackage",
+      JSON.stringify(examPackage)
+    );
+  } catch (error) {
+    console.warn("Could not save premium exam package", error);
   }
+
+  return examPackage;
 }

@@ -3,8 +3,7 @@ import { getPlacementFlow } from '../../data/aiPlacementLibrary';
 import {
   buildPlacementProfile,
   savePlacementProfile,
-} from '../../data/utils/placementEngine';
-
+} from "../../utils/placementEngine";
 export default function PlacementTestScreen({ setActiveTab }) {
   const [selectedLevel, setSelectedLevel] = useState('A2');
   const [started, setStarted] = useState(false);

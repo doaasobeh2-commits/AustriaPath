@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { buildWeeklySession } from '../../data/weeklyPlanLibrary';
+import { buildWeeklySession } from "../../data/weeklyPlanLibrary";
 
 function cleanLevel(level = 'B1') {
   return String(level).replace('+', '').trim().toUpperCase() || 'B1';

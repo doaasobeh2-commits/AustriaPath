@@ -61,7 +61,7 @@ export function buildWeeklyPlan({ selectedLevel, selectedDays, selectedTime, foc
     type: 'weekly_ai_plan',
     level,
     source: placement ? 'placement' : 'manual',
-    totalMinutes: sessions.reduce((sum, session) => sum + session.duration, 0),
+    totalMinutes: 60,
     createdAt: new Date().toISOString(),
     focusAreas: focus,
     sessions,
@@ -74,8 +74,6 @@ function getSessionTask(level, focus) {
     hoeren: `${level} Hören trainieren: kostenlose Hörmodelle üben, Informationen erkennen und Antworten formulieren.`,
     bildbeschreibung: `${level} Bildbeschreibung trainieren: kostenlose Bildmodelle üben, Meinung und eigene Erfahrung nennen.`,
     planung: `${level} Planung trainieren: gemeinsam planen, Vorschläge machen, begründen und Alternativen nennen.`,
-    grafikbeschreibung: `${level} Grafikbeschreibung trainieren: Thema, wichtigste Werte, Vergleich, Interpretation und eigene Meinung üben.`,
-diskussion: `${level} Diskussion trainieren: Meinung sagen, begründen, Beispiele geben und auf Gegenargumente reagieren.`,
     lesen: `${level} Lesen trainieren: kostenlose Lesemodelle bearbeiten und wichtige Informationen markieren.`,
     schreiben: `${level} Schreiben trainieren: kostenlose Schreibmodelle lesen und Satzbau verbessern.`,
   };

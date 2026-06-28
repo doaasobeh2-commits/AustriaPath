@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { a2Models } from '../../data/modelsA2';
 import { b1Models } from '../../data/modelsb1';
 import { b2Models } from '../../data/modelsB2';
-
-import { getSmartPremiumMessage } from '../../data/smartPremiumMessages';
+import { getPublishedAdminItems } from "../../utils/adminContent";
 
 export function PracticeScreen({
   setActiveTab,
@@ -11,59 +10,63 @@ export function PracticeScreen({
   userLevel = localStorage.getItem('userLevel') || 'B1',
 }) {
   const [level] = useState(userLevel);
-  const [adminItems, setAdminItems] = useState([]);
   const [showPremiumHint, setShowPremiumHint] = useState(false);
   const [smartSection, setSmartSection] = useState('writing');
-
-  useEffect(() => {
-    const saved = JSON.parse(
-      localStorage.getItem('austriaPathAdminData') || '[]'
-    );
-
-    setAdminItems(
-      saved.filter(
-        (item) =>
-          item.status === 'published' &&
-          String(item.type).toLowerCase() === 'schreiben'
-      )
-    );
-  }, []);
 
   const staticModels =
     level === 'A2' ? a2Models :
     level === 'B1' ? b1Models :
     b2Models;
 
-  const adminModels = adminItems
-    .filter((item) => item.level === level)
-    .map((item, index) => ({
-      id: `admin-${item.id}`,
-      originalId: item.id,
-      displayNumber: staticModels.length + index + 1,
-      title: item.title,
-      level: item.level,
-      type: item.type,
-      category: item.type,
-      source: 'admin',
-      content: item.content,
-      solution: item.solution,
-      schreiben: item.type === 'schreiben' ? item.solution || item.content : '',
-      words: item.words || [],
-      verbs: item.verbs || [],
-      grammar: item.grammar || [],
-      satzbau: item.satzbau || [],
-      konnektoren: item.konnektoren || [],
-      confirmations: item.confirmations || 1,
-    }));
+  const allowedTypes = [
+    'schreiben',
+    'lesen',
+    'hoeren',
+    'hören',
+    'bildbeschreibung',
+    'planung',
+    'sprechen',
+    'speaking',
+    'akademie',
+    'grammatik',
+    'wortschatz',
+    'satzbau',
+    'konnektoren',
+  ];
+
+  const adminModels = useMemo(() => {
+    return getPublishedAdminItems({ level })
+      .filter((item) =>
+        allowedTypes.includes(String(item.type || '').toLowerCase())
+      )
+      .map((item, index) => {
+        const type = String(item.type || '').toLowerCase();
+
+        return {
+          id: `admin-${item.id || index}`,
+          originalId: item.id,
+          displayNumber: staticModels.length + index + 1,
+          title: item.title || 'Admin Modell',
+          level: item.level || level,
+          type,
+          category: type,
+          source: 'admin',
+          content: item.content || '',
+          solution: item.solution || '',
+          schreiben: type === 'schreiben' ? item.solution || item.content || '' : '',
+          words: item.words || [],
+          verbs: item.verbs || [],
+          grammar: item.grammar || [],
+          satzbau: item.satzbau || [],
+          konnektoren: item.konnektoren || [],
+          confirmations: item.confirmations || 1,
+          imageUrl: item.imageUrl || '',
+          audioUrl: item.audioUrl || '',
+        };
+      });
+  }, [level, staticModels.length]);
 
   const models = [...staticModels, ...adminModels];
-
-  const language =
-    localStorage.getItem('austriaPathLanguage') ||
-    localStorage.getItem('userLanguage') ||
-    'Deutsch';
-
- 
 
   const shouldShowSmartHint = (model) => {
     const rawType = String(model.type || 'schreiben').toLowerCase();
@@ -78,6 +81,12 @@ export function PracticeScreen({
       images: 'bild',
       planung: 'planung',
       sprechen: 'speaking',
+      speaking: 'speaking',
+      akademie: 'akademie',
+      grammatik: 'akademie',
+      wortschatz: 'akademie',
+      satzbau: 'akademie',
+      konnektoren: 'akademie',
     };
 
     const section = sectionMap[rawType] || 'writing';
@@ -88,46 +97,55 @@ export function PracticeScreen({
     localStorage.setItem('lastSmartSection', section);
     setSmartSection(section);
 
-   if (visits >= 4) {
+    if (visits >= 4) {
       setShowPremiumHint(true);
-    
     }
 
     return false;
   };
 
-  const openModelDirectly = (model) => {
-    if (model.source === 'admin') {
-      if (model.type === 'schreiben') {
-        setSelectedWritingModel({
-          id: model.id,
-          level: model.level,
-          title: model.title,
-          category: model.category,
-          task: model.content
-            ? model.content.split('\n').filter((line) => line.trim() !== '')
-            : [model.title],
-          schreiben: model.solution || model.schreiben || model.content || '',
-          words: model.words,
-          verbs: model.verbs,
-          grammar: model.grammar,
-          satzbau: model.satzbau,
-          konnektoren: model.konnektoren,
-          tip: 'Aus Admin hinzugefügt.',
-          source: 'admin',
-        });
+  const openAdminModel = (model) => {
+    if (model.type === 'schreiben') {
+      setSelectedWritingModel({
+        id: model.id,
+        level: model.level,
+        title: model.title,
+        category: model.category,
+        task: model.content
+          ? model.content.split('\n').filter((line) => line.trim() !== '')
+          : [model.title],
+        schreiben: model.solution || model.schreiben || model.content || '',
+        words: model.words,
+        verbs: model.verbs,
+        grammar: model.grammar,
+        satzbau: model.satzbau,
+        konnektoren: model.konnektoren,
+        tip: 'Aus Admin hinzugefügt.',
+        source: 'admin',
+      });
 
-        setActiveTab('writing');
-        return;
-      }
-
-      if (model.type === 'planung') return setActiveTab('planning');
-      if (model.type === 'bildbeschreibung') return setActiveTab('images');
-      if (model.type === 'lesen') return setActiveTab('lesen');
-      if (model.type === 'hoeren') return setActiveTab('horen');
-      if (model.type === 'sprechen') return setActiveTab('speaking');
+      setActiveTab('writing');
+      return;
     }
 
+    if (model.type === 'planung') return setActiveTab('planning');
+    if (model.type === 'bildbeschreibung') return setActiveTab('images');
+    if (model.type === 'lesen') return setActiveTab('lesen');
+    if (model.type === 'hoeren' || model.type === 'hören') return setActiveTab('horen');
+    if (model.type === 'sprechen' || model.type === 'speaking') return setActiveTab('speaking');
+
+    if (
+      model.type === 'akademie' ||
+      model.type === 'grammatik' ||
+      model.type === 'wortschatz' ||
+      model.type === 'satzbau' ||
+      model.type === 'konnektoren'
+    ) {
+      return setActiveTab('akademie');
+    }
+  };
+
+  const openStaticModel = (model) => {
     if (level === 'A2') {
       setSelectedWritingModel(model);
       setActiveTab('writing');
@@ -158,18 +176,19 @@ export function PracticeScreen({
   };
 
   const openModel = (model) => {
-  shouldShowSmartHint(model);
-  openModelDirectly(model);
-};
+    shouldShowSmartHint(model);
+
+    if (model.source === 'admin') {
+      openAdminModel(model);
+      return;
+    }
+
+    openStaticModel(model);
+  };
 
   return (
     <div style={pageStyle}>
-     
-
-      <button
-        onClick={() => setActiveTab('home')}
-        style={backButtonStyle}
-      >
+      <button onClick={() => setActiveTab('home')} style={backButtonStyle}>
         ← Zurück
       </button>
 
@@ -185,10 +204,26 @@ export function PracticeScreen({
         </button>
       </div>
 
+      {showPremiumHint && (
+        <div style={premiumHintStyle}>
+          <strong>KI-Tipp:</strong> Du hast diesen Bereich mehrmals geöffnet.
+          Der Einstufungstest kann dir zeigen, worauf du dich konzentrieren solltest.
+          <button
+            onClick={() => {
+              setShowPremiumHint(false);
+              setActiveTab('placement');
+            }}
+            style={premiumButtonStyle}
+          >
+            Einstufungstest starten
+          </button>
+        </div>
+      )}
+
       <div style={cardsStyle}>
         {models.map((model, index) => (
           <div
-            key={model.id}
+            key={model.id || index}
             style={modelCardStyle}
             onClick={() => openModel(model)}
           >
@@ -202,7 +237,7 @@ export function PracticeScreen({
               <p style={metaStyle}>
                 {level === 'B1' && model.emails
                   ? `${model.emails.length} E-Mails · B1`
-                  : `${model.category || model.type} · ${model.level}`}
+                  : `${model.category || model.type || 'Modell'} · ${model.level || level}`}
               </p>
 
               {model.source === 'admin' && (
@@ -262,6 +297,28 @@ const levelButtonStyle = (active) => ({
   fontWeight: 'bold',
   cursor: 'pointer',
 });
+
+const premiumHintStyle = {
+  backgroundColor: '#fff7ed',
+  border: '1px solid #fed7aa',
+  color: '#9a3412',
+  borderRadius: '18px',
+  padding: '14px',
+  marginBottom: '18px',
+  lineHeight: 1.5,
+};
+
+const premiumButtonStyle = {
+  display: 'block',
+  marginTop: '10px',
+  border: 'none',
+  backgroundColor: '#ea580c',
+  color: '#ffffff',
+  padding: '10px 14px',
+  borderRadius: '999px',
+  fontWeight: '700',
+  cursor: 'pointer',
+};
 
 const cardsStyle = {
   display: 'flex',
