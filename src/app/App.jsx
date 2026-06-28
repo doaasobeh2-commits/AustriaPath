@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+
 import { OnboardingScreen } from './screens/OnboardingScreen';
 import { AdminScreen } from './screens/AdminScreen';
 import { AkademieScreen } from './screens/AkademieScreen';
@@ -9,8 +10,10 @@ import LevelSelectScreen from './screens/LevelSelectScreen';
 import { PracticeScreen } from './screens/PracticeScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
 import SubscriptionScreen from './screens/SubscriptionScreen';
+import AccountSettingsScreen from './screens/AccountSettingsScreen';
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
+import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
 import { DatabaseScreen } from './screens/DatabaseScreen';
 import { WritingScreen } from './screens/WritingScreen';
 import { ImageTrainingScreen } from './screens/ImageTrainingScreen';
@@ -54,7 +57,15 @@ export default function App() {
     return <OnboardingScreen onFinish={() => setShowOnboarding(false)} />;
   }
 
-  if (!isLoggedIn) {
+if (!isLoggedIn) {
+
+  if (authScreen === 'forgot') {
+    return (
+      <ForgotPasswordScreen
+        onBack={() => setAuthScreen('login')}
+      />
+    );
+  }
     return authScreen === 'login' ? (
       <LoginScreen
         onLogin={(email) => {
@@ -68,6 +79,7 @@ export default function App() {
           }
         }}
         onRegister={() => setAuthScreen('register')}
+        onForgotPassword={() => setAuthScreen('forgot')}
       />
     ) : (
       <RegisterScreen
@@ -197,7 +209,12 @@ export default function App() {
     setActiveTab={setActiveTab}
   />
 )}
-
+{activeTab === 'accountSettings' && (
+  <AccountSettingsScreen
+    setActiveTab={setActiveTab}
+    onLogout={handleLogout}
+  />
+)}
           {activeTab === 'premium' && (
             <SubscriptionScreen
               setActiveTab={setActiveTab}

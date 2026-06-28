@@ -575,7 +575,7 @@ if (modelMode === 'existing' && !parentModelId) {
         <label style={labelStyle}>Bereich</label>
         <select value={type} onChange={(e) => setType(e.target.value)} style={inputStyle}>
           <option value="schreiben">Schreiben</option>
-          <option value="bildbeschreibung">Bildbeschreibung</option>
+          <option value="bildbeschreibung">Bildbeschreibung / Grafikbeschreibung</option>
           <option value="planung">Planung</option>
           <option value="lesen">Lesen</option>
           <option value="hoeren">Hören</option>
@@ -750,19 +750,18 @@ if (modelMode === 'existing' && !parentModelId) {
       />
 
       <div style={filterBoxStyle}>
-        <select value={type} onChange={(e) => setType(e.target.value)} style={inputStyle}>
+       <select
+  value={filterType}
+  onChange={(e) => setFilterType(e.target.value)}
+  style={filterInputStyle}
+>
+  <option value="all">Alle Bereiche</option>
   <option value="schreiben">Schreiben</option>
-  <option value="sprachbausteine">Sprachbausteine</option>
-  <option value="sprachbausteine">Sprachbausteine</option>
-<option value="diskussion">Diskussion</option>
-<option value="expressions">B2 Ausdrücke</option>
   <option value="bildbeschreibung">Bildbeschreibung / Grafikbeschreibung</option>
   <option value="planung">Planung</option>
-  <option value="diskussion">Diskussion</option>
   <option value="lesen">Lesen</option>
   <option value="hoeren">Hören</option>
   <option value="sprechen">Sprechen</option>
-  <option value="expressions">B2 Ausdrücke</option>
   <option value="erfahrung">Prüfungserfahrung</option>
 </select>
 

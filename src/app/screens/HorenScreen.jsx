@@ -3,9 +3,8 @@ import { b2Models } from '../../data/modelsB2';
 import { getSmartPremiumMessage } from '../../data/smartPremiumMessages';
 import { B1HorenScreen } from "./lesen/B1HorenScreen";
 import { b2HorenModels } from '../../data/b2HorenModels';
-const PREMIUM_HINT_COOLDOWN_DAYS = 3;
-const PREMIUM_HINT_COOLDOWN_MS =
-  PREMIUM_HINT_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
+import { isPremiumUser, trackSectionVisit } from '../../data/utils/premiumHint';
+
 
 function splitLines(value) {
   if (!value) return [];
@@ -83,24 +82,7 @@ function getAdminHorenModels() {
   }
 }
 
-function isPremiumUser() {
-  return (
-    localStorage.getItem('isPremiumUser') === 'true' ||
-    localStorage.getItem('placementPaid') === 'true' ||
-    Boolean(localStorage.getItem('premiumPlan'))
-  );
-}
 
-function shouldShowPremiumHint(storageKey) {
-  const lastShown = Number(localStorage.getItem(storageKey) || 0);
-  const now = Date.now();
-
-  return !lastShown || now - lastShown >= PREMIUM_HINT_COOLDOWN_MS;
-}
-
-function markPremiumHintShown(storageKey) {
-  localStorage.setItem(storageKey, String(Date.now()));
-}
 
 
 const staticA2HorenModels = [
@@ -165,22 +147,18 @@ export function HorenScreen({
 
   const premiumMessage = getSmartPremiumMessage(language, 'hoeren');
 
-  useEffect(() => {
-    if (!models.length) return;
+ useEffect(() => {
+  if (!models.length) return;
 
-    const storageKey = 'hoerenPremiumLastShown';
+  if (isPremiumUser()) {
+    setShowPremiumHint(false);
+    return;
+  }
 
-    if (isPremiumUser()) {
-      setShowPremiumHint(false);
-      return;
-    }
-
-    if (shouldShowPremiumHint(storageKey)) {
-      setShowPremiumHint(true);
-      markPremiumHintShown(storageKey);
-    }
-  }, [models.length]);
-
+  if (trackSectionVisit('hoeren')) {
+    setShowPremiumHint(true);
+  }
+}, [models.length]);
   const readText = () => {
     if (!model?.text) return;
 

@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { b1LesenModels } from '../../../data/b1LesenModels';
 import BrochureViewer from '../BrochureViewer';
+import { getSmartPremiumMessage } from '../../../data/smartPremiumMessages';
+import { isPremiumUser, trackSectionVisit } from '../../../data/utils/premiumHint';
 export function B1LesenScreen({ setActiveTab }) {
   const [index, setIndex] = useState(0);
   const [activeTeil, setActiveTeil] = useState('teil1');
@@ -8,6 +10,25 @@ export function B1LesenScreen({ setActiveTab }) {
   const [showAnswers, setShowAnswers] = useState(false);
 const [showBrochure, setShowBrochure] = useState(false);
 const [showTeil2Questions, setShowTeil2Questions] = useState(false);
+const [showPremiumHint, setShowPremiumHint] = useState(false);
+
+const language =
+  localStorage.getItem('austriaPathLanguage') ||
+  localStorage.getItem('userLanguage') ||
+  'Deutsch';
+
+const premiumMessage = getSmartPremiumMessage(language, 'lesen');
+
+useEffect(() => {
+  if (isPremiumUser()) {
+    setShowPremiumHint(false);
+    return;
+  }
+
+  if (trackSectionVisit('lesen')) {
+    setShowPremiumHint(true);
+  }
+}, []);
   const model = b1LesenModels[index];
 if (showBrochure) {
   return (
@@ -30,7 +51,35 @@ if (showBrochure) {
 
       <h1>📖 B1 Lesen</h1>
       <p style={subtitleStyle}>Komplette B1-Lesemodelle mit drei Teilen.</p>
+{showPremiumHint && (
+  <div style={premiumHintStyle}>
+    <div style={{ fontSize: '30px' }}>{premiumMessage.icon}</div>
 
+    <h3 style={{ margin: '8px 0', color: '#0f172a' }}>
+      {premiumMessage.title}
+    </h3>
+
+    <p style={{ color: '#475569', lineHeight: 1.6 }}>
+      {premiumMessage.text}
+    </p>
+
+    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+      <button
+        onClick={() => setActiveTab('premium')}
+        style={premiumButtonStyle}
+      >
+        {premiumMessage.button}
+      </button>
+
+      <button
+        onClick={() => setShowPremiumHint(false)}
+        style={laterButtonStyle}
+      >
+        {premiumMessage.later}
+      </button>
+    </div>
+  </div>
+)}
       <select
         style={inputStyle}
         value={index}
@@ -352,4 +401,33 @@ const openBrochureButtonStyle = {
   fontSize: '16px',
   cursor: 'pointer',
   marginBottom: '14px'
+};
+
+const premiumHintStyle = {
+  backgroundColor: '#fff7ed',
+  border: '1px solid #fed7aa',
+  borderRadius: '18px',
+  padding: '16px',
+  marginBottom: '14px',
+  boxShadow: '0 8px 20px rgba(15, 23, 42, 0.08)'
+};
+
+const premiumButtonStyle = {
+  backgroundColor: '#f97316',
+  color: '#ffffff',
+  border: 'none',
+  padding: '10px 14px',
+  borderRadius: '12px',
+  fontWeight: '700',
+  cursor: 'pointer'
+};
+
+const laterButtonStyle = {
+  backgroundColor: '#ffffff',
+  color: '#475569',
+  border: '1px solid #cbd5e1',
+  padding: '10px 14px',
+  borderRadius: '12px',
+  fontWeight: '600',
+  cursor: 'pointer'
 };

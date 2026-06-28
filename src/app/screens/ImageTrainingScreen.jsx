@@ -4,9 +4,8 @@ import { b1Images } from '../../data/b1Images';
 import { b2Images } from '../../data/b2Images';
 import { getSmartPremiumMessage } from '../../data/smartPremiumMessages';
 import { b2Grafiken } from '../../data/b2Grafiken';
-const PREMIUM_HINT_COOLDOWN_DAYS = 3;
-const PREMIUM_HINT_COOLDOWN_MS =
-  PREMIUM_HINT_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
+import { isPremiumUser, trackSectionVisit } from '../../data/utils/premiumHint';
+
 
 const imageModels = {
   A2: a2Images,
@@ -24,24 +23,6 @@ const splitLines = (value) => {
 const normalizeStatus = (value) => String(value || '').toLowerCase();
 const normalizeBereich = (value) => String(value || '').toLowerCase();
 
-function isPremiumUser() {
-  return (
-    localStorage.getItem('isPremiumUser') === 'true' ||
-    localStorage.getItem('placementPaid') === 'true' ||
-    Boolean(localStorage.getItem('premiumPlan'))
-  );
-}
-
-function shouldShowPremiumHint(storageKey) {
-  const lastShown = Number(localStorage.getItem(storageKey) || 0);
-  const now = Date.now();
-
-  return !lastShown || now - lastShown >= PREMIUM_HINT_COOLDOWN_MS;
-}
-
-function markPremiumHintShown(storageKey) {
-  localStorage.setItem(storageKey, String(Date.now()));
-}
 
 function getAdminImageModels() {
   try {
@@ -133,22 +114,22 @@ export function ImageTrainingScreen({
 
   const premiumMessage = getSmartPremiumMessage(language, 'bild');
 
-  useEffect(() => {
-    if (!models.length) return;
+useEffect(() => {
+  if (!models.length) return;
 
-    const storageKey = 'bildPremiumLastShown';
+  if (isPremiumUser()) {
+    setShowPremiumHint(false);
+    return;
+  }
 
-    if (isPremiumUser()) {
-      setShowPremiumHint(false);
-      return;
-    }
-
-    if (shouldShowPremiumHint(storageKey)) {
+  const timer = setTimeout(() => {
+    if (trackSectionVisit('bild')) {
       setShowPremiumHint(true);
-      markPremiumHintShown(storageKey);
     }
-  }, [models.length]);
+  }, 300);
 
+  return () => clearTimeout(timer);
+}, []);
   const openImage = (item) => {
     setSelectedImage(item);
   };

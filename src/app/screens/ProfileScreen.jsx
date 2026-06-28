@@ -215,7 +215,14 @@ const openPremiumExam = (exam) => {
               <div style={goodBadgeStyle}>
                 ⭐ {hasAIResult ? 'Gutes Niveau!' : 'Free Profil'}
               </div>
+              <button
+  onClick={() => setActiveTab('accountSettings')}
+  style={settingsButtonStyle}
+>
+  ⚙️ Kontoeinstellungen
+</button>
             </div>
+
 
             <div style={infoRowStyle}>📅 21. Juni 2026</div>
             <div style={infoRowStyle}>
@@ -941,4 +948,15 @@ const createPlanButtonStyle = {
   fontWeight: 900,
   cursor: 'pointer',
   marginBottom: 16,
+};
+
+const settingsButtonStyle = {
+  marginTop: 14,
+  border: 'none',
+  background: '#2563eb',
+  color: 'white',
+  borderRadius: 14,
+  padding: '11px 14px',
+  fontWeight: 800,
+  cursor: 'pointer',
 };

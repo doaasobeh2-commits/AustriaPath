@@ -1,31 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { b1PlanningModels } from '../../data/modelsb1';
 import { getSmartPremiumMessage } from '../../data/smartPremiumMessages';
-
+import { isPremiumUser, trackSectionVisit } from '../../data/utils/premiumHint';
 const STORAGE_KEY = 'austriaPathAdminData';
 
-const PREMIUM_HINT_COOLDOWN_DAYS = 3;
-const PREMIUM_HINT_COOLDOWN_MS =
-  PREMIUM_HINT_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
 
-function isPremiumUser() {
-  return (
-    localStorage.getItem('isPremiumUser') === 'true' ||
-    localStorage.getItem('placementPaid') === 'true' ||
-    Boolean(localStorage.getItem('premiumPlan'))
-  );
-}
-
-function shouldShowPremiumHint(storageKey) {
-  const lastShown = Number(localStorage.getItem(storageKey) || 0);
-  const now = Date.now();
-
-  return !lastShown || now - lastShown >= PREMIUM_HINT_COOLDOWN_MS;
-}
-
-function markPremiumHintShown(storageKey) {
-  localStorage.setItem(storageKey, String(Date.now()));
-}
 
 const b2SpeakingModels = [
   {
@@ -422,21 +401,17 @@ export function SpeakingScreen({
  const premiumMessage = getSmartPremiumMessage(language, 'speaking');
 
   useEffect(() => {
-    if (!models.length) return;
+  if (!models.length) return;
 
-    const storageKey = 'sprechenPremiumLastShown';
+  if (isPremiumUser()) {
+    setShowPremiumHint(false);
+    return;
+  }
 
-    if (isPremiumUser()) {
-      setShowPremiumHint(false);
-      return;
-    }
-
-    if (shouldShowPremiumHint(storageKey)) {
-      setShowPremiumHint(true);
-      markPremiumHintShown(storageKey);
-    }
-  }, [models.length]);
-
+  if (trackSectionVisit('speaking')) {
+    setShowPremiumHint(true);
+  }
+}, [models.length]);
   if (!current) {
     return (
       <div style={pageStyle}>
