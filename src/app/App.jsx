@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import PremiumScheduleScreen from './screens/PremiumScheduleScreen';
 import { OnboardingScreen } from './screens/OnboardingScreen';
 import { AdminScreen } from './screens/AdminScreen';
 import { AkademieScreen } from './screens/AkademieScreen';
@@ -221,7 +221,9 @@ if (!isLoggedIn) {
               onOpenPremiumExam={() => setActiveTab('premiumExam')}
             />
           )}
-
+{activeTab === 'premiumSchedule' && (
+  <PremiumScheduleScreen setActiveTab={setActiveTab} />
+)}
        {activeTab === 'placementTest' && (
   <PlacementTestScreen setActiveTab={setActiveTab} />
 )}

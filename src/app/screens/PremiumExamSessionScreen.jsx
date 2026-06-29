@@ -1,5 +1,12 @@
 import React, { useMemo, useState } from 'react';
-
+import {
+  WritingPart,
+  ReadingClozePart,
+  ReadingAdsPart,
+  ListeningPart,
+  SpeakingPart,
+  PlanningPart,
+} from './PremiumExamParts';
 export default function PremiumExamSessionScreen({ setActiveTab }) {
   const exam = useMemo(() => {
     try {
@@ -27,7 +34,16 @@ export default function PremiumExamSessionScreen({ setActiveTab }) {
   const [started, setStarted] = useState(false);
   const [step, setStep] = useState(0);
   const [finished, setFinished] = useState(false);
+const [answers, setAnswers] = useState({});
+const [submitted, setSubmitted] = useState({});
 
+const updateAnswer = (value) => {
+  setAnswers((old) => ({ ...old, [step]: value }));
+};
+
+const submitCurrent = () => {
+  setSubmitted((old) => ({ ...old, [step]: true }));
+};
   const parts = exam?.parts || [];
   const currentPart = parts[step];
 
@@ -88,63 +104,39 @@ export default function PremiumExamSessionScreen({ setActiveTab }) {
         </div>
       )}
 
-      {started && !finished && (
-        <div style={cardStyle}>
-          <p style={badgeStyle}>
-            Teil {step + 1} / {parts.length}
-          </p>
+   <>
+  {currentPart?.type === 'writing' && (
+    <WritingPart part={currentPart} value={answers[step]} onChange={updateAnswer} onSubmit={submitCurrent} submitted={submitted[step]} />
+  )}
 
-          <h2>{currentPart?.label || currentPart?.title || 'Prüfungsteil'}</h2>
+  {currentPart?.type === 'reading_cloze' && (
+    <ReadingClozePart part={currentPart} value={answers[step]} onChange={updateAnswer} onSubmit={submitCurrent} submitted={submitted[step]} />
+  )}
 
-          {currentPart?.title && <h3>{currentPart.title}</h3>}
+  {currentPart?.type === 'reading_ads' && (
+    <ReadingAdsPart part={currentPart} value={answers[step]} onChange={updateAnswer} onSubmit={submitCurrent} submitted={submitted[step]} />
+  )}
 
-          <div style={aiBoxStyle}>
-            <b>AI Prüfer:</b>{' '}
-            {currentPart?.instruction || 'Bitte beginnen Sie mit diesem Prüfungsteil.'}
+  {currentPart?.type === 'listening' && (
+    <ListeningPart part={currentPart} value={answers[step]} onChange={updateAnswer} onSubmit={submitCurrent} submitted={submitted[step]} />
+  )}
 
-            {currentPart?.text && (
-              <p>
-                <b>Text:</b> {currentPart.text}
-              </p>
-            )}
+  {(currentPart?.type === 'self_intro' || currentPart?.type === 'image') && (
+    <SpeakingPart part={currentPart} value={answers[step]} onChange={updateAnswer} onSubmit={submitCurrent} submitted={submitted[step]} />
+  )}
 
-            {currentPart?.audioText && (
-              <p>
-                <b>Hörtext:</b> {currentPart.audioText}
-              </p>
-            )}
+  {(currentPart?.type === 'planning' || currentPart?.type === 'roleplay') && (
+    <PlanningPart part={currentPart} value={answers[step]} onChange={updateAnswer} onSubmit={submitCurrent} submitted={submitted[step]} />
+  )}
 
-            {currentPart?.points?.length ? (
-              <ul>
-                {currentPart.points.map((point, index) => (
-                  <li key={index}>{point}</li>
-                ))}
-              </ul>
-            ) : null}
-
-            {currentPart?.questions?.length ? (
-              <div>
-                <b>Fragen:</b>
-                <ul>
-                  {currentPart.questions.map((question, index) => (
-                    <li key={index}>{question.q}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-          </div>
-
-          {step < parts.length - 1 ? (
-            <button style={primaryButtonStyle} onClick={() => setStep(step + 1)}>
-              Weiter
-            </button>
-          ) : (
-            <button style={primaryButtonStyle} onClick={finishExam}>
-              Prüfung abschließen
-            </button>
-          )}
-        </div>
-      )}
+  <button
+    style={primaryButtonStyle}
+    onClick={step < parts.length - 1 ? () => setStep(step + 1) : finishExam}
+  >
+    {step < parts.length - 1 ? 'Weiter' : 'Prüfung abschließen'}
+  </button>
+</>
+            
 
       {finished && (
         <div style={successStyle}>

@@ -26,25 +26,9 @@ export function B2ModelScreen({ model, setActiveTab }) {
         </p>
       </div>
 
-      <TopicCard
-        icon="✍️"
-        title="Schreiben A"
-        text={model.schreibenA || 'Thema wird später ergänzt.'}
-      />
-
-      <TopicCard
-        icon="✍️"
-        title="Schreiben B"
-        text={model.schreibenB || 'Thema wird später ergänzt.'}
-      />
-
-      
-
-      <TopicCard
-        icon="🧩"
-        title="Sprachbausteine"
-        text={model.sprachbausteine || 'Thema wird später ergänzt.'}
-      />
+      <TopicCard icon="✍️" title="Schreiben A" text={model.schreibenA} />
+      <TopicCard icon="✍️" title="Schreiben B" text={model.schreibenB} />
+      <TopicCard icon="🧩" title="Sprachbausteine" text={model.sprachbausteine} />
 
       <TopicList
         icon="📚"
@@ -69,7 +53,8 @@ function TopicCard({ icon, title, text }) {
       <h2 style={sectionTitleStyle}>
         {icon} {title}
       </h2>
-      <p style={textStyle}>{text}</p>
+
+      {renderContent(text)}
     </div>
   );
 }
@@ -81,17 +66,73 @@ function TopicList({ icon, title, items }) {
         {icon} {title}
       </h2>
 
-      {items && items.length > 0 ? (
+      {Array.isArray(items) && items.length > 0 ? (
         <ul style={listStyle}>
           {items.map((item, index) => (
-            <li key={index}>{item}</li>
+            <li key={index}>{renderPlainText(item)}</li>
           ))}
         </ul>
       ) : (
-        <p style={textStyle}>Themen werden später ergänzt.</p>
+        <p style={textStyle}>Keine Inhalte vorhanden.</p>
       )}
     </div>
   );
+}
+
+function renderContent(value) {
+  if (!value) {
+    return <p style={textStyle}>Thema wird später ergänzt.</p>;
+  }
+
+  if (typeof value === 'string') {
+    return <p style={textStyle}>{value}</p>;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item, index) => (
+      <p key={index} style={textStyle}>
+        {renderPlainText(item)}
+      </p>
+    ));
+  }
+
+  if (typeof value === 'object') {
+    return (
+      <>
+        {value.title && <h3 style={smallTitleStyle}>{value.title}</h3>}
+        {value.description && <p style={textStyle}>{value.description}</p>}
+        {value.teil1 && <p style={textStyle}>{renderPlainText(value.teil1)}</p>}
+        {value.teil2 && <p style={textStyle}>{renderPlainText(value.teil2)}</p>}
+        {value.text && <p style={textStyle}>{renderPlainText(value.text)}</p>}
+      </>
+    );
+  }
+
+  return <p style={textStyle}>{String(value)}</p>;
+}
+
+function renderPlainText(value) {
+  if (!value) return '';
+
+  if (typeof value === 'string') return value;
+
+  if (Array.isArray(value)) {
+    return value.map(renderPlainText).join('\n');
+  }
+
+  if (typeof value === 'object') {
+    return (
+      value.title ||
+      value.description ||
+      value.text ||
+      value.teil1 ||
+      value.teil2 ||
+      value.modelId ||
+      ''
+    );
+  }
+
+  return String(value);
 }
 
 const pageStyle = {
@@ -157,6 +198,12 @@ const sectionTitleStyle = {
   marginTop: 0,
   color: '#0f172a',
   fontSize: '20px',
+};
+
+const smallTitleStyle = {
+  margin: '0 0 8px',
+  color: '#1e293b',
+  fontSize: '17px',
 };
 
 const textStyle = {

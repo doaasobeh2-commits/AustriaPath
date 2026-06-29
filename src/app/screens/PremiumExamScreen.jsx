@@ -225,8 +225,40 @@ export function PremiumExamScreen({ setActiveTab }) {
 const userLanguage = getUserLanguage();
 const t = premiumTexts[userLanguage] || premiumTexts.Deutsch;
 const localizedPlans = getLocalizedPlans(userLanguage);
-  const examFlow = useMemo(() => getExamFlow(level), [level]);
+ const examFlow = useMemo(() => {
+  if (exam?.parts?.length) {
+    return exam.parts.map((part, index) => ({
+      key: `${part.type}-${index}`,
+      icon:
+        part.type === 'writing' ? '✉️' :
+        part.type.includes('reading') ? '📖' :
+        part.type === 'listening' ? '🎧' :
+        part.type === 'self_intro' ? '👤' :
+        part.type === 'image' ? '🖼️' :
+        '🗓️',
+      title: part.label || part.title || 'Prüfung',
+      type: part.type,
+      time: '03:00',
+    }));
+  }
+
+  return getExamFlow(level);
+}, [level, exam]);
   const currentStep = examFlow[step];
+  const currentPart = exam?.parts?.find((part) => {
+  if (!currentStep) return false;
+
+  if (currentStep.type === 'writing') return part.type === 'writing';
+  if (currentStep.type === 'reading') return part.type === 'reading';
+  if (currentStep.type === 'listening') return part.type === 'listening';
+  if (currentStep.type === 'self_intro') return part.type === 'self_intro';
+  if (currentStep.type === 'image') return part.type === 'image';
+  if (currentStep.type === 'planning') {
+    return part.type === 'planning' || part.type === 'roleplay';
+  }
+
+  return false;
+});
   const [timeLeft, setTimeLeft] = useState(parseTime(currentStep?.time || '01:00'));
 
   useEffect(() => {
@@ -287,15 +319,20 @@ const startExam = () => {
 
   savePremiumExamPackage(packageData);
 
-  const firstExam = packageData.exams[0];
+const firstExam = packageData?.exams?.[0];
 
-  setExam({
-    level,
-    plan: selectedPlan,
-    packageData,
-    currentExam: firstExam,
-    parts: firstExam.parts,
-  });
+if (!firstExam || !Array.isArray(firstExam.parts) || firstExam.parts.length === 0) {
+  alert('Keine Prüfungsinhalte gefunden. Bitte später erneut versuchen.');
+  return;
+}
+
+setExam({
+  level,
+  plan: selectedPlan,
+  packageData,
+  currentExam: firstExam,
+  parts: firstExam.parts,
+});
 
   setStarted(true);
   setStep(0);
@@ -445,8 +482,33 @@ const startExam = () => {
         <div style={stepIconStyle}>{currentStep.icon}</div>
         <h2>{currentStep.title}</h2>
 
-        <p style={taskTextStyle}>{buildTaskText(currentStep, exam, answers)}</p>
+        <p style={taskTextStyle}>
+  {currentPart?.instruction || buildTaskText(currentStep, exam, answers)}
+</p>
+{currentPart?.text && (
+  <div style={infoBoxStyle}>
+    <b>Text:</b>
+    <p>{currentPart.text}</p>
+  </div>
+)}
 
+{currentPart?.audioText && (
+  <div style={infoBoxStyle}>
+    <b>Hörtext:</b>
+    <p>{currentPart.audioText}</p>
+  </div>
+)}
+
+{currentPart?.questions?.length > 0 && (
+  <div style={infoBoxStyle}>
+    <b>Fragen:</b>
+    <ul>
+      {currentPart.questions.map((q, index) => (
+        <li key={index}>{q.q}</li>
+      ))}
+    </ul>
+  </div>
+)}
         {currentStep.type === 'image' && (
           <div style={imagePlaceholderStyle}>
             🖼 {exam?.imageGroup?.title || 'Bildbeschreibung'}
@@ -921,28 +983,45 @@ function getExamFlow(level) {
 }
 
 function buildTaskText(step, exam) {
+  const realPart = exam?.parts?.find((part) => {
+    if (step.type === 'writing') return part.type === 'writing' || part.skill === 'schreiben';
+    if (step.type === 'reading') return part.type === 'reading' || part.skill === 'lesen';
+    if (step.type === 'listening') return part.type === 'listening' || part.skill === 'hoeren';
+    if (step.type === 'self_intro') return part.type === 'self_intro' || part.skill === 'selbstvorstellung';
+    if (step.type === 'image') return part.type === 'image' || part.skill === 'bildbeschreibung';
+    if (step.type === 'planning') return part.type === 'planning' || part.skill === 'planung' || part.skill === 'diskussion';
+    return false;
+  });
+
+  if (realPart) {
+    return (
+      realPart.instruction ||
+      realPart.task ||
+      realPart.text ||
+      realPart.description ||
+      realPart.title ||
+      'Antworten Sie klar und in ganzen Sätzen.'
+    );
+  }
+
   switch (step.type) {
     case 'writing':
       return 'Schreiben Sie eine E-Mail. Achten Sie auf Anrede, Grund, Bitte oder Vorschlag und Grußformel.';
 
     case 'reading':
-      return 'Lesen Sie den Text aufmerksam und beantworten Sie die Fragen. Achten Sie auf wichtige Informationen.';
+      return 'Lesen Sie den Text aufmerksam und beantworten Sie die Fragen.';
 
     case 'listening':
-      return 'Hören Sie den Text und beantworten Sie danach die Fragen. Achten Sie auf Uhrzeiten, Orte, Gründe und wichtige Details.';
+      return 'Hören Sie den Text und beantworten Sie danach die Fragen.';
 
     case 'self_intro':
-      return 'Stellen Sie sich kurz vor. Sprechen Sie über Name, Herkunft, Wohnort, Beruf oder Kurs, Familie und Freizeit.';
+      return 'Stellen Sie sich kurz vor.';
 
     case 'image':
-      return `Beschreiben Sie das Bildthema: ${
-        exam?.imageGroup?.title || 'Alltagssituation'
-      }. Sprechen Sie über Personen, Ort, Handlung, Meinung und eigene Erfahrung.`;
+      return 'Beschreiben Sie das Bild.';
 
     case 'planning':
-      return `Planungsgespräch: ${
-        exam?.planning?.title || 'eine gemeinsame Aktivität'
-      }. Machen Sie Vorschläge, reagieren Sie höflich und begründen Sie Ihre Meinung.`;
+      return 'Führen Sie ein Planungsgespräch.';
 
     default:
       return 'Antworten Sie klar, langsam und in ganzen Sätzen.';

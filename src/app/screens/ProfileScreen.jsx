@@ -34,9 +34,30 @@ export function ProfileScreen({ setActiveTab }) {
     }
   }, []);
 
-  const userName = localStorage.getItem('userName') || 'Fadi Sobeih';
-  const userEmail = localStorage.getItem('userEmail') || 'user@example.com';
-  const targetLevel = localStorage.getItem('userLevel') || 'B1';
+ const currentUser = (() => {
+  try {
+    return JSON.parse(localStorage.getItem('currentUser')) || {};
+  } catch {
+    return {};
+  }
+})();
+
+const userName =
+  localStorage.getItem('userName') ||
+  currentUser.name ||
+  'Fadi Sobeh';
+
+const userEmail =
+  localStorage.getItem('userEmail') ||
+  currentUser.email ||
+  'user@example.com';
+
+const profileImage = localStorage.getItem('userProfileImage') || '';
+
+const targetLevel =
+  localStorage.getItem('userLevel') ||
+  currentUser.level ||
+  'B1';
 
   const hasAIResult = Boolean(placementProfile);
   const level = placementProfile?.level || targetLevel;
@@ -175,6 +196,35 @@ function skillLabel(skill) {
 
   return labels[skill] || 'Training';
 }
+const getPremiumSchedule = () => {
+  try {
+    return JSON.parse(localStorage.getItem('austriaPathPremiumSchedule') || '[]');
+  } catch {
+    return [];
+  }
+};
+
+const canStartScheduledExam = (exam) => {
+  const schedule = getPremiumSchedule();
+  const now = new Date();
+
+  const next = schedule.find(
+    (item) => item.type === exam.type && !item.used
+  );
+
+  if (!next) return { allowed: false, message: 'Bitte zuerst Termine planen.' };
+
+  const start = new Date(next.startAt);
+
+  if (now < start) {
+    return {
+      allowed: false,
+      message: `Diese Prüfung beginnt am ${next.date} um ${next.time}.`,
+    };
+  }
+
+  return { allowed: true, appointment: next };
+};
 const openPremiumExam = (exam) => {
   const cleanLevel = level?.replace('+', '') || 'B1';
 
@@ -196,16 +246,78 @@ const openPremiumExam = (exam) => {
     })
   );
 
-  setActiveTab('aiSession');
+setActiveTab('aiSession');
 };
 
-  return (
+const handlePremiumExamClick = (exam) => {
+  const subscription = JSON.parse(
+    localStorage.getItem("austriaPathSubscription") || "null"
+  );
+
+  if (!subscription) {
+    alert("Bitte zuerst einen Premium-Plan auswählen.");
+    setActiveTab("premium");
+    return;
+  }
+
+ if (exam.type === "probe" || exam.type === "ai_exam") {
+    localStorage.setItem(
+  "austriaPathCurrentPremiumType",
+  "ai_exam"
+);
+
+setActiveTab("premiumSchedule");
+    return;
+  }
+
+ if (exam.type === "intensive") {
+   localStorage.setItem(
+  "austriaPathCurrentPremiumType",
+  "intensive_week"
+);
+
+setActiveTab("premiumSchedule");
+    return;
+  }
+
+ if (exam.type === "month") {
+   localStorage.setItem(
+  "austriaPathCurrentPremiumType",
+  "premium_month"
+);
+
+setActiveTab("premiumSchedule");
+    return;
+  }
+
+const result = canStartScheduledExam(exam);
+
+if (!result.allowed) {
+  alert(result.message);
+  return;
+}
+
+localStorage.setItem(
+  'austriaPathActivePremiumAppointment',
+  JSON.stringify(result.appointment)
+);
+
+openPremiumExam(exam);
+};
+
+return (
   <div style={pageStyle}>
     
 
     <div style={heroCardStyle}>
       <div style={heroLeftStyle}>
-        <div style={avatarStyle}>👤</div>
+       <div style={avatarStyle}>
+  {profileImage ? (
+    <img src={profileImage} alt="Profil" style={avatarImageStyle} />
+  ) : (
+    <span>👤</span>
+  )}
+</div>
           <div>
             <h1 style={nameStyle}>{userName}</h1>
             <p style={mutedStyle}>{userEmail}</p>
@@ -359,10 +471,14 @@ const openPremiumExam = (exam) => {
 
               <button
                 style={examButtonStyle}
-                onClick={() => openPremiumExam(exam)}
+                onClick={() => handlePremiumExamClick(exam)}
                 disabled={exam.used >= exam.total}
               >
-                {exam.used >= exam.total ? 'Abgeschlossen' : 'Prüfung starten'}
+                {
+  exam.used >= exam.total
+    ? "Abgeschlossen"
+    : "Termin planen"
+}
               </button>
             </div>
           ))}
@@ -674,8 +790,15 @@ const avatarStyle = {
   justifyContent: 'center',
   fontSize: 54,
   fontWeight: 900,
+  overflow: 'hidden',
+  flexShrink: 0,
 };
-
+const avatarImageStyle = {
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+  borderRadius: '50%',
+};
 const nameStyle = {
   fontSize: 38,
   margin: 0,

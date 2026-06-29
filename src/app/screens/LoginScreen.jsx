@@ -22,7 +22,10 @@ export default function LoginScreen({ onLogin, onRegister }) {
     if (!user) {
       user = {
         id: Date.now(),
-        name: cleanEmail.split('@')[0],
+       name:
+  cleanEmail === "fadisobehau@gmail.com"
+    ? "Fadi Sobeh"
+    : cleanEmail.split("@")[0],
         email: cleanEmail,
         password,
         level: localStorage.getItem('userLevel') || 'B1',
@@ -37,8 +40,16 @@ export default function LoginScreen({ onLogin, onRegister }) {
       localStorage.setItem('austriaPathUsers', JSON.stringify(updatedUsers));
     }
 
-    saveCurrentUser(user);
-    localStorage.setItem('userEmail', cleanEmail);
+   saveCurrentUser(user);
+
+localStorage.setItem('isLoggedIn', 'true');
+localStorage.setItem('currentUser', JSON.stringify(user));
+localStorage.setItem('userName', user.name || cleanEmail.split('@')[0]);
+localStorage.setItem('userEmail', user.email || cleanEmail);
+localStorage.setItem('userLevel', user.level || 'B1');
+localStorage.setItem('userLanguage', user.language || localStorage.getItem('userLanguage') || 'Deutsch');
+
+onLogin(cleanEmail);
 
     onLogin(cleanEmail);
   };

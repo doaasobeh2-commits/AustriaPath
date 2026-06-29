@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function SubscriptionScreen({ setActiveTab, onOpenPremiumExam }) {
+export default function SubscriptionScreen({ setActiveTab }) {
   const language =
     localStorage.getItem('userLanguage') ||
     localStorage.getItem('austriaPathLanguage') ||
@@ -9,14 +9,55 @@ export default function SubscriptionScreen({ setActiveTab, onOpenPremiumExam }) 
   const t = content[language] || content.Deutsch;
   const plans = t.plans;
 
+  const handleSelectPlan = (plan) => {
+    const now = new Date();
+
+    const subscription = {
+      id: plan.id,
+      name: plan.name,
+      price: plan.price,
+      type: plan.type,
+      status: 'active',
+      purchasedAt: now.toISOString(),
+      validUntil: plan.validDays
+        ? new Date(now.getTime() + plan.validDays * 24 * 60 * 60 * 1000).toISOString()
+        : null,
+      totalUses: plan.totalUses,
+      remainingUses: plan.totalUses,
+    };
+
+    localStorage.setItem('austriaPathSubscription', JSON.stringify(subscription));
+    localStorage.setItem('userPlan', plan.type);
+    localStorage.setItem('premiumActive', 'true');
+    localStorage.setItem('austriaPathSelectedPremiumPlan', JSON.stringify(plan));
+
+    if (plan.type === 'placement') {
+      setActiveTab?.('placementTest');
+      return;
+    }
+
+    if (plan.type === 'weekly_plan') {
+      setActiveTab?.('weeklyPlanSetup');
+      return;
+    }
+
+ if (
+  plan.type === 'ai_exam' ||
+  plan.type === 'intensive_week' ||
+  plan.type === 'premium_month'
+) {
+  setActiveTab?.('profile');
+  return;
+}
+};
   return (
     <div style={container}>
       <h1 style={title}>{t.title}</h1>
       <p style={subtitle}>{t.subtitle}</p>
 
-      {plans.map((plan, index) => (
+      {plans.map((plan) => (
         <div
-          key={index}
+          key={plan.id}
           style={{
             ...card,
             border: plan.highlight ? '2px solid #2563eb' : '1px solid #e5e7eb',
@@ -35,26 +76,12 @@ export default function SubscriptionScreen({ setActiveTab, onOpenPremiumExam }) 
             ))}
           </ul>
 
-  <button
-  style={button}
-  onClick={() => {
-    if (plan.price === '2,00 €') {
-      setActiveTab?.('placementTest');
-      return;
-    }
-
-   if (plan.price === '14,99 €') {
-  setActiveTab?.('weeklyPlanSetup');
-  return;
-}
-
-    if (onOpenPremiumExam) {
-      onOpenPremiumExam();
-    }
-  }}
->
-  {plan.buttonText}
-</button>
+          <button
+            style={button}
+            onClick={() => handleSelectPlan(plan)}
+          >
+            {plan.buttonText || t.select}
+          </button>
         </div>
       ))}
 
@@ -66,7 +93,38 @@ export default function SubscriptionScreen({ setActiveTab, onOpenPremiumExam }) 
   );
 }
 
-
+const planMeta = {
+  placement: {
+    id: 'placement',
+    type: 'placement',
+    totalUses: 1,
+    validDays: null,
+  },
+  weekly: {
+    id: 'weekly-plan',
+    type: 'weekly_plan',
+    totalUses: 3,
+    validDays: 7,
+  },
+  exam: {
+    id: 'ai-exam',
+    type: 'ai_exam',
+    totalUses: 1,
+    validDays: null,
+  },
+  intensive: {
+    id: 'intensive-week',
+    type: 'intensive_week',
+    totalUses: 3,
+    validDays: 7,
+  },
+  month: {
+    id: 'premium-month',
+    type: 'premium_month',
+    totalUses: 5,
+    validDays: 30,
+  },
+};
 
 const content = {
   Deutsch: {
@@ -79,8 +137,10 @@ const content = {
       'AustriaPath Premium hilft Ihnen, Ihr Niveau zu bestimmen, Prüfungen zu trainieren, Stärken und Schwächen zu erkennen und einen persönlichen Lernplan zu erhalten.',
     plans: [
       {
+        ...planMeta.placement,
         name: 'Persönlicher Lernplan',
         price: '2,00 €',
+        buttonText: 'Einstufungstest starten',
         exams: 'Einstufungstest',
         duration: 'ca. 8 Minuten',
         highlight: false,
@@ -93,8 +153,10 @@ const content = {
         ],
       },
       {
+        ...planMeta.weekly,
         name: 'KI-Wochenplan',
         price: '14,99 €',
+        buttonText: 'Wochenplan erstellen',
         exams: '3 Termine',
         duration: '7 Tage',
         highlight: true,
@@ -108,8 +170,10 @@ const content = {
         ],
       },
       {
+        ...planMeta.exam,
         name: 'AI Probeprüfung',
         price: '9,99 €',
+        buttonText: 'Prüfung starten',
         exams: '1 Prüfung',
         duration: 'Einmalig',
         highlight: false,
@@ -122,8 +186,10 @@ const content = {
         ],
       },
       {
+        ...planMeta.intensive,
         name: 'Intensive Woche',
         price: '24,99 €',
+        buttonText: 'Intensive Woche starten',
         exams: '3 Prüfungen',
         duration: '7 Tage gültig',
         highlight: false,
@@ -136,8 +202,10 @@ const content = {
         ],
       },
       {
+        ...planMeta.month,
         name: 'Premium Monat',
         price: '39,99 €',
+        buttonText: 'Premium Monat starten',
         exams: '5 Prüfungen',
         duration: '30 Tage gültig',
         highlight: false,
@@ -162,8 +230,10 @@ const content = {
       'تساعدك خطط AustriaPath Premium على معرفة مستواك، والتدريب على الامتحان، وتحليل نقاط القوة والضعف، والحصول على خطة دراسة مناسبة لك.',
     plans: [
       {
+        ...planMeta.placement,
         name: 'خطة الدراسة الشخصية',
         price: '2,00 €',
+        buttonText: 'بدء اختبار المستوى',
         exams: 'اختبار مستوى',
         duration: 'حوالي 8 دقائق',
         highlight: false,
@@ -176,8 +246,10 @@ const content = {
         ],
       },
       {
+        ...planMeta.weekly,
         name: 'خطة أسبوع بالذكاء الاصطناعي',
         price: '14,99 €',
+        buttonText: 'إنشاء الخطة الأسبوعية',
         exams: '3 جلسات',
         duration: '7 أيام',
         highlight: true,
@@ -191,8 +263,10 @@ const content = {
         ],
       },
       {
+        ...planMeta.exam,
         name: 'امتحان AI تجريبي',
         price: '9,99 €',
+        buttonText: 'بدء الامتحان',
         exams: 'امتحان واحد',
         duration: 'مرة واحدة',
         highlight: false,
@@ -205,8 +279,10 @@ const content = {
         ],
       },
       {
+        ...planMeta.intensive,
         name: 'أسبوع مكثف',
         price: '24,99 €',
+        buttonText: 'بدء الأسبوع المكثف',
         exams: '3 امتحانات',
         duration: '7 أيام',
         highlight: false,
@@ -218,8 +294,10 @@ const content = {
         ],
       },
       {
+        ...planMeta.month,
         name: 'شهر Premium',
         price: '39,99 €',
+        buttonText: 'بدء شهر Premium',
         exams: '5 امتحانات',
         duration: '30 يوماً',
         highlight: false,
@@ -243,8 +321,10 @@ const content = {
       'AustriaPath Premium seviyenizi belirlemenize, sınava hazırlanmanıza, güçlü ve zayıf yönlerinizi görmenize ve kişisel bir çalışma planı almanıza yardımcı olur.',
     plans: [
       {
+        ...planMeta.placement,
         name: 'Kişisel Çalışma Planı',
         price: '2,00 €',
+        buttonText: 'Seviye testini başlat',
         exams: 'Seviye testi',
         duration: 'Yaklaşık 8 dakika',
         highlight: false,
@@ -257,8 +337,10 @@ const content = {
         ],
       },
       {
+        ...planMeta.weekly,
         name: 'AI ile Haftalık Plan',
         price: '14,99 €',
+        buttonText: 'Haftalık plan oluştur',
         exams: '3 Oturum',
         duration: '7 Gün',
         highlight: true,
@@ -272,8 +354,10 @@ const content = {
         ],
       },
       {
+        ...planMeta.exam,
         name: 'AI Deneme Sınavı',
         price: '9,99 €',
+        buttonText: 'Sınavı başlat',
         exams: '1 sınav',
         duration: 'Tek seferlik',
         highlight: false,
@@ -286,8 +370,10 @@ const content = {
         ],
       },
       {
+        ...planMeta.intensive,
         name: 'Yoğun Hafta',
         price: '24,99 €',
+        buttonText: 'Yoğun haftayı başlat',
         exams: '3 sınav',
         duration: '7 gün geçerli',
         highlight: false,
@@ -300,8 +386,10 @@ const content = {
         ],
       },
       {
+        ...planMeta.month,
         name: 'Premium Ay',
         price: '39,99 €',
+        buttonText: 'Premium ayı başlat',
         exams: '5 sınav',
         duration: '30 gün geçerli',
         highlight: false,
@@ -326,8 +414,10 @@ const content = {
       'AustriaPath Premium به شما کمک می‌کند سطح خود را بشناسید، برای امتحان تمرین کنید، نقاط قوت و ضعف خود را ببینید و یک برنامه آموزشی مناسب دریافت کنید.',
     plans: [
       {
+        ...planMeta.placement,
         name: 'برنامه آموزشی شخصی',
         price: '2,00 €',
+        buttonText: 'شروع آزمون تعیین سطح',
         exams: 'آزمون تعیین سطح',
         duration: 'حدود 8 دقیقه',
         highlight: false,
@@ -340,8 +430,10 @@ const content = {
         ],
       },
       {
+        ...planMeta.weekly,
         name: 'برنامه هفتگی با هوش مصنوعی',
         price: '14,99 €',
+        buttonText: 'ساخت برنامه هفتگی',
         exams: '3 جلسه',
         duration: '7 روز',
         highlight: true,
@@ -355,8 +447,10 @@ const content = {
         ],
       },
       {
+        ...planMeta.exam,
         name: 'آزمون آزمایشی AI',
         price: '9,99 €',
+        buttonText: 'شروع آزمون',
         exams: '1 آزمون',
         duration: 'یک بار',
         highlight: false,
@@ -369,8 +463,10 @@ const content = {
         ],
       },
       {
+        ...planMeta.intensive,
         name: 'هفته فشرده',
         price: '24,99 €',
+        buttonText: 'شروع هفته فشرده',
         exams: '3 آزمون',
         duration: 'معتبر برای 7 روز',
         highlight: false,
@@ -383,8 +479,10 @@ const content = {
         ],
       },
       {
+        ...planMeta.month,
         name: 'ماه Premium',
         price: '39,99 €',
+        buttonText: 'شروع ماه Premium',
         exams: '5 آزمون',
         duration: 'معتبر برای 30 روز',
         highlight: false,
@@ -409,8 +507,10 @@ const content = {
       'AustriaPath Premium допомагає визначити рівень, тренувати іспити, побачити сильні та слабкі сторони й отримати персональний навчальний план.',
     plans: [
       {
+        ...planMeta.placement,
         name: 'Персональний навчальний план',
         price: '2,00 €',
+        buttonText: 'Почати тест рівня',
         exams: 'Тест рівня',
         duration: 'близько 8 хвилин',
         highlight: false,
@@ -423,8 +523,10 @@ const content = {
         ],
       },
       {
+        ...planMeta.weekly,
         name: 'AI план на тиждень',
         price: '14,99 €',
+        buttonText: 'Створити тижневий план',
         exams: '3 сесії',
         duration: '7 днів',
         highlight: true,
@@ -438,8 +540,10 @@ const content = {
         ],
       },
       {
+        ...planMeta.exam,
         name: 'AI пробний іспит',
         price: '9,99 €',
+        buttonText: 'Почати іспит',
         exams: '1 іспит',
         duration: 'одноразово',
         highlight: false,
@@ -452,8 +556,10 @@ const content = {
         ],
       },
       {
+        ...planMeta.intensive,
         name: 'Інтенсивний тиждень',
         price: '24,99 €',
+        buttonText: 'Почати інтенсивний тиждень',
         exams: '3 іспити',
         duration: 'дійсно 7 днів',
         highlight: false,
@@ -466,8 +572,10 @@ const content = {
         ],
       },
       {
+        ...planMeta.month,
         name: 'Premium місяць',
         price: '39,99 €',
+        buttonText: 'Почати Premium місяць',
         exams: '5 іспитів',
         duration: 'дійсно 30 днів',
         highlight: false,
