@@ -8,11 +8,23 @@ export default function RegisterScreen({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [level, setLevel] = useState('B1');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const handleRegister = () => {
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !confirmPassword) {
       alert('Bitte füllen Sie alle Felder aus.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      alert('Die Passwörter stimmen nicht überein.');
+      return;
+    }
+
+    if (!acceptedTerms) {
+      alert('Bitte akzeptieren Sie die Datenschutzbestimmungen und Nutzungsbedingungen.');
       return;
     }
 
@@ -22,6 +34,12 @@ export default function RegisterScreen({
       password,
       level,
     });
+
+    localStorage.setItem('userName', name);
+    localStorage.setItem('userEmail', email);
+    localStorage.setItem('userLevel', level);
+    localStorage.setItem('userLanguage', localStorage.getItem('userLanguage') || 'Deutsch');
+    localStorage.setItem('isLoggedIn', 'true');
 
     if (onRegisterSuccess) {
       onRegisterSuccess(newUser);
@@ -66,6 +84,14 @@ export default function RegisterScreen({
         style={inputStyle}
       />
 
+      <input
+        type="password"
+        placeholder="Passwort bestätigen"
+        value={confirmPassword}
+        onChange={(e) => setConfirmPassword(e.target.value)}
+        style={inputStyle}
+      />
+
       <div style={{ marginTop: '18px' }}>
         <label style={{ fontWeight: 800 }}>
           Welches Niveau möchten Sie trainieren?
@@ -93,6 +119,17 @@ export default function RegisterScreen({
           ))}
         </div>
       </div>
+
+      <label style={checkboxStyle}>
+        <input
+          type="checkbox"
+          checked={acceptedTerms}
+          onChange={(e) => setAcceptedTerms(e.target.checked)}
+        />
+        <span>
+          Ich akzeptiere die Datenschutzbestimmungen und Nutzungsbedingungen.
+        </span>
+      </label>
 
       <button
         onClick={handleRegister}
@@ -137,4 +174,15 @@ const inputStyle = {
   borderRadius: '10px',
   border: '1px solid #d1d5db',
   boxSizing: 'border-box',
+};
+
+const checkboxStyle = {
+  display: 'flex',
+  alignItems: 'flex-start',
+  gap: '10px',
+  marginTop: '18px',
+  marginBottom: '4px',
+  fontSize: '14px',
+  lineHeight: '1.6',
+  color: '#334155',
 };

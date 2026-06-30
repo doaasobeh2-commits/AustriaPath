@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 export default function AccountSettingsScreen({ setActiveTab }) {
   const currentUser =
   JSON.parse(localStorage.getItem("currentUser")) || {};
-
 const [name, setName] = useState(
   localStorage.getItem("userName") ||
   currentUser.name ||
