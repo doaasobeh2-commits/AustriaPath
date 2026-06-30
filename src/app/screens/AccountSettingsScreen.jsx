@@ -267,12 +267,31 @@ const [name, setName] = useState(
       </div>
 
       <div style={noteStyle}>
-        <h3 style={noteTitleStyle}>🔐 Später mit Backend</h3>
-        <p style={noteTextStyle}>
-          Passwort ändern, Konto löschen und E-Mail bestätigen werden später nach
-          der Backend-Verbindung aktiviert.
-        </p>
-      </div>
+  <h3 style={noteTitleStyle}>🔒 Demnächst verfügbar</h3>
+
+  <p style={noteTextStyle}>
+    In einer zukünftigen Version von AustriaPath können Sie:
+  </p>
+
+  <ul
+    style={{
+      marginTop: '10px',
+      marginBottom: '14px',
+      paddingLeft: '22px',
+      color: '#92400e',
+      lineHeight: '1.8',
+    }}
+  >
+    <li>Passwort ändern</li>
+    <li>E-Mail bestätigen</li>
+    <li>Konto löschen</li>
+  </ul>
+
+  <p style={noteTextStyle}>
+    Diese Funktionen werden nach der vollständigen Konto-Integration
+    automatisch freigeschaltet.
+  </p>
+</div>
     </div>
   );
 }

@@ -1,12 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import {
-  WritingPart,
-  ReadingClozePart,
-  ReadingAdsPart,
-  ListeningPart,
-  SpeakingPart,
-  PlanningPart,
-} from './PremiumExamParts';
+
 export default function PremiumExamSessionScreen({ setActiveTab }) {
   const exam = useMemo(() => {
     try {
@@ -22,8 +15,8 @@ export default function PremiumExamSessionScreen({ setActiveTab }) {
         ? {
             ...activeExam,
             packageData,
-            used: activeExam.number,
-            total: packageData.examCount,
+            used: activeExam.number || 1,
+            total: packageData.totalExams || packageData.examCount || 1,
           }
         : null;
     } catch {
@@ -34,18 +27,265 @@ export default function PremiumExamSessionScreen({ setActiveTab }) {
   const [started, setStarted] = useState(false);
   const [step, setStep] = useState(0);
   const [finished, setFinished] = useState(false);
-const [answers, setAnswers] = useState({});
-const [submitted, setSubmitted] = useState({});
+  const [answers, setAnswers] = useState({});
 
-const updateAnswer = (value) => {
-  setAnswers((old) => ({ ...old, [step]: value }));
-};
-
-const submitCurrent = () => {
-  setSubmitted((old) => ({ ...old, [step]: true }));
-};
   const parts = exam?.parts || [];
-  const currentPart = parts[step];
+  const currentPart = parts[step] || null;
+
+  const answerKey = (suffix = '') => `${step}${suffix}`;
+
+  const updateAnswer = (key, value) => {
+    setAnswers((old) => ({ ...old, [key]: value }));
+  };
+
+  const playAudioText = (text) => {
+    if (!text) return;
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'de-DE';
+      utterance.rate = 0.85;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  const nextStep = () => {
+    if (step < parts.length - 1) {
+      setStep(step + 1);
+    } else {
+      finishExam();
+    }
+  };
+
+  const finishExam = () => {
+  const report = {
+    title: `${exam.title} · ${exam.level}`,
+    date: new Date().toLocaleDateString('de-DE'),
+    summary: 'AI-Prüfung abgeschlossen. Bericht wurde gespeichert.',
+    type: 'premium-exam',
+    level: exam.level,
+    packageType: exam.packageData?.packageType,
+    examNumber: exam.examNumber || exam.used,
+    total: exam.total,
+  };
+
+  try {
+    const oldReports = JSON.parse(localStorage.getItem('austriaPathAIReports') || '[]');
+    localStorage.setItem('austriaPathAIReports', JSON.stringify([report, ...oldReports]));
+  } catch {
+    localStorage.setItem('austriaPathAIReports', JSON.stringify([report]));
+  }
+
+ setActiveTab('profile');
+};
+
+
+  const renderQuestionsWithInputs = (questions = []) => (
+    <div style={infoBoxStyle}>
+      <b>Fragen:</b>
+
+      {questions.length === 0 && (
+        <p>Die Fragen werden später vom AI-Prüfer passend erstellt.</p>
+      )}
+
+      {questions.map((q, index) => (
+        <div key={index} style={questionBoxStyle}>
+          <p style={questionTextStyle}>{index + 1}. {q.q}</p>
+          <input
+            style={lineInputStyle}
+            placeholder="Antwort schreiben..."
+            value={answers[answerKey(`-q-${index}`)] || ''}
+            onChange={(e) => updateAnswer(answerKey(`-q-${index}`), e.target.value)}
+          />
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderPartContent = () => {
+    if (!currentPart) return null;
+
+    if (currentPart.type === 'writing') {
+      return (
+        <>
+          {currentPart.taskPoints?.length > 0 && (
+            <div style={infoBoxStyle}>
+              <b>Punkte:</b>
+              <ul>
+                {currentPart.taskPoints.map((p, i) => <li key={i}>{p}</li>)}
+              </ul>
+            </div>
+          )}
+
+          <textarea
+            style={textareaStyle}
+            placeholder="Schreiben Sie hier Ihre E-Mail..."
+            value={answers[answerKey('-writing')] || ''}
+            onChange={(e) => updateAnswer(answerKey('-writing'), e.target.value)}
+          />
+        </>
+      );
+    }
+
+    if (currentPart.type === 'reading_cloze') {
+      return (
+        <>
+          <div style={infoBoxStyle}>
+            <b>Text:</b>
+            <p style={{ whiteSpace: 'pre-line' }}>{currentPart.text}</p>
+          </div>
+
+          {Object.entries(currentPart.options || {}).map(([gap, options]) => (
+            <div key={gap} style={questionBoxStyle}>
+              <p style={questionTextStyle}>Lücke {gap}</p>
+              <select
+                style={inputStyle}
+                value={answers[answerKey(`-gap-${gap}`)] || ''}
+                onChange={(e) => updateAnswer(answerKey(`-gap-${gap}`), e.target.value)}
+              >
+                <option value="">Antwort wählen</option>
+                {options.map((option, i) => (
+                  <option key={i} value={option}>{option}</option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </>
+      );
+    }
+
+    if (currentPart.type === 'reading_ads' || currentPart.type === 'reading') {
+      return (
+        <>
+          {currentPart.text && (
+            <div style={infoBoxStyle}>
+              <b>Text:</b>
+              <p style={{ whiteSpace: 'pre-line' }}>{currentPart.text}</p>
+            </div>
+          )}
+
+          {currentPart.imageUrl && (
+            <img src={currentPart.imageUrl} alt={currentPart.title} style={examImageStyle} />
+          )}
+
+          {renderQuestionsWithInputs(currentPart.questions || [])}
+        </>
+      );
+    }
+
+    if (currentPart.type === 'listening') {
+      return (
+        <>
+          <button style={purpleButtonStyle} onClick={() => playAudioText(currentPart.audioText)}>
+            ▶️ Hörtext abspielen
+          </button>
+
+          {renderQuestionsWithInputs(currentPart.questions || [])}
+
+          <div style={hintStyle}>
+            Später wird hier ein echtes AI-Audio mit realistischen Hintergrundgeräuschen abgespielt.
+          </div>
+        </>
+      );
+    }
+
+    if (currentPart.type === 'self_intro') {
+      return (
+        <>
+          <div style={infoBoxStyle}>
+            <b>Punkte:</b>
+            <ul>
+              {currentPart.points?.map((p, i) => <li key={i}>{p}</li>)}
+            </ul>
+          </div>
+
+          <div style={aiQuestionStyle}>
+            <b>AI-Frage:</b>
+            <p>Warum lernen Sie Deutsch?</p>
+          </div>
+
+          <button style={purpleButtonStyle}>🎤 Antwort aufnehmen</button>
+
+          <div style={transcriptBoxStyle}>
+            Demo: Hier erscheint später die Transkription der Sprachaufnahme.
+          </div>
+        </>
+      );
+    }
+
+    if (currentPart.type === 'image') {
+      return (
+        <>
+          {currentPart.imageUrl && (
+            <img src={currentPart.imageUrl} alt={currentPart.title} style={examImageStyle} />
+          )}
+
+          <div style={infoBoxStyle}>
+            <b>Punkte:</b>
+            <ul>
+              {currentPart.points?.map((p, i) => <li key={i}>{p}</li>)}
+            </ul>
+          </div>
+
+          <div style={aiQuestionStyle}>
+            <b>AI-Frage:</b>
+            <p>Was denken Sie über diese Situation?</p>
+          </div>
+
+          <button style={purpleButtonStyle}>🎤 Beschreibung aufnehmen</button>
+
+          <div style={transcriptBoxStyle}>
+            Demo: Hier erscheint später die Transkription der Sprachaufnahme.
+          </div>
+        </>
+      );
+    }
+
+   if (currentPart.type === 'planning' || currentPart.type === 'roleplay') {
+  return (
+    <>
+      <div style={infoBoxStyle}>
+        <b>Aufgabe:</b>
+        <p>{currentPart.instruction}</p>
+
+        <ul>
+          {currentPart.points?.map((p, i) => <li key={i}>{p}</li>)}
+        </ul>
+      </div>
+
+      <div style={chatBoxStyle}>
+        <div style={aiBubbleStyle}>
+          <b>AI-Partner:</b>
+          <p>Gut, wir planen zusammen. Was schlagen Sie zuerst vor?</p>
+        </div>
+
+        <div style={studentBubbleStyle}>
+          <b>Student:</b>
+          <p>🎤 Ihre Antwort wird hier später als Audio aufgenommen.</p>
+        </div>
+
+        <div style={aiBubbleStyle}>
+          <b>AI-Partner:</b>
+          <p>Okay. Und wann möchten wir das machen?</p>
+        </div>
+
+        <div style={studentBubbleStyle}>
+          <b>Student:</b>
+          <p>🎤 Nächste Antwort aufnehmen...</p>
+        </div>
+      </div>
+
+      <button style={purpleButtonStyle}>🎤 Antwort aufnehmen</button>
+
+      <div style={transcriptBoxStyle}>
+        Demo: Später läuft hier eine echte interaktive Unterhaltung zwischen AI-Prüfer und Student.
+      </div>
+    </>
+  );
+}
+
+    return null;
+  };
 
   if (!exam) {
     return (
@@ -59,23 +299,19 @@ const submitCurrent = () => {
     );
   }
 
-  const finishExam = () => {
-    const report = {
-      title: `${exam.title} · ${exam.level}`,
-      date: new Date().toLocaleDateString('de-DE'),
-      summary: 'AI-Prüfung abgeschlossen. Bericht wurde gespeichert.',
-      type: 'premium-exam',
-      level: exam.level,
-      packageType: exam.packageData?.type,
-      examNumber: exam.number,
-      total: exam.total,
-    };
-
-    const oldReports = JSON.parse(localStorage.getItem('austriaPathAIReports') || '[]');
-    localStorage.setItem('austriaPathAIReports', JSON.stringify([report, ...oldReports]));
-
-    setFinished(true);
-  };
+  if (finished) {
+    return (
+      <div style={pageStyle}>
+        <div style={successStyle}>
+          <h2>✅ Prüfung abgeschlossen</h2>
+          <p>Der Bericht wurde im Profil gespeichert.</p>
+          <button style={primaryButtonStyle} onClick={() => setActiveTab('profile')}>
+            Zum Profil
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={pageStyle}>
@@ -85,66 +321,34 @@ const submitCurrent = () => {
 
       <div style={heroStyle}>
         <h1>🧪 {exam.title}</h1>
-        <p>
-          {exam.level} · Prüfung {exam.used}/{exam.total}
-        </p>
+        <p>{exam.level} · Prüfung {exam.used}/{exam.total}</p>
       </div>
 
-      {!started && !finished && (
+      {!started ? (
         <div style={cardStyle}>
           <h2>Prüfung bereit</h2>
           <p>
-            Diese Prüfung simuliert einen vollständigen AI-Prüfer. Während der Prüfung wird
-            nicht ausführlich erklärt. Am Ende bekommst du einen Bericht.
+            Diese Prüfung simuliert einen vollständigen AI-Prüfer. Am Ende bekommst du einen Bericht.
           </p>
 
           <button style={primaryButtonStyle} onClick={() => setStarted(true)}>
             ▶️ Prüfung starten
           </button>
         </div>
-      )}
+      ) : (
+        <div style={cardStyle}>
+          <p style={badgeStyle}>
+            Schritt {step + 1} von {parts.length}
+          </p>
 
-   <>
-  {currentPart?.type === 'writing' && (
-    <WritingPart part={currentPart} value={answers[step]} onChange={updateAnswer} onSubmit={submitCurrent} submitted={submitted[step]} />
-  )}
+          <h2>{currentPart?.title || currentPart?.label}</h2>
 
-  {currentPart?.type === 'reading_cloze' && (
-    <ReadingClozePart part={currentPart} value={answers[step]} onChange={updateAnswer} onSubmit={submitCurrent} submitted={submitted[step]} />
-  )}
+          <p style={taskTextStyle}>{currentPart?.instruction}</p>
 
-  {currentPart?.type === 'reading_ads' && (
-    <ReadingAdsPart part={currentPart} value={answers[step]} onChange={updateAnswer} onSubmit={submitCurrent} submitted={submitted[step]} />
-  )}
+          {renderPartContent()}
 
-  {currentPart?.type === 'listening' && (
-    <ListeningPart part={currentPart} value={answers[step]} onChange={updateAnswer} onSubmit={submitCurrent} submitted={submitted[step]} />
-  )}
-
-  {(currentPart?.type === 'self_intro' || currentPart?.type === 'image') && (
-    <SpeakingPart part={currentPart} value={answers[step]} onChange={updateAnswer} onSubmit={submitCurrent} submitted={submitted[step]} />
-  )}
-
-  {(currentPart?.type === 'planning' || currentPart?.type === 'roleplay') && (
-    <PlanningPart part={currentPart} value={answers[step]} onChange={updateAnswer} onSubmit={submitCurrent} submitted={submitted[step]} />
-  )}
-
-  <button
-    style={primaryButtonStyle}
-    onClick={step < parts.length - 1 ? () => setStep(step + 1) : finishExam}
-  >
-    {step < parts.length - 1 ? 'Weiter' : 'Prüfung abschließen'}
-  </button>
-</>
-            
-
-      {finished && (
-        <div style={successStyle}>
-          <h2>✅ Prüfung abgeschlossen</h2>
-          <p>Der Bericht wurde im Profil gespeichert.</p>
-
-          <button style={primaryButtonStyle} onClick={() => setActiveTab('profile')}>
-            Zum Profil
+          <button style={primaryButtonStyle} onClick={nextStep}>
+            {step < parts.length - 1 ? 'Weiter' : 'Prüfung abschließen'}
           </button>
         </div>
       )}
@@ -185,14 +389,7 @@ const cardStyle = {
   borderRadius: '18px',
   border: '1px solid #e2e8f0',
   lineHeight: '1.6',
-};
-
-const aiBoxStyle = {
-  backgroundColor: '#f5f3ff',
-  color: '#5b21b6',
-  padding: '14px',
-  borderRadius: '14px',
-  margin: '14px 0',
+  marginBottom: '14px',
 };
 
 const primaryButtonStyle = {
@@ -204,6 +401,106 @@ const primaryButtonStyle = {
   borderRadius: '14px',
   fontWeight: '800',
   cursor: 'pointer',
+  marginTop: '12px',
+};
+
+const purpleButtonStyle = {
+  ...primaryButtonStyle,
+  marginBottom: '14px',
+};
+
+const infoBoxStyle = {
+  backgroundColor: '#f8fafc',
+  border: '1px solid #e2e8f0',
+  borderRadius: '16px',
+  padding: '14px',
+  marginBottom: '14px',
+  color: '#334155',
+};
+
+const taskTextStyle = {
+  color: '#475569',
+  lineHeight: '1.6',
+};
+
+const textareaStyle = {
+  width: '100%',
+  minHeight: '160px',
+  padding: '14px',
+  borderRadius: '14px',
+  border: '1px solid #cbd5e1',
+  boxSizing: 'border-box',
+  fontSize: '15px',
+};
+
+const inputStyle = {
+  width: '100%',
+  padding: '12px',
+  borderRadius: '12px',
+  border: '1px solid #cbd5e1',
+  fontSize: '15px',
+  boxSizing: 'border-box',
+};
+
+const questionBoxStyle = {
+  marginTop: '14px',
+  paddingTop: '12px',
+  borderTop: '1px solid #e2e8f0',
+};
+
+const questionTextStyle = {
+  fontWeight: 'bold',
+  color: '#0f172a',
+  marginBottom: '8px',
+};
+
+const lineInputStyle = {
+  width: '100%',
+  border: 'none',
+  borderBottom: '2px solid #cbd5e1',
+  padding: '10px 4px',
+  fontSize: '16px',
+  outline: 'none',
+  boxSizing: 'border-box',
+};
+
+const aiQuestionStyle = {
+  backgroundColor: '#f8fafc',
+  border: '1px solid #e2e8f0',
+  borderRadius: '16px',
+  padding: '16px',
+  marginBottom: '14px',
+  color: '#334155',
+};
+
+const transcriptBoxStyle = {
+  minHeight: '120px',
+  border: '1px solid #cbd5e1',
+  borderRadius: '16px',
+  padding: '14px',
+  color: '#94a3b8',
+  fontSize: '15px',
+  lineHeight: '1.6',
+  marginTop: '12px',
+  marginBottom: '14px',
+};
+
+const examImageStyle = {
+  width: '100%',
+  borderRadius: '18px',
+  marginBottom: '14px',
+  objectFit: 'cover',
+};
+
+const hintStyle = {
+  backgroundColor: '#fff7ed',
+  border: '1px solid #fed7aa',
+  color: '#9a3412',
+  borderRadius: '14px',
+  padding: '12px',
+  fontSize: '13px',
+  lineHeight: '1.5',
+  marginBottom: '14px',
 };
 
 const badgeStyle = {
@@ -220,4 +517,29 @@ const successStyle = {
   color: '#166534',
   padding: '18px',
   borderRadius: '18px',
+};
+
+const chatBoxStyle = {
+  backgroundColor: '#f8fafc',
+  border: '1px solid #e2e8f0',
+  borderRadius: '16px',
+  padding: '14px',
+  marginBottom: '14px',
+};
+
+const aiBubbleStyle = {
+  backgroundColor: '#ede9fe',
+  color: '#4c1d95',
+  padding: '12px',
+  borderRadius: '14px',
+  marginBottom: '10px',
+};
+
+const studentBubbleStyle = {
+  backgroundColor: '#e0f2fe',
+  color: '#075985',
+  padding: '12px',
+  borderRadius: '14px',
+  marginBottom: '10px',
+  marginLeft: '24px',
 };
