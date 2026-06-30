@@ -11,6 +11,7 @@ import { PracticeScreen } from './screens/PracticeScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
 import SubscriptionScreen from './screens/SubscriptionScreen';
 import AccountSettingsScreen from './screens/AccountSettingsScreen';
+
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
@@ -24,20 +25,36 @@ import { HorenScreen } from './screens/HorenScreen';
 import { B2ModelScreen } from './screens/B2ModelsScreen';
 import WeeklyPlanSetupScreen from './screens/WeeklyPlanSetupScreen.jsx';
 import AIPrueferScreen from './screens/AIPrueferScreen';
+import UserManagementScreen from './screens/UserManagementScreen';
 import PlacementTestScreen from './screens/PlacementTestScreen';
 import WeeklyPlanSessionScreen from './screens/WeeklyPlanSessionScreen';
 import AISessionScreen from "./screens/AISessionScreen";
 import PremiumExamSessionScreen from './screens/PremiumExamSessionScreen';
 export default function App() {
+  const currentUser = JSON.parse(
+  localStorage.getItem('currentUser') || 'null'
+);
+
+const isAdminPreview =
+  localStorage.getItem('isAdminPreview') === 'true';
   const [activeTab, setActiveTab] = useState('home');
   const [selectedLevel, setSelectedLevel] = useState(null);
   const [levelTarget, setLevelTarget] = useState(null);
   const [selectedWritingModel, setSelectedWritingModel] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [authScreen, setAuthScreen] = useState('login');
+  const [isLoggedIn, setIsLoggedIn] = useState(
+  localStorage.getItem('isLoggedIn') === 'true'
+);
+
+
+ const [authScreen, setAuthScreen] = useState('login');
   const [showOnboarding, setShowOnboarding] = useState(true);
 
   const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('isAdminPreview');
+
     setIsLoggedIn(false);
     setActiveTab('home');
     setSelectedLevel(null);
@@ -69,9 +86,15 @@ if (!isLoggedIn) {
     return authScreen === 'login' ? (
       <LoginScreen
         onLogin={(email) => {
+          localStorage.setItem('isLoggedIn', 'true');
           const cleanEmail = String(email || '').trim().toLowerCase();
           setIsLoggedIn(true);
-
+localStorage.setItem(
+  'userRole',
+  cleanEmail === 'fadisobehau@gmail.com'
+    ? 'admin'
+    : 'user'
+);
           if (cleanEmail === 'fadisobehau@gmail.com') {
             setActiveTab('admin');
           } else {
@@ -92,6 +115,44 @@ if (!isLoggedIn) {
   return (
     <div style={pageStyle}>
       <div style={mobileAppStyle}>
+        {isAdminPreview && (
+  <div
+    style={{
+      background: '#fff3cd',
+      border: '1px solid #ffe69c',
+      color: '#664d03',
+      padding: 12,
+      borderRadius: 10,
+      marginBottom: 16,
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      fontWeight: 700,
+    }}
+  >
+    <span>
+      👤 Admin Preview – {currentUser?.name}
+    </span>
+
+    <button
+      onClick={() => {
+        localStorage.removeItem('isAdminPreview');
+        localStorage.removeItem('currentUser');
+        window.location.reload();
+      }}
+      style={{
+        border: 'none',
+        background: '#2563eb',
+        color: '#fff',
+        padding: '8px 14px',
+        borderRadius: 8,
+        cursor: 'pointer',
+      }}
+    >
+      Zurück zum Admin
+    </button>
+  </div>
+)}
         <div style={topBarStyle}>
           <span style={brandStyle}>AustriaPath</span>
 
@@ -128,7 +189,9 @@ if (!isLoggedIn) {
           {activeTab === 'admin' && (
             <AdminScreen setActiveTab={setActiveTab} />
           )}
-
+{activeTab === 'userManagement' && (
+  <UserManagementScreen setActiveTab={setActiveTab} />
+)}
           {activeTab === 'exams' && (
             <IntelligentExamScreen
               level={selectedLevel}
