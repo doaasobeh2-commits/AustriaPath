@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-
+import { runExaminerMind } from "../../ai/examinerMind/runExaminerMind";
 export default function PremiumExamSessionScreen({ setActiveTab }) {
   const exam = useMemo(() => {
     try {
@@ -48,7 +48,30 @@ export default function PremiumExamSessionScreen({ setActiveTab }) {
       window.speechSynthesis.speak(utterance);
     }
   };
+const evaluateCurrentPart = async () => {
+  if (!currentPart) return null;
 
+  return await runExaminerMind({
+    answerText:
+      answers[currentPart.id] ||
+      answers[currentPart.type] ||
+      currentPart.studentAnswer ||
+      "",
+
+    taskAnswered: true,
+
+    examType: currentPart.examiner?.examType || "OEIF",
+    level: currentPart.examiner?.level || exam.level,
+    sectionIndex: currentPart.examiner?.sectionIndex || 0,
+
+    currentSection: {
+      title: currentPart.title,
+      skill: currentPart.type,
+    },
+
+    saveToProfile: true,
+  });
+};
   const nextStep = () => {
     if (step < parts.length - 1) {
       setStep(step + 1);
@@ -57,16 +80,38 @@ export default function PremiumExamSessionScreen({ setActiveTab }) {
     }
   };
 
-  const finishExam = () => {
+ const finishExam = async () => {
+  const aiResult = await runExaminerMind({
+  examType: "OEIF",
+  level: exam.level,
+  currentSection: currentPart,
+  answerText: answers[currentPart?.type] || "",
+  taskAnswered: true,
+  saveToProfile: true,
+});
+
+console.log("Examiner Mind:", aiResult);
   const report = {
     title: `${exam.title} · ${exam.level}`,
     date: new Date().toLocaleDateString('de-DE'),
     summary: 'AI-Prüfung abgeschlossen. Bericht wurde gespeichert.',
+    strongCount: aiResult.decision?.strengths?.length || 0,
+middleCount:
+  aiResult.decision?.score >= 50 &&
+  aiResult.decision?.score < 70
+    ? 1
+    : 0,
+weakCount: aiResult.decision?.weaknesses?.length || 0,
+
+strengths: aiResult.decision?.strengths || [],
+weaknesses: aiResult.decision?.weaknesses || [],
+focusAreas: aiResult.decision?.focusAreas || [],
     type: 'premium-exam',
     level: exam.level,
     packageType: exam.packageData?.packageType,
     examNumber: exam.examNumber || exam.used,
     total: exam.total,
+    examinerMind: aiResult,
   };
 
   try {

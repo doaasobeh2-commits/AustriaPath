@@ -15,7 +15,16 @@ import { examBank } from './examBank';
 function cleanLevel(level = 'B1') {
   return String(level).replace('+', '').trim().toUpperCase() || 'B1';
 }
-
+function withExaminerMeta(part, level, sectionIndex) {
+  return {
+    ...part,
+    examiner: {
+      examType: 'OEIF',
+      level,
+      sectionIndex,
+    },
+  };
+}
 function pickOne(list = []) {
   const clean = list.filter(Boolean);
   if (!clean.length) return null;
@@ -292,14 +301,33 @@ function buildPlanningPart(level) {
 export function buildPremiumExamParts(level = 'B1') {
   const examLevel = cleanLevel(level);
 
-  return [
-    buildWritingPart(examLevel),
-    ...buildReadingParts(examLevel),
-    ...buildListeningParts(examLevel),
-    buildSelfIntroPart(examLevel),
-    buildImagePart(examLevel),
-    buildPlanningPart(examLevel),
-  ];
+  const parts = [
+  buildWritingPart(examLevel),
+  ...buildReadingParts(examLevel),
+  ...buildListeningParts(examLevel),
+  buildSelfIntroPart(examLevel),
+  buildImagePart(examLevel),
+  buildPlanningPart(examLevel),
+];
+
+return parts.map((part) => {
+  let sectionIndex = 0;
+
+  if (part.type?.startsWith("reading")) {
+    sectionIndex = 1;
+  } else if (part.type === "listening") {
+    sectionIndex = 2;
+  } else if (
+    part.type === "self_intro" ||
+    part.type === "image" ||
+    part.type === "planning" ||
+    part.type === "roleplay"
+  ) {
+    sectionIndex = 3;
+  }
+
+  return withExaminerMeta(part, examLevel, sectionIndex);
+});
 }
 
 export function buildPremiumExamPackage({

@@ -2,7 +2,7 @@ import { ExaminerCouncil } from "./examinerCouncil";
 import { DecisionEngine } from "./decisionEngine";
 import { ExamModes } from "../modes/examModes";
 import { AuditEngine } from "../audit/auditEngine";
-import { ExamStructure } from "../knowledge/examStructure";
+import { getExamStructure } from "../knowledge/examStructure";
 import { ExaminerKnowledge } from "../knowledge/examinerKnowledge";
 import { StudentProfileEngine } from "../student/studentProfileEngine";
 /**
@@ -26,9 +26,30 @@ this.studentProfileEngine = new StudentProfileEngine();
     console.log(`🧠 Brain started in ${mode} mode`);
 const examType = examContext.examType || "OEIF";
 const level = examContext.level || "B1";
-const structure = ExamStructure[examType]?.[level] || null;
+
+const structure = getExamStructure(examType, level);
+
+const currentSection =
+  structure?.sections?.[examContext.sectionIndex || 0] || null;
+
 const studentProfile = this.studentProfileEngine.getProfile();
-    const reports = this.council.collect(examContext);
+
+let currentKnowledge = null;
+
+if (currentSection?.skill) {
+  currentKnowledge =
+    ExaminerKnowledge?.levels?.[level]?.[
+      currentSection.skill.toLowerCase()
+    ] || null;
+}
+
+const reports = this.council.collect({
+  ...examContext,
+  structure,
+  currentSection,
+  currentKnowledge,
+  studentProfile,
+});
     let decision = this.decisionEngine.decide(reports);
 if (examContext.saveToProfile === true) {
   this.studentProfileEngine.addExamResult({
@@ -39,9 +60,9 @@ if (examContext.saveToProfile === true) {
     examType,
     examLevel: level,
     reports,
-    weaknesses: [],
-    strengths: [],
-    repeatedMistakes: [],
+    strengths: decision.strengths || [],
+    weaknesses: decision.weaknesses || [],
+    focusAreas: decision.focusAreas || [],
   });
 }
     if (mode === ExamModes.DEEP || decision.needsDeepReview === true) {
@@ -62,6 +83,7 @@ return {
   brainVersion: this.version,
   mode,
   structure,
+  currentSection,
   knowledge: ExaminerKnowledge,
   studentProfile,
   decision,

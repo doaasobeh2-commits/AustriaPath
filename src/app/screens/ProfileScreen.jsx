@@ -519,34 +519,57 @@ return (
         <div style={reportGridStyle}>
           <div style={reportMiniBoxStyle}>
             <b>✅ Stark</b>
-            <p>{report.strongCount || 0}</p>
+            <p>
+  {report.examinerMind?.decision?.score >= 75
+    ? 1
+    : report.strongCount || 0}
+</p>
           </div>
 
           <div style={reportMiniBoxStyle}>
             <b>➖ Mittel</b>
-            <p>{report.middleCount || 0}</p>
+          <p>
+  {report.examinerMind?.decision?.score >= 55 &&
+  report.examinerMind?.decision?.score < 75
+    ? 1
+    : report.middleCount || 0}
+</p>
           </div>
 
           <div style={reportMiniBoxStyle}>
             <b>⚠️ Schwach</b>
-            <p>{report.weakCount || 0}</p>
+            <p>
+  {report.examinerMind?.decision?.score < 55
+    ? 1
+    : report.weakCount || 0}
+</p>
           </div>
         </div>
 
         {report.strengths?.length > 0 && (
+        
           <div style={reportSectionStyle}>
             <b>🎯 Stärken</b>
-            {report.strengths.map((item) => (
+            {uniqueLabels(report.strengths).map((item) => (
               <p key={item} style={smallTextStyle}>✓ {item}</p>
             ))}
           </div>
         )}
-
+{report.weaknesses?.length > 0 && (
+  <div style={reportSectionStyle}>
+    <b>⚠️ Schwächen</b>
+    {uniqueLabels(report.weaknesses).map((item) => (
+      <p key={item} style={smallTextStyle}>
+        • {item}
+      </p>
+    ))}
+  </div>
+)}
         {report.focusAreas?.length > 0 && (
           <div style={reportSectionStyle}>
             <b>🔥 Fokus verbessern</b>
            <p style={{ margin: 0 }}>
-  {report.focusAreas?.slice(0, 3).join(' • ')}
+  {uniqueLabels(report.focusAreas).slice(0, 3).join(" • ")}
 </p>
           </div>
         )}
@@ -569,6 +592,28 @@ return (
 </div>
     </div>
   );
+  function labelReportItem(item) {
+  const labels = {
+    taskCompletion: "Aufgabe vollständig bearbeitet",
+    grammar: "Grammatik",
+    vocabulary: "Wortschatz",
+    structure: "Satzbau",
+    reasoning: "Begründungen",
+    communication: "Kommunikation",
+    writing: "Schreiben",
+    reading: "Lesen",
+    listening: "Hören",
+    speaking: "Sprechen",
+    image: "Bildbeschreibung",
+    planning: "Planung",
+  };
+
+  return labels[item] || item;
+}
+
+function uniqueLabels(items = []) {
+  return [...new Set(items)].map(labelReportItem);
+}
 }
 
 function skillName(skill) {
