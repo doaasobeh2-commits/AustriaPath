@@ -8,6 +8,7 @@ export default function RegisterScreen({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [familyCode, setFamilyCode] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [level, setLevel] = useState('B1');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -27,13 +28,14 @@ export default function RegisterScreen({
       alert('Bitte akzeptieren Sie die Datenschutzbestimmungen und Nutzungsbedingungen.');
       return;
     }
-
+const isFamilyApproved =
+  familyCode.trim().toLowerCase() === "fadijibril";
    const newUser = registerUser({
   name,
   email,
   password,
   level,
-  status: "pending",
+  status: isFamilyApproved ? "approved" : "pending",
   aiCredits: 5,
   createdAt: new Date().toISOString(),
 });
@@ -94,7 +96,19 @@ alert("Ihr Konto wurde erstellt und wartet auf die Freigabe durch den Administra
         onChange={(e) => setConfirmPassword(e.target.value)}
         style={inputStyle}
       />
-
+<input
+  type="text"
+  value={familyCode}
+  onChange={(e) => setFamilyCode(e.target.value)}
+  placeholder="Familiencode (optional)"
+  style={{
+    width: "100%",
+    padding: "12px",
+    marginTop: "12px",
+    borderRadius: "10px",
+    border: "1px solid #d1d5db",
+  }}
+/>
       <div style={{ marginTop: '18px' }}>
         <label style={{ fontWeight: 800 }}>
           Welches Niveau möchten Sie trainieren?
