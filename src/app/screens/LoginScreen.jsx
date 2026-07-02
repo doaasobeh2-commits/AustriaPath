@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getUsers, saveCurrentUser } from '../userAccess';
+import { getUsers, saveUsers, saveCurrentUser } from '../userAccess';
 
 export default function LoginScreen({ onLogin, onRegister }) {
   const [email, setEmail] = useState('');
@@ -22,10 +22,10 @@ export default function LoginScreen({ onLogin, onRegister }) {
     if (!user) {
       user = {
         id: Date.now(),
-       name:
-  cleanEmail === "fadisobehau@gmail.com"
-    ? "Fadi Sobeh"
-    : cleanEmail.split("@")[0],
+        name:
+          cleanEmail === 'fadisobehau@gmail.com'
+            ? 'Fadi Sobeh'
+            : cleanEmail.split('@')[0],
         email: cleanEmail,
         password,
         level: localStorage.getItem('userLevel') || 'B1',
@@ -33,23 +33,46 @@ export default function LoginScreen({ onLogin, onRegister }) {
         plan: 'free',
         levelSource: 'login_created',
         role: cleanEmail === 'fadisobehau@gmail.com' ? 'admin' : 'student',
+        status: cleanEmail === 'fadisobehau@gmail.com' ? 'approved' : 'pending',
+        aiCredits: 5,
         createdAt: new Date().toISOString(),
       };
 
-      const updatedUsers = [...users, user];
-      localStorage.setItem('austriaPathUsers', JSON.stringify(updatedUsers));
+      saveUsers([...users, user]);
     }
 
-   saveCurrentUser(user);
+    if (user.password !== password) {
+      alert('E-Mail oder Passwort ist falsch.');
+      return;
+    }
 
-localStorage.setItem('isLoggedIn', 'true');
-localStorage.setItem('currentUser', JSON.stringify(user));
-localStorage.setItem('userName', user.name || cleanEmail.split('@')[0]);
-localStorage.setItem('userEmail', user.email || cleanEmail);
-localStorage.setItem('userLevel', user.level || 'B1');
-localStorage.setItem('userLanguage', user.language || localStorage.getItem('userLanguage') || 'Deutsch');
+    if (user.status === 'blocked') {
+      alert('Ihr Konto wurde gesperrt. Bitte kontaktieren Sie den Administrator.');
+      return;
+    }
 
-onLogin(cleanEmail);
+    if (user.role !== 'admin' && user.status !== 'approved') {
+      alert('Ihr Konto wartet noch auf die Freigabe durch den Administrator.');
+      return;
+    }
+
+    const safeUser = {
+      ...user,
+      status: user.status || (user.role === 'admin' ? 'approved' : 'pending'),
+      aiCredits: typeof user.aiCredits === 'number' ? user.aiCredits : 5,
+    };
+
+    saveCurrentUser(safeUser);
+
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('currentUser', JSON.stringify(safeUser));
+    localStorage.setItem('userName', safeUser.name || cleanEmail.split('@')[0]);
+    localStorage.setItem('userEmail', safeUser.email || cleanEmail);
+    localStorage.setItem('userLevel', safeUser.level || 'B1');
+    localStorage.setItem(
+      'userLanguage',
+      safeUser.language || localStorage.getItem('userLanguage') || 'Deutsch'
+    );
 
     onLogin(cleanEmail);
   };

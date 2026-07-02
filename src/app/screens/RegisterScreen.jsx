@@ -28,19 +28,22 @@ export default function RegisterScreen({
       return;
     }
 
-    const newUser = registerUser({
-      name,
-      email,
-      password,
-      level,
-    });
+   const newUser = registerUser({
+  name,
+  email,
+  password,
+  level,
+  status: "pending",
+  aiCredits: 5,
+  createdAt: new Date().toISOString(),
+});
 
     localStorage.setItem('userName', name);
     localStorage.setItem('userEmail', email);
     localStorage.setItem('userLevel', level);
     localStorage.setItem('userLanguage', localStorage.getItem('userLanguage') || 'Deutsch');
-    localStorage.setItem('isLoggedIn', 'true');
-
+   localStorage.setItem('isLoggedIn', 'false');
+alert("Ihr Konto wurde erstellt und wartet auf die Freigabe durch den Administrator.");
     if (onRegisterSuccess) {
       onRegisterSuccess(newUser);
     }

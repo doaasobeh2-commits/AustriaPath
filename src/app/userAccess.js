@@ -30,8 +30,15 @@ function getDefaultAllowedLevels(level) {
   if (level === 'B1') return ['A2', 'B1'];
   return ['A2'];
 }
-
-export function registerUser({ name, email, password, level }) {
+export function registerUser({
+  name,
+  email,
+  password,
+  level,
+  status,
+  aiCredits,
+  createdAt,
+}) {
   const users = getUsers();
 
   const existingUser = users.find(
@@ -41,6 +48,11 @@ export function registerUser({ name, email, password, level }) {
   if (existingUser) {
     const fixedUser = {
       ...existingUser,
+      status: existingUser.status || 'pending',
+      aiCredits:
+        typeof existingUser.aiCredits === 'number'
+          ? existingUser.aiCredits
+          : 5,
       allowedLevels:
         existingUser.allowedLevels && existingUser.allowedLevels.length > 0
           ? existingUser.allowedLevels
@@ -57,11 +69,13 @@ export function registerUser({ name, email, password, level }) {
     email,
     password,
     level,
+    status: email === 'fadisobehau@gmail.com' ? 'approved' : status || 'pending',
+    aiCredits: typeof aiCredits === 'number' ? aiCredits : 5,
     allowedLevels: getDefaultAllowedLevels(level),
     plan: 'free',
     levelSource: 'self_selected',
     role: email === 'fadisobehau@gmail.com' ? 'admin' : 'student',
-    createdAt: new Date().toISOString(),
+    createdAt: createdAt || new Date().toISOString(),
   };
 
   const updatedUsers = [...users, newUser];
