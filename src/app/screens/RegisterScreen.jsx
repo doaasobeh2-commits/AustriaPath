@@ -1,73 +1,105 @@
-import React, { useState } from 'react';
-import { registerUser } from '../userAccess';
+import React, { useState } from "react";
+import { registerUser, saveCurrentUser } from "../userAccess";
 
-export default function RegisterScreen({
-  onBack,
-  onRegisterSuccess
-}) {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [familyCode, setFamilyCode] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [level, setLevel] = useState('B1');
+export default function RegisterScreen({ onRegisterSuccess, onLogin }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [level, setLevel] = useState("B1");
+  const [familyCode, setFamilyCode] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const handleRegister = () => {
-    if (!name || !email || !password || !confirmPassword) {
-      alert('Bitte füllen Sie alle Felder aus.');
+    const cleanEmail = email.trim().toLowerCase();
+    const isFamilyApproved =
+      familyCode.trim().toLowerCase() === "fadijibril";
+
+    if (!name.trim() || !cleanEmail || !password) {
+      alert("Bitte füllen Sie alle Pflichtfelder aus.");
       return;
     }
 
     if (password !== confirmPassword) {
-      alert('Die Passwörter stimmen nicht überein.');
+      alert("Die Passwörter stimmen nicht überein.");
       return;
     }
 
     if (!acceptedTerms) {
-      alert('Bitte akzeptieren Sie die Datenschutzbestimmungen und Nutzungsbedingungen.');
+      alert("Bitte akzeptieren Sie die Datenschutzbestimmungen.");
       return;
     }
-const isFamilyApproved =
-  familyCode.trim().toLowerCase() === "fadijibril";
-   const newUser = registerUser({
-  name,
-  email,
-  password,
-  level,
-  status: isFamilyApproved ? "approved" : "pending",
-  aiCredits: 5,
-  createdAt: new Date().toISOString(),
-});
 
-    localStorage.setItem('userName', name);
-    localStorage.setItem('userEmail', email);
-    localStorage.setItem('userLevel', level);
-    localStorage.setItem('userLanguage', localStorage.getItem('userLanguage') || 'Deutsch');
-   localStorage.setItem('isLoggedIn', 'false');
-alert("Ihr Konto wurde erstellt und wartet auf die Freigabe durch den Administrator.");
+    let newUser = registerUser({
+      name: name.trim(),
+      email: cleanEmail,
+      password,
+      level,
+      status: isFamilyApproved ? "approved" : "pending",
+      aiCredits: 5,
+      familyApproved: isFamilyApproved,
+      createdAt: new Date().toISOString(),
+    });
+
+    newUser = {
+      ...newUser,
+      status: isFamilyApproved ? "approved" : newUser.status || "pending",
+      aiCredits: typeof newUser.aiCredits === "number" ? newUser.aiCredits : 5,
+      familyApproved: isFamilyApproved,
+      accessUpdatedAt: new Date().toISOString(),
+    };
+
+    const users = JSON.parse(localStorage.getItem("austriaPathUsers") || "[]");
+
+    const existingIndex = users.findIndex(
+      (user) => user.email?.toLowerCase() === cleanEmail
+    );
+
+    const updatedUsers =
+      existingIndex >= 0
+        ? users.map((user, index) => (index === existingIndex ? newUser : user))
+        : [...users, newUser];
+
+    localStorage.setItem("austriaPathUsers", JSON.stringify(updatedUsers));
+    saveCurrentUser(newUser);
+
+    localStorage.setItem("currentUser", JSON.stringify(newUser));
+    localStorage.setItem("userName", newUser.name);
+    localStorage.setItem("userEmail", newUser.email);
+    localStorage.setItem("userLevel", newUser.level || "B1");
+    localStorage.setItem(
+      "userLanguage",
+      localStorage.getItem("userLanguage") || "Deutsch"
+    );
+
+    if (isFamilyApproved) {
+      localStorage.setItem("isLoggedIn", "true");
+
+      if (onLogin) {
+        onLogin(cleanEmail);
+      } else if (onRegisterSuccess) {
+        onRegisterSuccess(newUser);
+      }
+
+      return;
+    }
+
+    localStorage.setItem("isLoggedIn", "false");
+
+    alert("Ihr Konto wurde erstellt und wartet auf die Freigabe.");
+
     if (onRegisterSuccess) {
       onRegisterSuccess(newUser);
     }
   };
 
   return (
-    <div
-      style={{
-        padding: '24px',
-        maxWidth: '450px',
-        margin: '50px auto'
-      }}
-    >
-      <h1>Neues Konto erstellen</h1>
-
-      <p style={{ color: '#64748b' }}>
-        Erstellen Sie ein Konto, um Ihren Fortschritt und Ihre Prüfungen zu speichern.
-      </p>
+    <div style={{ padding: "24px", maxWidth: "450px", margin: "50px auto" }}>
+      <h1>Konto erstellen</h1>
 
       <input
         type="text"
-        placeholder="Vollständiger Name"
+        placeholder="Name"
         value={name}
         onChange={(e) => setName(e.target.value)}
         style={inputStyle}
@@ -96,39 +128,34 @@ alert("Ihr Konto wurde erstellt und wartet auf die Freigabe durch den Administra
         onChange={(e) => setConfirmPassword(e.target.value)}
         style={inputStyle}
       />
-<input
-  type="text"
-  value={familyCode}
-  onChange={(e) => setFamilyCode(e.target.value)}
-  placeholder="Familiencode (optional)"
-  style={{
-    width: "100%",
-    padding: "12px",
-    marginTop: "12px",
-    borderRadius: "10px",
-    border: "1px solid #d1d5db",
-  }}
-/>
-      <div style={{ marginTop: '18px' }}>
+
+      <input
+        type="text"
+        placeholder="Familiencode (optional)"
+        value={familyCode}
+        onChange={(e) => setFamilyCode(e.target.value)}
+        style={inputStyle}
+      />
+
+      <div style={{ marginTop: "18px" }}>
         <label style={{ fontWeight: 800 }}>
           Welches Niveau möchten Sie trainieren?
         </label>
 
-        <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-          {['A2', 'B1', 'B2'].map((item) => (
+        <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
+          {["A2", "B1", "B2"].map((item) => (
             <button
               key={item}
               type="button"
               onClick={() => setLevel(item)}
               style={{
                 flex: 1,
-                border: 'none',
-                borderRadius: '14px',
-                padding: '12px',
+                border: "none",
+                borderRadius: "14px",
+                padding: "12px",
                 fontWeight: 900,
-                background: level === item ? '#16a34a' : '#dcfce7',
-                color: level === item ? 'white' : '#166534',
-                cursor: 'pointer',
+                background: level === item ? "#2563eb" : "#e5e7eb",
+                color: level === item ? "white" : "#111827",
               }}
             >
               {item}
@@ -143,63 +170,41 @@ alert("Ihr Konto wurde erstellt und wartet auf die Freigabe durch den Administra
           checked={acceptedTerms}
           onChange={(e) => setAcceptedTerms(e.target.checked)}
         />
-        <span>
-          Ich akzeptiere die Datenschutzbestimmungen und Nutzungsbedingungen.
-        </span>
+        Ich akzeptiere die Datenschutzbestimmungen.
       </label>
 
-      <button
-        onClick={handleRegister}
-        style={{
-          width: '100%',
-          padding: '14px',
-          marginTop: '20px',
-          border: 'none',
-          borderRadius: '10px',
-          background: '#2563eb',
-          color: 'white',
-          fontWeight: 'bold',
-          cursor: 'pointer'
-        }}
-      >
+      <button onClick={handleRegister} style={buttonStyle}>
         Konto erstellen
-      </button>
-
-      <button
-        onClick={onBack}
-        style={{
-          width: '100%',
-          padding: '14px',
-          marginTop: '12px',
-          border: '1px solid #64748b',
-          borderRadius: '10px',
-          background: '#ffffff',
-          color: '#64748b',
-          cursor: 'pointer'
-        }}
-      >
-        Zurück zum Login
       </button>
     </div>
   );
 }
 
 const inputStyle = {
-  width: '100%',
-  padding: '12px',
-  marginTop: '12px',
-  borderRadius: '10px',
-  border: '1px solid #d1d5db',
-  boxSizing: 'border-box',
+  width: "100%",
+  padding: "12px",
+  marginTop: "12px",
+  borderRadius: "10px",
+  border: "1px solid #d1d5db",
+  boxSizing: "border-box",
 };
 
 const checkboxStyle = {
-  display: 'flex',
-  alignItems: 'flex-start',
-  gap: '10px',
-  marginTop: '18px',
-  marginBottom: '4px',
-  fontSize: '14px',
-  lineHeight: '1.6',
-  color: '#334155',
+  display: "flex",
+  gap: "10px",
+  marginTop: "18px",
+  fontSize: "14px",
+  color: "#334155",
+};
+
+const buttonStyle = {
+  width: "100%",
+  padding: "14px",
+  marginTop: "20px",
+  border: "none",
+  borderRadius: "10px",
+  background: "#2563eb",
+  color: "white",
+  fontWeight: "bold",
+  cursor: "pointer",
 };
