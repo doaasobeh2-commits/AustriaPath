@@ -11,7 +11,7 @@ import { PracticeScreen } from './screens/PracticeScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
 import SubscriptionScreen from './screens/SubscriptionScreen';
 import AccountSettingsScreen from './screens/AccountSettingsScreen';
-
+import ExaminerLabScreen from "./screens/ExaminerLabScreen";
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
@@ -168,7 +168,9 @@ localStorage.setItem(
           {activeTab === 'home' && (
             <HomeScreen setActiveTab={setActiveTab} />
           )}
-
+{activeTab === "examinerLab" && (
+  <ExaminerLabScreen setActiveTab={setActiveTab} />
+)}
           {activeTab === 'levelSelect' && (
             <LevelSelectScreen
               onSelectLevel={(level) => {

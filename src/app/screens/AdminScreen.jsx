@@ -469,6 +469,22 @@ if (modelMode === 'existing' && !parentModelId) {
 >
   🤖 AI Prüfer Bibliothek
 </button>
+<button
+  onClick={() => setActiveTab("examinerLab")}
+  style={{
+    width: "100%",
+    padding: "12px",
+    background: "#7c3aed",
+    color: "#fff",
+    border: "none",
+    borderRadius: "10px",
+    marginBottom: "15px",
+    fontWeight: "bold",
+    cursor: "pointer",
+  }}
+>
+  🧠 Examiner Lab
+</button>
       <div style={adminCardStyle}>
         <h2>Benutzer verwalten</h2>
         

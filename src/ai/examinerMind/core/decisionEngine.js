@@ -10,7 +10,7 @@
  * - Dynamic strengths / weaknesses / focus areas
  * - Conflict detection
  */
-
+import { saveAIError } from "../learning/errorLearningEngine";
 export class DecisionEngine {
   constructor() {
     this.name = "AustriaPath Decision Engine";
@@ -42,7 +42,19 @@ export class DecisionEngine {
       conflicts,
       criticalResult
     );
-
+if (
+  confidence < 65 ||
+  warnings.length > 0 ||
+  conflicts.length > 0
+) {
+  saveAIError({
+    score,
+    confidence,
+    warnings,
+    conflicts,
+    reports: validReports,
+  });
+}
     const strengths = this.extractStrengths(validReports);
     const weaknesses = this.extractWeaknesses(validReports);
     const focusAreas = this.extractFocusAreas(validReports);
