@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { runExaminerMind } from "../../ai/examinerMind/runExaminerMind";
+import { runModelRouter } from "../../ai/examinerMind/learning/modelRouter";
 export default function PremiumExamSessionScreen({ setActiveTab }) {
   const exam = useMemo(() => {
     try {
@@ -125,7 +126,17 @@ const buildExamSummary = (decision = {}) => {
   taskAnswered: true,
   saveToProfile: true,
 });
-
+await runModelRouter({
+  engineName: "reportBuilder",
+  mode: "ai_exam",
+  prompt: "Bewerte diese Premium-Prüfung und erstelle einen kurzen Bericht auf Deutsch.",
+  studentAnswer: JSON.stringify(answers),
+  context: {
+    serviceType: "ai_exam",
+    level: exam.level,
+    examType: "OEIF",
+  },
+});
 console.log("Examiner Mind:", aiResult);
   const report = {
     title: `${exam.title} · ${exam.level}`,

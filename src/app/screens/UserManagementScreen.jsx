@@ -25,7 +25,7 @@ function loadUsers() {
     const saved = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
     if (saved.length) return saved;
   } catch {}
-
+console.log("Loaded users:", saved);
   return [
     {
       id: 'demo-1',
@@ -73,16 +73,22 @@ export default function UserManagementScreen({ setActiveTab }) {
     );
   }, [users, search]);
 
-  const stats = useMemo(() => ({
-    total: users.length,
-    active: users.filter((u) => u.status === 'active').length,
-    premium: users.filter((u) => u.subscription?.type !== 'free').length,
-    blocked: users.filter((u) => u.status === 'blocked').length,
-  }), [users]);
-
+ const stats = useMemo(() => ({
+  total: users.length,
+ active: users.filter(
+  (u) => u.status === "approved" || u.status === "active"
+).length,
+  premium: users.filter(
+    (u) =>
+      (u.plan && u.plan !== "free") ||
+      (u.subscription?.type && u.subscription.type !== "free")
+  ).length,
+  blocked: users.filter((u) => u.status === "blocked").length,
+  pending: users.filter((u) => !u.status || u.status === "pending").length,
+}), [users]);
   const updateUser = (id, changes) => {
     const next = users.map((u) => {
-      if (u.id !== id) return u;
+     if (String(u.id) !== String(id)) return u;
 
       const updated = {
         ...u,
@@ -95,7 +101,7 @@ export default function UserManagementScreen({ setActiveTab }) {
     setUsers(next);
     saveUsers(next);
 
-    if (selectedUser?.id === id) {
+    if (String(selectedUser?.id) === String(id)) {
       setSelectedUser((old) => ({ ...old, ...changes }));
     }
   };
@@ -181,7 +187,11 @@ const addActivity = (user, action, details = '') => {
           <div style={badgeRowStyle}>
             <span style={badgeStyle}>{selectedUser.level}</span>
             <span style={badgeStyle}>
-              {selectedUser.status === 'active' ? '🟢 Aktiv' : '🚫 Gesperrt'}
+             {selectedUser.status === "approved" || selectedUser.status === "active"
+  ? "🟢 Aktiv"
+  : selectedUser.status === "pending"
+  ? "🟡 Wartet"
+  : "🚫 Gesperrt"}
             </span>
             <span style={badgeStyle}>
               {subscriptionLabel(selectedUser.subscription?.type)}
@@ -420,59 +430,70 @@ const addActivity = (user, action, details = '') => {
       <div style={cardStyle}>
   <h2>⚙️ Verwaltung</h2>
 
-  <div style={actionGridStyle}>
-    <button
-      style={smallBlueButtonStyle}
-      onClick={() => loginAsUser(selectedUser)}
-    >
-      👤 Login als Benutzer
-    </button>
-
-    {selectedUser.status === 'active' ? (
-      <button
-        style={dangerButtonStyle}
-        onClick={() => {
-          updateUser(selectedUser.id, { status: 'blocked' });
-          addActivity(selectedUser, 'Benutzer gesperrt');
-        }}
-      >
-              
-                🚫 Sperren
-              </button>
-           ) : (
   <button
-    style={successButtonStyle}
-    onClick={() => {
-      updateUser(selectedUser.id, { status: 'active' });
-      addActivity(selectedUser, 'Benutzer entsperrt');
-    }}
+    style={openButtonStyle}
+    onClick={() => loginAsUser(selectedUser)}
   >
-    ✅ Entsperren
+    👤 Login als Benutzer
   </button>
-)}
-            <button
-              style={smallGrayButtonStyle}
-              onClick={() => alert('Passwort-Reset wird nach Backend-Integration aktiviert.')}
-            >
-              🔑 Passwort zurücksetzen
-            </button>
 
-            <button
-              style={smallGrayButtonStyle}
-              onClick={() => alert('E-Mail-Bestätigung wird nach Backend-Integration aktiviert.')}
-            >
-              ✉️ E-Mail bestätigen
-            </button>
+  {selectedUser.status === "approved" || selectedUser.status === "active" ? (
+    <button
+      style={deleteButtonStyle}
+      onClick={() => {
+        updateUser(selectedUser.id, { status: "blocked" });
+        addActivity(selectedUser, "Benutzer gesperrt");
+      }}
+    >
+      🚫 Sperren
+    </button>
+  ) : (
+    <button
+  style={successButtonStyle}
+  onClick={() => {
+    const updated = {
+      ...selectedUser,
+      status: "approved",
+      accessUpdatedAt: new Date().toISOString(),
+    };
 
-            <button
-              style={deleteButtonStyle}
-              onClick={() => deleteUser(selectedUser)}
-            >
-              🗑 Löschen
-            </button>
-          </div>
+    const next = users.map((u) =>
+      String(u.id) === String(selectedUser.id) ? updated : u
+    );
+
+    setUsers(next);
+    saveUsers(next);
+    setSelectedUser(updated);
+  
+  }}
+>
+  ✅ Entsperren
+</button>
+  )}
+
+  <button
+    style={smallGrayButtonStyle}
+    onClick={() => alert("Passwort-Reset wird nach Backend-Integration aktiviert.")}
+  >
+    🔑 Passwort zurücksetzen
+  </button>
+
+  <button
+    style={smallGrayButtonStyle}
+    onClick={() => alert("E-Mail-Bestätigung wird nach Backend-Integration aktiviert.")}
+  >
+    ✉️ E-Mail bestätigen
+  </button>
+
+  <button
+    style={deleteButtonStyle}
+    onClick={() => deleteUser(selectedUser)}
+  >
+    🗑 Löschen
+  </button>
+</div>
         </div>
-      </div>
+      
     );
   }
 
@@ -490,6 +511,7 @@ const addActivity = (user, action, details = '') => {
       <div style={statsGridStyle}>
         <Stat label="Gesamt" value={stats.total} />
         <Stat label="Aktiv" value={stats.active} />
+        <Stat label="Wartet" value={stats.pending} />
         <Stat label="Premium" value={stats.premium} />
         <Stat label="Gesperrt" value={stats.blocked} />
       </div>
@@ -514,7 +536,11 @@ const addActivity = (user, action, details = '') => {
                 <span style={badgeStyle}>{user.level}</span>
                 <span style={badgeStyle}>{subscriptionLabel(user.subscription?.type)}</span>
                 <span style={badgeStyle}>
-                  {user.status === 'active' ? '🟢 Aktiv' : '🚫 Gesperrt'}
+                 {user.status === "approved" || user.status === "active"
+  ? "🟢 Aktiv"
+  : user.status === "pending"
+  ? "🟡 Wartet"
+  : "🚫 Gesperrt"}
                 </span>
               </div>
             </div>

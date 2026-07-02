@@ -5,77 +5,86 @@ export default function LoginScreen({ onLogin, onRegister }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
-    const cleanEmail = email.trim().toLowerCase();
+ const handleLogin = () => {
+  const cleanEmail = email.trim().toLowerCase();
 
-    if (!cleanEmail || !password) {
-      alert('Bitte E-Mail und Passwort eingeben.');
-      return;
-    }
+  if (!cleanEmail || !password) {
+    alert("Bitte E-Mail und Passwort eingeben.");
+    return;
+  }
 
-    const users = getUsers();
+  const users = getUsers();
 
-    let user = users.find(
-      (item) => item.email?.toLowerCase() === cleanEmail
-    );
+  const matchingUsers = users.filter(
+    (item) => item.email?.toLowerCase() === cleanEmail
+  );
 
-    if (!user) {
-      user = {
-        id: Date.now(),
-        name:
-          cleanEmail === 'fadisobehau@gmail.com'
-            ? 'Fadi Sobeh'
-            : cleanEmail.split('@')[0],
-        email: cleanEmail,
-        password,
-        level: localStorage.getItem('userLevel') || 'B1',
-        allowedLevels: ['A2'],
-        plan: 'free',
-        levelSource: 'login_created',
-        role: cleanEmail === 'fadisobehau@gmail.com' ? 'admin' : 'student',
-        status: cleanEmail === 'fadisobehau@gmail.com' ? 'approved' : 'pending',
-        aiCredits: 5,
-        createdAt: new Date().toISOString(),
-      };
+  let user = matchingUsers[matchingUsers.length - 1];
 
-      saveUsers([...users, user]);
-    }
-
-    if (user.password !== password) {
-      alert('E-Mail oder Passwort ist falsch.');
-      return;
-    }
-
-    if (user.status === 'blocked') {
-      alert('Ihr Konto wurde gesperrt. Bitte kontaktieren Sie den Administrator.');
-      return;
-    }
-
-    if (user.role !== 'admin' && user.status !== 'approved') {
-      alert('Ihr Konto wartet noch auf die Freigabe durch den Administrator.');
-      return;
-    }
-
-    const safeUser = {
-      ...user,
-      status: user.status || (user.role === 'admin' ? 'approved' : 'pending'),
-      aiCredits: typeof user.aiCredits === 'number' ? user.aiCredits : 5,
+  if (!user) {
+    user = {
+      id: Date.now(),
+      name:
+        cleanEmail === "fadisobehau@gmail.com"
+          ? "Fadi Sobeh"
+          : cleanEmail.split("@")[0],
+      email: cleanEmail,
+      password,
+      level: localStorage.getItem("userLevel") || "B1",
+      allowedLevels: ["A2"],
+      plan: "free",
+      levelSource: "login_created",
+      role: cleanEmail === "fadisobehau@gmail.com" ? "admin" : "student",
+      status: cleanEmail === "fadisobehau@gmail.com" ? "approved" : "pending",
+      aiCredits: 5,
+      createdAt: new Date().toISOString(),
     };
 
-    saveCurrentUser(safeUser);
+    saveUsers([...users, user]);
+  }
 
-    localStorage.setItem('isLoggedIn', 'true');
-    localStorage.setItem('currentUser', JSON.stringify(safeUser));
-    localStorage.setItem('userName', safeUser.name || cleanEmail.split('@')[0]);
-    localStorage.setItem('userEmail', safeUser.email || cleanEmail);
-    localStorage.setItem('userLevel', safeUser.level || 'B1');
-    localStorage.setItem(
-      'userLanguage',
-      safeUser.language || localStorage.getItem('userLanguage') || 'Deutsch'
-    );
+  if (user.password && user.password !== password) {
+    alert("E-Mail oder Passwort ist falsch.");
+    return;
+  }
 
-    onLogin(cleanEmail);
+  const normalizedStatus =
+    user.role === "admin"
+      ? "approved"
+      : user.status === "active"
+      ? "approved"
+      : user.status || "pending";
+
+  if (normalizedStatus === "blocked") {
+    alert("Ihr Konto wurde gesperrt. Bitte kontaktieren Sie den Administrator.");
+    return;
+  }
+
+  if (user.role !== "admin" && normalizedStatus !== "approved") {
+    alert("Ihr Konto wartet noch auf die Freigabe durch den Administrator.");
+    return;
+  }
+
+  const safeUser = {
+    ...user,
+    status: normalizedStatus,
+    aiCredits: typeof user.aiCredits === "number" ? user.aiCredits : 5,
   };
+
+  saveCurrentUser(safeUser);
+
+  localStorage.setItem("isLoggedIn", "true");
+  localStorage.setItem("currentUser", JSON.stringify(safeUser));
+  localStorage.setItem("userName", safeUser.name || cleanEmail.split("@")[0]);
+  localStorage.setItem("userEmail", safeUser.email || cleanEmail);
+  localStorage.setItem("userLevel", safeUser.level || "B1");
+  localStorage.setItem(
+    "userLanguage",
+    safeUser.language || localStorage.getItem("userLanguage") || "Deutsch"
+  );
+
+  onLogin(cleanEmail);
+};
 
   return (
     <div
