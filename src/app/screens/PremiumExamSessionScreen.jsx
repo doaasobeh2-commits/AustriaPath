@@ -79,12 +79,48 @@ const evaluateCurrentPart = async () => {
       finishExam();
     }
   };
+const buildExamSummary = (decision = {}) => {
+  const score = decision.score || 0;
+  const confidence = decision.confidence || 0;
+
+  if (decision.conflicts?.length) {
+    return "Die Prüfer sind sich noch nicht vollständig einig. Eine erneute Bewertung wird empfohlen.";
+  }
+
+  if (decision.warnings?.length) {
+    return "Die Hauptaufgabe wurde nicht vollständig erfüllt. Einige wichtige Prüfungspunkte fehlen.";
+  }
+
+  if (confidence < 65) {
+    return "Die Bewertung ist noch nicht eindeutig. Eine genauere Analyse wird empfohlen.";
+  }
+
+  if (score >= 85) {
+    return "Sehr gute Leistung. Die Prüfungsziele wurden sicher erreicht.";
+  }
+
+  if (score >= 70) {
+    return "Gute Leistung. Die Antwort entspricht weitgehend dem Niveau.";
+  }
+
+  if (score >= 55) {
+    return "Ausreichende Leistung. Einige Bereiche sollten noch verbessert werden.";
+  }
+
+  return "Das gewünschte Prüfungsniveau wurde noch nicht erreicht. Weitere Vorbereitung wird empfohlen.";
+};
+
+ 
 
  const finishExam = async () => {
   const aiResult = await runExaminerMind({
   examType: "OEIF",
   level: exam.level,
-  currentSection: currentPart,
+ currentSection: {
+  ...currentPart,
+  allParts: exam.parts || [],
+  answers,
+},
   answerText: answers[currentPart?.type] || "",
   taskAnswered: true,
   saveToProfile: true,
@@ -94,14 +130,15 @@ console.log("Examiner Mind:", aiResult);
   const report = {
     title: `${exam.title} · ${exam.level}`,
     date: new Date().toLocaleDateString('de-DE'),
-    summary: 'AI-Prüfung abgeschlossen. Bericht wurde gespeichert.',
-    strongCount: aiResult.decision?.strengths?.length || 0,
+  summary: buildExamSummary(aiResult.decision),
+strongCount:
+(aiResult.decision?.strengths || []).length,
 middleCount:
-  aiResult.decision?.score >= 50 &&
-  aiResult.decision?.score < 70
+  aiResult.decision?.score >= 55 &&
+  aiResult.decision?.score < 75
     ? 1
     : 0,
-weakCount: aiResult.decision?.weaknesses?.length || 0,
+weakCount: aiResult.decision?.score < 55 ? 1 : 0,
 
 strengths: aiResult.decision?.strengths || [],
 weaknesses: aiResult.decision?.weaknesses || [],

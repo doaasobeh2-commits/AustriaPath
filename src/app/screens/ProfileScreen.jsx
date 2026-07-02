@@ -511,14 +511,32 @@ return (
         <p style={smallTextStyle}>
           {report.date || 'Datum unbekannt'} · Niveau {report.level || level}
         </p>
-
+{report.examinerMind?.decision?.score != null && (
+  <p
+    style={{
+      color: "#2563eb",
+      fontWeight: 700,
+      margin: "8px 0"
+    }}
+  >
+    Gesamtbewertung: {report.examinerMind.decision.score}/100
+  </p>
+)}
         <p style={mutedStyle}>
           {report.summary || 'Kurzer Bericht gespeichert.'}
         </p>
-
+{report.examinerMind?.decision?.score != null && (
+  <div style={tipStyle}>
+    💡 {report.examinerMind.decision.score >= 75
+      ? "Sehr gute Leistung. Üben Sie weiter, um das Niveau zu stabilisieren."
+      : report.examinerMind.decision.score >= 55
+      ? "Mit etwas mehr Struktur und vollständiger Bearbeitung aller Aufgabenpunkte können Sie das Niveau sicher erreichen."
+      : "Trainieren Sie zuerst den Aufbau der E-Mail und beantworten Sie alle Aufgabenpunkte vollständig."}
+  </div>
+)}
         <div style={reportGridStyle}>
           <div style={reportMiniBoxStyle}>
-            <b>✅ Stark</b>
+           <b>✅ Stärken</b>
             <p>
   {report.examinerMind?.decision?.score >= 75
     ? 1
@@ -537,7 +555,7 @@ return (
           </div>
 
           <div style={reportMiniBoxStyle}>
-            <b>⚠️ Schwach</b>
+            <b>⚠️ Verbesserungen</b>
             <p>
   {report.examinerMind?.decision?.score < 55
     ? 1
@@ -557,7 +575,7 @@ return (
         )}
 {report.weaknesses?.length > 0 && (
   <div style={reportSectionStyle}>
-    <b>⚠️ Schwächen</b>
+   <b>🛠️ Verbesserungsbereiche</b>
     {uniqueLabels(report.weaknesses).map((item) => (
       <p key={item} style={smallTextStyle}>
         • {item}
@@ -567,7 +585,7 @@ return (
 )}
         {report.focusAreas?.length > 0 && (
           <div style={reportSectionStyle}>
-            <b>🔥 Fokus verbessern</b>
+           <b>🎯 Empfohlener Schwerpunkt</b>
            <p style={{ margin: 0 }}>
   {uniqueLabels(report.focusAreas).slice(0, 3).join(" • ")}
 </p>

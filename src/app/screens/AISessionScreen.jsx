@@ -257,6 +257,33 @@ const focusAreas = weaknesses.length
       .map((x) => x.label || x.title || x.type);
 console.log('SESSION ANSWERS', sessionAnswers);
 console.log('STRONG', strongCount, 'MIDDLE', middleCount, 'WEAK', weakCount);
+const buildSmartSummary = () => {
+  if (weakCount === 0 && strongCount >= middleCount) {
+    return 'Sehr gute Sitzung. Die meisten Aufgaben wurden sicher gelöst. Der Schüler kann mit schwierigeren Aufgaben weitertrainieren.';
+  }
+
+  if (strongCount > weakCount && middleCount > 0) {
+    return 'Gute Sitzung. Der Schüler zeigt stabile Leistungen, braucht aber noch mehr Sicherheit in einzelnen Bereichen.';
+  }
+
+  if (weakCount > strongCount) {
+    return 'Die Sitzung zeigt klare Schwächen. Der Schüler braucht gezieltes Training mit einfachen, vollständigen Sätzen und mehr Struktur.';
+  }
+
+  return 'Die Sitzung ist gemischt. Einige Aufgaben wurden gut gelöst, andere brauchen noch Wiederholung und gezielte Übung.';
+};
+
+const buildSmartRecommendation = () => {
+  if (focusAreas.length > 0) {
+    return `Nächster Fokus: ${[...new Set(focusAreas)].slice(0, 2).join(' und ')} gezielt wiederholen.`;
+  }
+
+  if (weaknesses.length > 0) {
+    return `Wiederhole zuerst: ${[...new Set(weaknesses)].slice(0, 2).join(' und ')}.`;
+  }
+
+  return 'Weiter mit einer schwierigeren Aufgabe oder einer AI Probeprüfung.';
+};
 const report = {
   title,
   sessionType,
@@ -276,15 +303,9 @@ const report = {
 
   results: sessionAnswers,
 
-  summary:
-    strongCount > weakCount
-      ? 'Gute Sitzung. Der Schüler konnte mehrere Aufgaben sicher lösen. Die Schwierigkeit kann erhöht werden.'
-      : 'Sitzung abgeschlossen. Weiterer Fokus: klare Sätze, Satzbau, Wortschatz und Grammatik.',
+  summary: buildSmartSummary(),
 
-  nextRecommendation:
-    weakCount > 0
-      ? 'Wiederhole die schwachen Bereiche im Wochenplan.'
-      : 'Weiter mit einer schwierigeren Aufgabe oder einer Probeprüfung.',
+nextRecommendation: buildSmartRecommendation(),
 };
     const oldReports = JSON.parse(
       localStorage.getItem('austriaPathAIReports') || '[]'
