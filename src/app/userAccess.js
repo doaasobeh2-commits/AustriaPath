@@ -102,6 +102,74 @@ export function saveCurrentUser(user) {
   localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
 }
 
+export function clearSession() {
+  localStorage.removeItem("isLoggedIn");
+  localStorage.removeItem("currentUser");
+  localStorage.removeItem(CURRENT_USER_KEY);
+  localStorage.removeItem("userRole");
+  localStorage.removeItem("userEmail");
+  localStorage.removeItem("userName");
+  localStorage.removeItem("isAdminPreview");
+}
+
+export function resolveSessionUser() {
+  try {
+    const raw =
+      localStorage.getItem(CURRENT_USER_KEY) ||
+      localStorage.getItem("currentUser");
+
+    if (!raw) return null;
+
+    const sessionUser = JSON.parse(raw);
+    const cleanEmail = sessionUser?.email?.trim().toLowerCase();
+
+    if (!cleanEmail) return null;
+
+    const users = getUsers();
+    const storedUser = users.find(
+      (user) => user.email?.toLowerCase() === cleanEmail
+    );
+
+    if (!storedUser) return null;
+    if (storedUser.status !== "approved") return null;
+
+    if (cleanEmail !== ADMIN_EMAIL) {
+      return {
+        ...storedUser,
+        email: cleanEmail,
+        role: "student",
+        status: "approved",
+      };
+    }
+
+    return {
+      ...storedUser,
+      email: cleanEmail,
+      role: "admin",
+      status: "approved",
+      allowedLevels: ["A2", "B1", "B2"],
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function syncSessionUser(resolvedUser) {
+  if (!resolvedUser) return;
+
+  saveCurrentUser(resolvedUser);
+  localStorage.setItem("currentUser", JSON.stringify(resolvedUser));
+  localStorage.setItem("isLoggedIn", "true");
+  localStorage.setItem("userEmail", resolvedUser.email);
+  localStorage.setItem("userRole", resolvedUser.role);
+  localStorage.setItem(
+    "userName",
+    resolvedUser.name || resolvedUser.email.split("@")[0]
+  );
+  localStorage.setItem("userLevel", resolvedUser.level || "B1");
+  localStorage.removeItem("isAdminPreview");
+}
+
 function getDefaultAllowedLevels(level) {
   if (level === "B2") return ["A2", "B1", "B2"];
   if (level === "B1") return ["A2", "B1"];
@@ -186,7 +254,7 @@ export function registerUser({
     email: cleanEmail,
     password,
     level,
-    status: status || "pending",
+    status: status || "approved",
     aiCredits: typeof aiCredits === "number" ? aiCredits : 5,
     allowedLevels: getDefaultAllowedLevels(level),
     plan: "free",

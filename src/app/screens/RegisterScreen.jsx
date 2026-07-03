@@ -1,18 +1,17 @@
 import React, { useState } from "react";
 import { registerUser, saveCurrentUser } from "../userAccess";
 
-export default function RegisterScreen({ onRegisterSuccess, onLogin }) {
+export default function RegisterScreen({ onRegisterSuccess, onBack }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [level, setLevel] = useState("B1");
-  const [familyCode, setFamilyCode] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [notRobot, setNotRobot] = useState(false);
 
   const handleRegister = () => {
     const cleanEmail = email.trim().toLowerCase();
-   const isFamilyApproved = false;
 
     if (!name.trim() || !cleanEmail || !password) {
       alert("Bitte füllen Sie alle Pflichtfelder aus.");
@@ -24,68 +23,38 @@ export default function RegisterScreen({ onRegisterSuccess, onLogin }) {
       return;
     }
 
+    if (!notRobot) {
+      alert("Bitte bestätigen Sie, dass Sie kein Roboter sind.");
+      return;
+    }
+
     if (!acceptedTerms) {
       alert("Bitte akzeptieren Sie die Datenschutzbestimmungen.");
       return;
     }
 
-    let newUser = registerUser({
+    const newUser = registerUser({
       name: name.trim(),
       email: cleanEmail,
       password,
       level,
-      status: isFamilyApproved ? "approved" : "pending",
+      status: "approved",
       aiCredits: 5,
-      familyApproved: isFamilyApproved,
       createdAt: new Date().toISOString(),
     });
 
-    newUser = {
-      ...newUser,
-      status: isFamilyApproved ? "approved" : newUser.status || "pending",
-      aiCredits: typeof newUser.aiCredits === "number" ? newUser.aiCredits : 5,
-      familyApproved: isFamilyApproved,
-      accessUpdatedAt: new Date().toISOString(),
-    };
-
-    const users = JSON.parse(localStorage.getItem("austriaPathUsers") || "[]");
-
-    const existingIndex = users.findIndex(
-      (user) => user.email?.toLowerCase() === cleanEmail
-    );
-
-    const updatedUsers =
-      existingIndex >= 0
-        ? users.map((user, index) => (index === existingIndex ? newUser : user))
-        : [...users, newUser];
-
-    localStorage.setItem("austriaPathUsers", JSON.stringify(updatedUsers));
     saveCurrentUser(newUser);
 
+    localStorage.setItem("isLoggedIn", "true");
     localStorage.setItem("currentUser", JSON.stringify(newUser));
     localStorage.setItem("userName", newUser.name);
     localStorage.setItem("userEmail", newUser.email);
     localStorage.setItem("userLevel", newUser.level || "B1");
+    localStorage.setItem("userRole", newUser.role || "student");
     localStorage.setItem(
       "userLanguage",
       localStorage.getItem("userLanguage") || "Deutsch"
     );
-
-    if (isFamilyApproved) {
-      localStorage.setItem("isLoggedIn", "true");
-
-      if (onLogin) {
-        onLogin(cleanEmail);
-      } else if (onRegisterSuccess) {
-        onRegisterSuccess(newUser);
-      }
-
-      return;
-    }
-
-    localStorage.setItem("isLoggedIn", "false");
-
-    alert("Ihr Konto wurde erstellt und wartet auf die Freigabe.");
 
     if (onRegisterSuccess) {
       onRegisterSuccess(newUser);
@@ -128,14 +97,6 @@ export default function RegisterScreen({ onRegisterSuccess, onLogin }) {
         style={inputStyle}
       />
 
-      <input
-        type="text"
-        placeholder="Familiencode (optional)"
-        value={familyCode}
-        onChange={(e) => setFamilyCode(e.target.value)}
-        style={inputStyle}
-      />
-
       <div style={{ marginTop: "18px" }}>
         <label style={{ fontWeight: 800 }}>
           Welches Niveau möchten Sie trainieren?
@@ -166,6 +127,15 @@ export default function RegisterScreen({ onRegisterSuccess, onLogin }) {
       <label style={checkboxStyle}>
         <input
           type="checkbox"
+          checked={notRobot}
+          onChange={(e) => setNotRobot(e.target.checked)}
+        />
+        Ich bin kein Roboter
+      </label>
+
+      <label style={checkboxStyle}>
+        <input
+          type="checkbox"
           checked={acceptedTerms}
           onChange={(e) => setAcceptedTerms(e.target.checked)}
         />
@@ -175,6 +145,12 @@ export default function RegisterScreen({ onRegisterSuccess, onLogin }) {
       <button onClick={handleRegister} style={buttonStyle}>
         Konto erstellen
       </button>
+
+      {onBack && (
+        <button onClick={onBack} style={backButtonStyle}>
+          Zurück zum Login
+        </button>
+      )}
     </div>
   );
 }
@@ -204,6 +180,18 @@ const buttonStyle = {
   borderRadius: "10px",
   background: "#2563eb",
   color: "white",
+  fontWeight: "bold",
+  cursor: "pointer",
+};
+
+const backButtonStyle = {
+  width: "100%",
+  padding: "14px",
+  marginTop: "12px",
+  border: "1px solid #cbd5e1",
+  borderRadius: "10px",
+  background: "#ffffff",
+  color: "#64748b",
   fontWeight: "bold",
   cursor: "pointer",
 };

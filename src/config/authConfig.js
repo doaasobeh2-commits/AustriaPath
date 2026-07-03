@@ -12,3 +12,15 @@ export function getAdminInitialPassword() {
 export function canSeedAdminUser() {
   return getAdminInitialPassword().length > 0;
 }
+
+export function isAdminEmail(email) {
+  return email?.trim().toLowerCase() === ADMIN_EMAIL;
+}
+
+export function isAdminAccount(user) {
+  return (
+    isAdminEmail(user?.email) &&
+    user?.role === "admin" &&
+    user?.status === "approved"
+  );
+}

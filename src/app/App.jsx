@@ -28,56 +28,52 @@ import UserManagementScreen from "./screens/UserManagementScreen";
 import PlacementTestScreen from "./screens/PlacementTestScreen";
 import AISessionScreen from "./screens/AISessionScreen";
 import PremiumExamSessionScreen from "./screens/PremiumExamSessionScreen";
-import { ADMIN_EMAIL } from "../config/authConfig";
+import { isAdminAccount } from "../config/authConfig";
+import {
+  clearSession,
+  resolveSessionUser,
+  syncSessionUser,
+} from "./userAccess";
 
-const getStoredUser = () => {
-  try {
-    const raw =
-      localStorage.getItem("austriaPathCurrentUser") ||
-      localStorage.getItem("currentUser");
+const initialSessionUser = resolveSessionUser();
 
-    if (!raw) return null;
-
-    const user = JSON.parse(raw);
-
-    if (!user?.email || !user?.role || user?.status !== "approved") {
-      return null;
-    }
-
-    return user;
-  } catch {
-    return null;
-  }
-};
+function getInitialTab(user) {
+  return isAdminAccount(user) ? "admin" : "home";
+}
 
 export default function App() {
-  const storedUser = getStoredUser();
-
-  const [currentUser, setCurrentUser] = useState(storedUser);
-  const [isLoggedIn, setIsLoggedIn] = useState(Boolean(storedUser));
-  const [activeTab, setActiveTab] = useState("home");
+  const [currentUser, setCurrentUser] = useState(initialSessionUser);
+  const [isLoggedIn, setIsLoggedIn] = useState(Boolean(initialSessionUser));
+  const [activeTab, setActiveTab] = useState(() =>
+    getInitialTab(initialSessionUser)
+  );
   const [selectedLevel, setSelectedLevel] = useState(null);
   const [levelTarget, setLevelTarget] = useState(null);
   const [selectedWritingModel, setSelectedWritingModel] = useState(null);
   const [authScreen, setAuthScreen] = useState("login");
   const [showOnboarding, setShowOnboarding] = useState(true);
 
-  const isAdmin =
-    currentUser?.email?.toLowerCase() === ADMIN_EMAIL &&
-    currentUser?.role === "admin" &&
-    currentUser?.status === "approved";
+  const isAdmin = isAdminAccount(currentUser);
 
   const isAdminPreview =
     localStorage.getItem("isAdminPreview") === "true";
 
+  const completeLogin = () => {
+    const resolved = resolveSessionUser();
+
+    if (!resolved) {
+      handleLogout();
+      return;
+    }
+
+    syncSessionUser(resolved);
+    setCurrentUser(resolved);
+    setIsLoggedIn(true);
+    setActiveTab(isAdminAccount(resolved) ? "admin" : "home");
+  };
+
   const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("austriaPathCurrentUser");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("isAdminPreview");
+    clearSession();
 
     setIsLoggedIn(false);
     setCurrentUser(null);
@@ -106,44 +102,8 @@ export default function App() {
 
     return authScreen === "login" ? (
       <LoginScreen
-        onLogin={(user) => {
-          if (!user?.email || user?.status !== "approved") {
-            handleLogout();
-            return;
-          }
-
-          const safeUser = {
-            ...user,
-            email: user.email.toLowerCase(),
-            role:
-              user.email.toLowerCase() === ADMIN_EMAIL &&
-              user.role === "admin"
-                ? "admin"
-                : "student",
-            status: "approved",
-          };
-
-          localStorage.setItem("isLoggedIn", "true");
-          localStorage.setItem("currentUser", JSON.stringify(safeUser));
-          localStorage.setItem(
-            "austriaPathCurrentUser",
-            JSON.stringify(safeUser)
-          );
-          localStorage.setItem("userEmail", safeUser.email);
-          localStorage.setItem("userRole", safeUser.role);
-
-          setCurrentUser(safeUser);
-          setIsLoggedIn(true);
-
-          if (
-            safeUser.email === ADMIN_EMAIL &&
-            safeUser.role === "admin" &&
-            safeUser.status === "approved"
-          ) {
-            setActiveTab("admin");
-          } else {
-            setActiveTab("home");
-          }
+        onLogin={() => {
+          completeLogin();
         }}
         onRegister={() => setAuthScreen("register")}
         onForgotPassword={() => setAuthScreen("forgot")}
@@ -151,7 +111,9 @@ export default function App() {
     ) : (
       <RegisterScreen
         onBack={() => setAuthScreen("login")}
-        onRegisterSuccess={() => setAuthScreen("login")}
+        onRegisterSuccess={() => {
+          completeLogin();
+        }}
       />
     );
   }
