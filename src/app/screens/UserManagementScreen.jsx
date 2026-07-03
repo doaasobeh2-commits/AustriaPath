@@ -21,31 +21,31 @@ function loadUsers() {
     if (saved.length) return saved;
   } catch {}
 console.log("Loaded users:", saved);
-  return [
-    {
-      id: 'demo-1',
-      name: localStorage.getItem('userName') || 'Demo Student',
-      email: localStorage.getItem('userEmail') || 'demo@austriapath.at',
-      level: localStorage.getItem('userLevel') || 'B1',
-      allowedLevels: ['A2'],
-      language: localStorage.getItem('userLanguage') || 'Deutsch',
-      role: 'student',
-      status: 'active',
-      source: 'login_created',
-      createdAt: new Date().toISOString(),
-      lastLogin: new Date().toISOString(),
-      subscription: {
-        type: 'free',
-        status: 'inactive',
-        remainingExams: 0,
-        startDate: null,
-        endDate: null,
-      },
-      aiLevel: '-',
-      completedExams: 0,
-      notes: '',
+ return [
+  {
+    id: "admin-1",
+    name: "Fadi Sobeh",
+    email: "fadisobehau@gmail.com",
+    level: "B1",
+    allowedLevels: ["A2", "B1", "B2"],
+    language: "Deutsch",
+    role: "admin",
+    status: "approved",
+    source: "system_admin",
+    createdAt: new Date().toISOString(),
+    lastLogin: new Date().toISOString(),
+    subscription: {
+      type: "free",
+      status: "inactive",
+      remainingExams: 0,
+      startDate: null,
+      endDate: null,
     },
-  ];
+    aiLevel: "-",
+    completedExams: 0,
+    notes: "System administrator",
+  },
+];
 }
 
 function saveUsers(users) {

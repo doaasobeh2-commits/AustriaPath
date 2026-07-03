@@ -328,18 +328,21 @@ return (
   ⚙️ Kontoeinstellungen
 </button>
             </div>
-{userEmail === 'fadisobehau@gmail.com' && (
+{userEmail?.toLowerCase() === 'fadisobehau@gmail.com' && (
   <button
-    onClick={() => setActiveTab('userManagement')}
-    style={{
-      ...settingsButtonStyle,
-      marginTop: '10px',
-      background: '#2563eb',
-      color: '#ffffff'
-    }}
-  >
-    👥 Benutzerverwaltung
-  </button>
+  onClick={() => {
+    alert("Benutzerverwaltung clicked");
+    setActiveTab("userManagement");
+  }}
+  style={{
+    ...settingsButtonStyle,
+    marginTop: "10px",
+    background: "#2563eb",
+    color: "#ffffff",
+  }}
+>
+  👥 Benutzerverwaltung
+</button>
 )}
 
             <div style={infoRowStyle}>📅 21. Juni 2026</div>

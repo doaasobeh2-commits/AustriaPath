@@ -60,10 +60,14 @@ const [parentModelId, setParentModelId] = useState('');
     setItems(data);
   };
 
-  const login = () => {
-  alert("Admin-Zugang ist nur über das echte Admin-Konto erlaubt.");
+ const login = () => {
+  if (password === "admin123") {
+    setUnlocked(true);
+    setPassword("");
+  } else {
+    alert("Falsches Passwort");
+  }
 };
-
   const normalize = (text) =>
     (text || '').trim().toLowerCase().replace(/\s+/g, ' ');
 

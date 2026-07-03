@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { getUsers, saveCurrentUser } from "../userAccess";
+import { getUsers, saveUsers, saveCurrentUser } from "../userAccess";
 
 const ADMIN_EMAIL = "fadisobehau@gmail.com";
 
@@ -20,6 +20,57 @@ export default function LoginScreen({ onLogin, onRegister }) {
       (item) => item.email?.toLowerCase() === cleanEmail
     );
 
+    // Admin login
+    if (cleanEmail === ADMIN_EMAIL) {
+      const adminUser = {
+        ...(user || {}),
+        id: user?.id || "admin-1",
+        name: "Fadi Sobeh",
+        email: ADMIN_EMAIL,
+        password,
+        level: user?.level || "B1",
+        allowedLevels: ["A2", "B1", "B2"],
+        role: "admin",
+        status: "approved",
+        plan: user?.plan || "free",
+        aiCredits: typeof user?.aiCredits === "number" ? user.aiCredits : 0,
+        usedAiCredits:
+          typeof user?.usedAiCredits === "number" ? user.usedAiCredits : 0,
+        createdAt: user?.createdAt || new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+      };
+
+      const updatedUsers = user
+        ? users.map((u) =>
+            u.email?.toLowerCase() === ADMIN_EMAIL ? adminUser : u
+          )
+        : [...users, adminUser];
+
+      saveUsers(updatedUsers);
+      saveCurrentUser(adminUser);
+
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("currentUser", JSON.stringify(adminUser));
+      localStorage.setItem(
+        "austriaPathCurrentUser",
+        JSON.stringify(adminUser)
+      );
+      localStorage.setItem("userName", adminUser.name);
+      localStorage.setItem("userEmail", adminUser.email);
+      localStorage.setItem("userLevel", adminUser.level);
+      localStorage.setItem("userRole", "admin");
+      localStorage.removeItem("isAdminPreview");
+
+      localStorage.setItem(
+        "userLanguage",
+        adminUser.language || localStorage.getItem("userLanguage") || "Deutsch"
+      );
+
+      onLogin(adminUser);
+      return;
+    }
+
+    // Normal user login
     if (!user) {
       alert("Dieses Konto existiert nicht. Bitte zuerst registrieren.");
       return;
@@ -30,7 +81,7 @@ export default function LoginScreen({ onLogin, onRegister }) {
       return;
     }
 
-    if (user.status !== "approved" && cleanEmail !== ADMIN_EMAIL) {
+    if (user.status !== "approved") {
       alert("Ihr Konto wartet noch auf Freigabe durch den Administrator.");
       return;
     }
@@ -38,20 +89,19 @@ export default function LoginScreen({ onLogin, onRegister }) {
     const safeUser = {
       ...user,
       email: cleanEmail,
-      role:
-        cleanEmail === ADMIN_EMAIL && user.role === "admin"
-          ? "admin"
-          : "student",
-      status: cleanEmail === ADMIN_EMAIL ? "approved" : user.status,
+      role: "student",
+      status: "approved",
       aiCredits: typeof user.aiCredits === "number" ? user.aiCredits : 0,
       usedAiCredits:
         typeof user.usedAiCredits === "number" ? user.usedAiCredits : 0,
+      lastLogin: new Date().toISOString(),
     };
 
     saveCurrentUser(safeUser);
 
     localStorage.setItem("isLoggedIn", "true");
     localStorage.setItem("currentUser", JSON.stringify(safeUser));
+    localStorage.setItem("austriaPathCurrentUser", JSON.stringify(safeUser));
     localStorage.setItem("userName", safeUser.name || cleanEmail.split("@")[0]);
     localStorage.setItem("userEmail", safeUser.email);
     localStorage.setItem("userLevel", safeUser.level || "B1");
