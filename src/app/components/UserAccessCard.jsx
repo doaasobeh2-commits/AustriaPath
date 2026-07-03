@@ -1,15 +1,27 @@
-import React from "react";
+import React, { useState } from "react";
+import AdminActionBar from "./AdminActionBar";
 
 export default function UserAccessCard({
   user,
-  onApprove,
   onBlock,
   onAddCredits,
   onResetCredits,
 }) {
-  const status = user.status || "pending";
+  const [processingAction, setProcessingAction] = useState(null);
+  const status = user.status === "blocked" ? "blocked" : "approved";
   const credits =
     typeof user.aiCredits === "number" ? user.aiCredits : 5;
+
+  const runAction = (actionId, fn) => {
+    if (processingAction) return;
+
+    setProcessingAction(actionId);
+    try {
+      fn();
+    } finally {
+      setProcessingAction(null);
+    }
+  };
 
   return (
     <div
@@ -22,37 +34,42 @@ export default function UserAccessCard({
       }}
     >
       <p style={{ margin: 0 }}>
-        <strong>Status:</strong> {status}
+        <strong>Status:</strong>{" "}
+        {status === "blocked" ? "Gesperrt" : "Aktiv"}
       </p>
 
       <p style={{ margin: "6px 0" }}>
         <strong>AI Credits:</strong> {credits}
       </p>
 
-      <div
-        style={{
-          display: "flex",
-          gap: "8px",
-          flexWrap: "wrap",
-          marginTop: "10px",
-        }}
-      >
-        <button onClick={() => onApprove(user.id)}>
-          Approve
-        </button>
-
-        <button onClick={() => onBlock(user.id)}>
-          Block
-        </button>
-
-        <button onClick={() => onAddCredits(user.id, 5)}>
-          +5 AI Credits
-        </button>
-
-        <button onClick={() => onResetCredits(user.id)}>
-          Reset Credits
-        </button>
-      </div>
+      <AdminActionBar
+        processingAction={processingAction}
+        actions={[
+          {
+            id: "block",
+            icon: "🚫",
+            label: "Block",
+            variant: "neutral",
+            onClick: () => runAction("block", () => onBlock(user.id)),
+          },
+          {
+            id: "add-credits",
+            icon: "➕",
+            label: "+5 AI Credits",
+            variant: "blue",
+            onClick: () =>
+              runAction("add-credits", () => onAddCredits(user.id, 5)),
+          },
+          {
+            id: "reset-credits",
+            icon: "🔄",
+            label: "Reset Credits",
+            variant: "outline-red",
+            onClick: () =>
+              runAction("reset-credits", () => onResetCredits(user.id)),
+          },
+        ]}
+      />
     </div>
   );
 }

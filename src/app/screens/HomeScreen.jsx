@@ -51,13 +51,18 @@ export function HomeScreen({ setActiveTab }) {
     <div style={pageStyle}>
       <div style={mobileAppStyle}>
         <div style={heroStyle}>
-         <div style={heroImageStyle}>
-  <div style={heroTextInsideImageStyle}>
-    <h1 style={heroTitleStyle}>Willkommen bei AustriaPath</h1>
-
-  
-  </div>
-</div>
+          <div style={heroImageStyle}>
+            <img
+              src="/austria-hero.jpeg"
+              alt=""
+              style={heroBackgroundImageStyle}
+              aria-hidden="true"
+            />
+            <div style={heroImageOverlayStyle} aria-hidden="true" />
+            <div style={heroTextInsideImageStyle}>
+              <h1 style={heroTitleStyle}>Willkommen bei AustriaPath</h1>
+            </div>
+          </div>
         </div>
 
         <div style={contentStyle}>
@@ -139,26 +144,39 @@ const heroStyle = {
   
 };
 const heroImageStyle = {
+  position: 'relative',
   width: '100%',
   height: '205px',
   borderRadius: '26px',
   marginBottom: '22px',
-
- backgroundImage:
-  'linear-gradient(90deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.16) 42%, rgba(255,255,255,0.02) 100%), url("/austria-hero.jpeg")',
-
-  backgroundSize: '105% auto',
-backgroundPosition: 'center top',
-backgroundRepeat: 'no-repeat',
-
-
+  overflow: 'hidden',
   display: 'flex',
   alignItems: 'flex-start',
   justifyContent: 'flex-start',
-
   padding: '16px',
   boxSizing: 'border-box',
   boxShadow: '0 10px 28px rgba(15, 23, 42, 0.12)',
+};
+
+const heroBackgroundImageStyle = {
+  position: 'absolute',
+  top: 0,
+  left: '50%',
+  width: '105%',
+  height: '100%',
+  transform: 'translateX(-50%)',
+  objectFit: 'cover',
+  objectPosition: 'center top',
+  display: 'block',
+  pointerEvents: 'none',
+};
+
+const heroImageOverlayStyle = {
+  position: 'absolute',
+  inset: 0,
+  background:
+    'linear-gradient(90deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.16) 42%, rgba(255,255,255,0.02) 100%)',
+  pointerEvents: 'none',
 };
 const heroLogoStyle = {
   width: '92px',
@@ -301,6 +319,8 @@ const footerStyle = {
   lineHeight: '1.5',
 };
 const heroTextInsideImageStyle = {
+  position: 'relative',
+  zIndex: 1,
   maxWidth: '285px',
   marginTop: '88px',
   marginLeft: '4px',

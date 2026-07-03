@@ -8,7 +8,7 @@ import {
 import { a2Models } from '../../data/modelsA2';
 import { b1Models } from '../../data/modelsb1/';
 import { b2Models } from '../../data/modelsB2';
-import UserAccessCard from "../components/UserAccessCard";
+import AdminActionBar from "../components/AdminActionBar";
 
 export function AdminScreen({ setActiveTab }) {
 const STORAGE_KEY = 'austriaPathAdminData';
@@ -48,6 +48,18 @@ const [parentModelId, setParentModelId] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [search, setSearch] = useState('');
   const [showArchived, setShowArchived] = useState(false);
+  const [processingAction, setProcessingAction] = useState(null);
+
+  const runAction = (actionId, fn) => {
+    if (processingAction) return;
+
+    setProcessingAction(actionId);
+    try {
+      fn();
+    } finally {
+      setProcessingAction(null);
+    }
+  };
 
   useEffect(() => {
     try {
@@ -843,41 +855,77 @@ if (modelMode === 'existing' && !parentModelId) {
   )}
 </details>
 
-            <div style={actionRowStyle}>
-              <button onClick={() => editItem(item)} style={editButtonStyle}>
-                Bearbeiten
-              </button>
-
-              {item.status === 'published' ? (
-                <button onClick={() => unpublishItem(item.id)} style={archiveButtonStyle}>
-                  Stoppen
-                </button>
-              ) : (
-                <button onClick={() => publishItem(item.id)} style={publishButtonStyle}>
-                  Veröffentlichen
-                </button>
-              )}
-            </div>
-
-            <div style={actionRowStyle}>
-              {item.status === 'archived' ? (
-                <button onClick={() => restoreItem(item.id)} style={restoreButtonStyle}>
-                  Wiederherstellen
-                </button>
-              ) : (
-                <button onClick={() => archiveItem(item.id)} style={archiveButtonStyle}>
-                  Archivieren
-                </button>
-              )}
-
-              <button onClick={() => reviewItem(item.id)} style={reviewButtonStyle}>
-                Review
-              </button>
-
-              <button onClick={() => deleteItem(item.id)} style={deleteButtonStyle}>
-                Löschen
-              </button>
-            </div>
+            <AdminActionBar
+              wide
+              processingAction={processingAction}
+              actions={[
+                {
+                  id: `edit-${item.id}`,
+                  icon: "✏️",
+                  label: "Bearbeiten",
+                  variant: "outline-blue",
+                  onClick: () => runAction(`edit-${item.id}`, () => editItem(item)),
+                },
+                item.status === "published"
+                  ? {
+                      id: `unpublish-${item.id}`,
+                      icon: "⏸️",
+                      label: "Stoppen",
+                      variant: "outline-orange",
+                      onClick: () =>
+                        runAction(`unpublish-${item.id}`, () =>
+                          unpublishItem(item.id)
+                        ),
+                    }
+                  : {
+                      id: `publish-${item.id}`,
+                      icon: "✅",
+                      label: "Veröffentlichen",
+                      variant: "green",
+                      onClick: () =>
+                        runAction(`publish-${item.id}`, () =>
+                          publishItem(item.id)
+                        ),
+                    },
+                item.status === "archived"
+                  ? {
+                      id: `restore-${item.id}`,
+                      icon: "♻️",
+                      label: "Wiederherstellen",
+                      variant: "green",
+                      onClick: () =>
+                        runAction(`restore-${item.id}`, () =>
+                          restoreItem(item.id)
+                        ),
+                    }
+                  : {
+                      id: `archive-${item.id}`,
+                      icon: "📦",
+                      label: "Archivieren",
+                      variant: "outline-orange",
+                      onClick: () =>
+                        runAction(`archive-${item.id}`, () =>
+                          archiveItem(item.id)
+                        ),
+                    },
+                {
+                  id: `review-${item.id}`,
+                  icon: "🔍",
+                  label: "Review",
+                  variant: "outline-orange",
+                  onClick: () =>
+                    runAction(`review-${item.id}`, () => reviewItem(item.id)),
+                },
+                {
+                  id: `delete-${item.id}`,
+                  icon: "🗑",
+                  label: "Löschen",
+                  variant: "red",
+                  onClick: () =>
+                    runAction(`delete-${item.id}`, () => deleteItem(item.id)),
+                },
+              ]}
+            />
           </div>
         ))
       )}
@@ -1156,78 +1204,6 @@ const contentPreviewStyle = {
   fontSize: '14px',
   lineHeight: '1.5',
   whiteSpace: 'pre-line',
-};
-
-const actionRowStyle = {
-  display: 'flex',
-  gap: '8px',
-  marginTop: '10px',
-};
-
-const editButtonStyle = {
-  flex: 1,
-  border: 'none',
-  backgroundColor: '#dbeafe',
-  color: '#1d4ed8',
-  padding: '10px',
-  borderRadius: '12px',
-  fontWeight: '700',
-  cursor: 'pointer',
-};
-
-const publishButtonStyle = {
-  flex: 1,
-  border: 'none',
-  backgroundColor: '#dcfce7',
-  color: '#166534',
-  padding: '10px',
-  borderRadius: '12px',
-  fontWeight: '700',
-  cursor: 'pointer',
-};
-
-const reviewButtonStyle = {
-  flex: 1,
-  border: 'none',
-  backgroundColor: '#fef3c7',
-  color: '#92400e',
-  padding: '10px',
-  borderRadius: '12px',
-  fontWeight: '700',
-  cursor: 'pointer',
-};
-
-const archiveButtonStyle = {
-  flex: 1,
-  border: 'none',
-  backgroundColor: '#fef3c7',
-  color: '#92400e',
-  padding: '10px',
-  borderRadius: '12px',
-  fontWeight: '700',
-  cursor: 'pointer',
-};
-
-const restoreButtonStyle = {
-  flex: 1,
-  border: 'none',
-  backgroundColor: '#dcfce7',
-  color: '#166534',
-  padding: '10px',
-  borderRadius: '12px',
-  fontWeight: '700',
-  cursor: 'pointer',
-};
-
-const deleteButtonStyle = {
-  flex: 1,
-  border: 'none',
-  backgroundColor: '#fee2e2',
-  color: '#991b1b',
-  padding: '10px',
-  borderRadius: '12px',
-  fontWeight: '700',
-  cursor: 'pointer',
 };
 
 const clearButtonStyle = {

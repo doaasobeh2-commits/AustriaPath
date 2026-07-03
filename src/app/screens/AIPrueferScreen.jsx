@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { aiPremiumLibrary } from '../../data/aiPremiumLibrary';
+import AdminActionBar from '../components/AdminActionBar';
 
 const STORAGE_KEY = 'austriaPathAiPrueferLibrary';
 
@@ -61,6 +62,18 @@ export default function AIPrueferScreen({ setActiveTab }) {
   const [service, setService] = useState('Alle');
   const [selectedModel, setSelectedModel] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [processingAction, setProcessingAction] = useState(null);
+
+  const runAction = (actionId, fn) => {
+    if (processingAction) return;
+
+    setProcessingAction(actionId);
+    try {
+      fn();
+    } finally {
+      setProcessingAction(null);
+    }
+  };
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
 
@@ -196,13 +209,29 @@ examinerRulesText: arrayToLines(item.examinerRules),
           ← Zurück zur AI Library
         </button>
 
-        <button style={editButtonStyle} onClick={() => handleEdit(selectedModel)}>
-          ✏️ Bearbeiten
-        </button>
-
-        <button style={deleteButtonStyle} onClick={() => handleDelete(selectedModel.id)}>
-          🗑 Löschen
-        </button>
+        <AdminActionBar
+          processingAction={processingAction}
+          actions={[
+            {
+              id: "edit-model",
+              icon: "✏️",
+              label: "Bearbeiten",
+              variant: "outline-blue",
+              onClick: () =>
+                runAction("edit-model", () => handleEdit(selectedModel)),
+            },
+            {
+              id: "delete-model",
+              icon: "🗑",
+              label: "Löschen",
+              variant: "red",
+              onClick: () =>
+                runAction("delete-model", () =>
+                  handleDelete(selectedModel.id)
+                ),
+            },
+          ]}
+        />
 
         <div style={headerCardStyle}>
           <span style={badgeStyle}>{selectedModel.level}</span>
@@ -422,13 +451,26 @@ examinerRulesText: arrayToLines(item.examinerRules),
             <option value="premium_exam_followup">Nach Premium-Prüfung als Follow-up</option>
           </select>
 
-          <button style={saveButtonStyle} onClick={handleSave}>
-            {editingId ? 'Änderungen speichern' : 'Modell hinzufügen'}
-          </button>
-
-          <button style={cancelButtonStyle} onClick={resetForm}>
-            Abbrechen
-          </button>
+          <AdminActionBar
+            processingAction={processingAction}
+            actions={[
+              {
+                id: editingId ? "save-model" : "add-model",
+                icon: "💾",
+                label: editingId ? "Änderungen speichern" : "Modell hinzufügen",
+                variant: "green",
+                onClick: () =>
+                  runAction(editingId ? "save-model" : "add-model", handleSave),
+              },
+              {
+                id: "cancel-form",
+                icon: "✕",
+                label: "Abbrechen",
+                variant: "neutral",
+                onClick: () => runAction("cancel-form", resetForm),
+              },
+            ]}
+          />
         </div>
       )}
 
@@ -505,10 +547,27 @@ examinerRulesText: arrayToLines(item.examinerRules),
               <div style={openHintStyle}>Details öffnen ›</div>
             </div>
 
-            <div style={cardActionsStyle}>
-              <button style={miniEditButtonStyle} onClick={() => handleEdit(item)}>Bearbeiten</button>
-              <button style={miniDeleteButtonStyle} onClick={() => handleDelete(item.id)}>Löschen</button>
-            </div>
+            <AdminActionBar
+              processingAction={processingAction}
+              actions={[
+                {
+                  id: `edit-${item.id}`,
+                  icon: "✏️",
+                  label: "Bearbeiten",
+                  variant: "outline-blue",
+                  onClick: () =>
+                    runAction(`edit-${item.id}`, () => handleEdit(item)),
+                },
+                {
+                  id: `delete-${item.id}`,
+                  icon: "🗑",
+                  label: "Löschen",
+                  variant: "red",
+                  onClick: () =>
+                    runAction(`delete-${item.id}`, () => handleDelete(item.id)),
+                },
+              ]}
+            />
           </div>
         ))
       )}
@@ -585,29 +644,6 @@ const addButtonStyle = {
   borderRadius: '12px',
   fontWeight: '700',
   cursor: 'pointer'
-};
-
-const editButtonStyle = {
-  border: 'none',
-  backgroundColor: '#fef3c7',
-  color: '#92400e',
-  padding: '10px 14px',
-  borderRadius: '12px',
-  fontWeight: '700',
-  cursor: 'pointer',
-  marginRight: '8px',
-  marginBottom: '8px'
-};
-
-const deleteButtonStyle = {
-  border: 'none',
-  backgroundColor: '#fee2e2',
-  color: '#991b1b',
-  padding: '10px 14px',
-  borderRadius: '12px',
-  fontWeight: '700',
-  cursor: 'pointer',
-  marginBottom: '8px'
 };
 
 const heroStyle = {
@@ -690,29 +726,6 @@ const checkboxStyle = {
   color: '#334155'
 };
 
-const saveButtonStyle = {
-  width: '100%',
-  border: 'none',
-  backgroundColor: '#16a34a',
-  color: '#ffffff',
-  padding: '13px',
-  borderRadius: '12px',
-  fontWeight: '800',
-  cursor: 'pointer',
-  marginBottom: '8px'
-};
-
-const cancelButtonStyle = {
-  width: '100%',
-  border: 'none',
-  backgroundColor: '#e2e8f0',
-  color: '#334155',
-  padding: '13px',
-  borderRadius: '12px',
-  fontWeight: '800',
-  cursor: 'pointer'
-};
-
 const modelCardStyle = {
   backgroundColor: '#ffffff',
   borderRadius: '16px',
@@ -738,34 +751,6 @@ const modelTitleStyle = { margin: '0 0 8px', color: '#0f172a' };
 const modelTextStyle = { margin: '4px 0', color: '#64748b', fontSize: '14px' };
 
 const openHintStyle = { marginTop: '10px', color: '#2563eb', fontWeight: '700', cursor: 'pointer' };
-
-const cardActionsStyle = {
-  display: 'flex',
-  gap: '8px',
-  marginTop: '12px'
-};
-
-const miniEditButtonStyle = {
-  flex: 1,
-  border: 'none',
-  backgroundColor: '#fef3c7',
-  color: '#92400e',
-  padding: '10px',
-  borderRadius: '10px',
-  fontWeight: '700',
-  cursor: 'pointer'
-};
-
-const miniDeleteButtonStyle = {
-  flex: 1,
-  border: 'none',
-  backgroundColor: '#fee2e2',
-  color: '#991b1b',
-  padding: '10px',
-  borderRadius: '10px',
-  fontWeight: '700',
-  cursor: 'pointer'
-};
 
 const emptyStyle = {
   backgroundColor: '#ffffff',

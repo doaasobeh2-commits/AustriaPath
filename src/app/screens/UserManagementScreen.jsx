@@ -6,6 +6,7 @@ import {
   consumeAiCredits,
 } from '../../data/subscriptionEngine';
 import { getUsers, USERS_KEY } from '../userAccess';
+import AdminActionBar from '../components/AdminActionBar';
 function getUserCode(user) {
   if (user.userCode) return user.userCode;
   const raw = String(user.id || user.email || Date.now());
@@ -26,6 +27,18 @@ export default function UserManagementScreen({ setActiveTab }) {
   const [users, setUsers] = useState(loadUsers);
   const [selectedUser, setSelectedUser] = useState(null);
   const [search, setSearch] = useState('');
+  const [processingAction, setProcessingAction] = useState(null);
+
+  const runAction = (actionId, fn) => {
+    if (processingAction) return;
+
+    setProcessingAction(actionId);
+    try {
+      fn();
+    } finally {
+      setProcessingAction(null);
+    }
+  };
 
   const filteredUsers = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -40,16 +53,13 @@ export default function UserManagementScreen({ setActiveTab }) {
 
  const stats = useMemo(() => ({
   total: users.length,
- active: users.filter(
-  (u) => u.status === "approved" || u.status === "active"
-).length,
+  active: users.filter((u) => u.status !== "blocked").length,
   premium: users.filter(
     (u) =>
       (u.plan && u.plan !== "free") ||
       (u.subscription?.type && u.subscription.type !== "free")
   ).length,
   blocked: users.filter((u) => u.status === "blocked").length,
-  pending: users.filter((u) => !u.status || u.status === "pending").length,
 }), [users]);
   const updateUser = (id, changes) => {
     const next = users.map((u) => {
@@ -130,6 +140,171 @@ const addActivity = (user, action, details = '') => {
   };
 
   if (selectedUser) {
+    const isBlocked = selectedUser.status === "blocked";
+
+    const handleUnlockUser = () => {
+      runAction("unlock", () => {
+        const updated = {
+          ...selectedUser,
+          status: "approved",
+          accessUpdatedAt: new Date().toISOString(),
+        };
+
+        const next = users.map((u) =>
+          String(u.id) === String(selectedUser.id) ? updated : u
+        );
+
+        setUsers(next);
+        saveUsers(next);
+        setSelectedUser(updated);
+      });
+    };
+
+    const handleBlockUser = () => {
+      runAction("block", () => {
+        updateUser(selectedUser.id, { status: "blocked" });
+        addActivity(selectedUser, "Benutzer gesperrt");
+      });
+    };
+
+    const handleResetPassword = () => {
+      if (processingAction) return;
+
+      const confirmed = window.confirm(
+        `Passwort für ${selectedUser.name} wirklich zurücksetzen?`
+      );
+      if (!confirmed) return;
+
+      runAction("reset-password", () => {
+        alert("Passwort-Reset wird nach Backend-Integration aktiviert.");
+      });
+    };
+
+    const handleVerifyEmail = () => {
+      runAction("verify-email", () => {
+        alert("E-Mail-Bestätigung wird nach Backend-Integration aktiviert.");
+      });
+    };
+
+    const handleDeleteUser = () => {
+      runAction("delete", () => deleteUser(selectedUser));
+    };
+
+    const managementActions = [
+      ...(isBlocked
+        ? [
+            {
+              id: "unlock",
+              icon: "🔓",
+              label: "Entsperren",
+              variant: "green",
+              onClick: handleUnlockUser,
+            },
+          ]
+        : [
+            {
+              id: "block",
+              icon: "🚫",
+              label: "Sperren",
+              variant: "neutral",
+              onClick: handleBlockUser,
+            },
+          ]),
+      {
+        id: "reset-password",
+        icon: "🔑",
+        label: "Passwort zurücksetzen",
+        variant: "blue",
+        onClick: handleResetPassword,
+      },
+      {
+        id: "verify-email",
+        icon: "✉️",
+        label: "E-Mail bestätigen",
+        variant: "orange",
+        onClick: handleVerifyEmail,
+      },
+      {
+        id: "delete",
+        icon: "🗑",
+        label: "Löschen",
+        variant: "red",
+        onClick: handleDeleteUser,
+      },
+    ];
+
+    const creditActions = [
+      {
+        id: "credits-plus-50",
+        icon: "➕",
+        label: "+50 Credits",
+        variant: "blue",
+        onClick: () =>
+          runAction("credits-plus-50", () =>
+            changeAiCredits(selectedUser, 50)
+          ),
+      },
+      {
+        id: "credits-plus-100",
+        icon: "➕",
+        label: "+100 Credits",
+        variant: "blue",
+        onClick: () =>
+          runAction("credits-plus-100", () =>
+            changeAiCredits(selectedUser, 100)
+          ),
+      },
+      {
+        id: "credits-minus-50",
+        icon: "➖",
+        label: "−50 Credits",
+        variant: "neutral",
+        onClick: () =>
+          runAction("credits-minus-50", () =>
+            changeAiCredits(selectedUser, -50)
+          ),
+      },
+      {
+        id: "credits-reset",
+        icon: "🔄",
+        label: "Reset Credits",
+        variant: "outline-red",
+        onClick: () =>
+          runAction("credits-reset", () => resetAiCredits(selectedUser)),
+      },
+    ];
+
+    const subscriptionActions = [
+      {
+        id: "sub-ai-exam",
+        icon: "🤖",
+        label: "AI Prüfung geben",
+        variant: "blue",
+        onClick: () =>
+          runAction("sub-ai-exam", () =>
+            changeSubscription(selectedUser, "ai_exam")
+          ),
+      },
+      {
+        id: "sub-premium",
+        icon: "⭐",
+        label: "Premium Monat",
+        variant: "blue",
+        onClick: () =>
+          runAction("sub-premium", () =>
+            changeSubscription(selectedUser, "premium_month")
+          ),
+      },
+      {
+        id: "sub-free",
+        icon: "↩️",
+        label: "Premium entfernen",
+        variant: "neutral",
+        onClick: () =>
+          runAction("sub-free", () => changeSubscription(selectedUser, "free")),
+      },
+    ];
+
     return (
       <div style={pageStyle}>
         <button style={backButtonStyle} onClick={() => setSelectedUser(null)}>
@@ -144,13 +319,7 @@ const addActivity = (user, action, details = '') => {
 </p>
           <div style={badgeRowStyle}>
             <span style={badgeStyle}>{selectedUser.level}</span>
-            <span style={badgeStyle}>
-             {selectedUser.status === "approved" || selectedUser.status === "active"
-  ? "🟢 Aktiv"
-  : selectedUser.status === "pending"
-  ? "🟡 Wartet"
-  : "🚫 Gesperrt"}
-            </span>
+            <span style={badgeStyle}>{accountStatusLabel(selectedUser.status)}</span>
             <span style={badgeStyle}>
               {subscriptionLabel(selectedUser.subscription?.type)}
             </span>
@@ -260,57 +429,18 @@ const addActivity = (user, action, details = '') => {
   {Math.max(0, (selectedUser.aiCredits || 0) - (selectedUser.usedAiCredits || 0))}
 </p>
 
-<div style={actionGridStyle}>
-  <button
-    style={smallBlueButtonStyle}
-    onClick={() => changeAiCredits(selectedUser, 50)}
-  >
-    ➕ 50 Credits
-  </button>
-
-  <button
-    style={smallBlueButtonStyle}
-    onClick={() => changeAiCredits(selectedUser, 100)}
-  >
-    ➕ 100 Credits
-  </button>
-
-  <button
-    style={smallGrayButtonStyle}
-    onClick={() => changeAiCredits(selectedUser, -50)}
-  >
-    ➖ 50 Credits
-  </button>
-
-  <button
-    style={dangerButtonStyle}
-    onClick={() => resetAiCredits(selectedUser)}
-  >
-    🔄 Reset Credits
-  </button>
-</div>
-          <div style={actionGridStyle}>
-            <button
-              style={smallBlueButtonStyle}
-              onClick={() => changeSubscription(selectedUser, 'ai_exam')}
-            >
-              AI Prüfung geben
-            </button>
-
-            <button
-              style={smallBlueButtonStyle}
-              onClick={() => changeSubscription(selectedUser, 'premium_month')}
-            >
-              Premium Monat geben
-            </button>
-
-            <button
-              style={smallGrayButtonStyle}
-              onClick={() => changeSubscription(selectedUser, 'free')}
-            >
-              Premium entfernen
-            </button>
-          </div>
+<AdminActionBar
+  title="Credits anpassen"
+  inset
+  actions={creditActions}
+  processingAction={processingAction}
+/>
+          <AdminActionBar
+            title="Abo-Plan ändern"
+            inset
+            actions={subscriptionActions}
+            processingAction={processingAction}
+          />
         </div>
 <div style={cardStyle}>
   <h2>🔐 Permissions</h2>
@@ -338,17 +468,25 @@ const addActivity = (user, action, details = '') => {
 
         <div style={cardStyle}>
           <h2>📝 Admin Notiz</h2>
-<button
-  style={smallBlueButtonStyle}
-  onClick={() => alert('Notiz gespeichert.')}
->
-  💾 Notiz speichern
-</button>
           <textarea
             style={textareaStyle}
             value={selectedUser.notes || ''}
             placeholder="Interne Notiz zum Benutzer..."
             onChange={(e) => updateUser(selectedUser.id, { notes: e.target.value })}
+          />
+          <AdminActionBar
+            inset
+            processingAction={processingAction}
+            actions={[
+              {
+                id: "save-note",
+                icon: "💾",
+                label: "Notiz speichern",
+                variant: "blue",
+                onClick: () =>
+                  runAction("save-note", () => alert("Notiz gespeichert.")),
+              },
+            ]}
           />
         </div>
 <div style={cardStyle}>
@@ -387,62 +525,15 @@ const addActivity = (user, action, details = '') => {
 </div>
       <div style={cardStyle}>
   <h2>⚙️ Verwaltung</h2>
+  <p style={managementHintStyle}>
+    Konto sperren, Passwort zurücksetzen, E-Mail bestätigen oder Benutzer löschen.
+  </p>
 
-
-  {selectedUser.status === "approved" || selectedUser.status === "active" ? (
-    <button
-      style={deleteButtonStyle}
-      onClick={() => {
-        updateUser(selectedUser.id, { status: "blocked" });
-        addActivity(selectedUser, "Benutzer gesperrt");
-      }}
-    >
-      🚫 Sperren
-    </button>
-  ) : (
-    <button
-  style={successButtonStyle}
-  onClick={() => {
-    const updated = {
-      ...selectedUser,
-      status: "approved",
-      accessUpdatedAt: new Date().toISOString(),
-    };
-
-    const next = users.map((u) =>
-      String(u.id) === String(selectedUser.id) ? updated : u
-    );
-
-    setUsers(next);
-    saveUsers(next);
-    setSelectedUser(updated);
-  
-  }}
->
-  ✅ Entsperren
-</button>
-  )}
-
-  <button
-    style={smallGrayButtonStyle}
-    onClick={() => alert("Passwort-Reset wird nach Backend-Integration aktiviert.")}
-  >
-    🔑 Passwort zurücksetzen
-  </button>
-
-  <button
-    style={smallGrayButtonStyle}
-    onClick={() => alert("E-Mail-Bestätigung wird nach Backend-Integration aktiviert.")}
-  >
-    ✉️ E-Mail bestätigen
-  </button>
-
-  <button
-    style={deleteButtonStyle}
-    onClick={() => deleteUser(selectedUser)}
-  >
-    🗑 Löschen
-  </button>
+  <AdminActionBar
+    inset
+    actions={managementActions}
+    processingAction={processingAction}
+  />
 </div>
         </div>
       
@@ -463,7 +554,6 @@ const addActivity = (user, action, details = '') => {
       <div style={statsGridStyle}>
         <Stat label="Gesamt" value={stats.total} />
         <Stat label="Aktiv" value={stats.active} />
-        <Stat label="Wartet" value={stats.pending} />
         <Stat label="Premium" value={stats.premium} />
         <Stat label="Gesperrt" value={stats.blocked} />
       </div>
@@ -487,13 +577,7 @@ const addActivity = (user, action, details = '') => {
               <div style={badgeRowStyle}>
                 <span style={badgeStyle}>{user.level}</span>
                 <span style={badgeStyle}>{subscriptionLabel(user.subscription?.type)}</span>
-                <span style={badgeStyle}>
-                 {user.status === "approved" || user.status === "active"
-  ? "🟢 Aktiv"
-  : user.status === "pending"
-  ? "🟡 Wartet"
-  : "🚫 Gesperrt"}
-                </span>
+                <span style={badgeStyle}>{accountStatusLabel(user.status)}</span>
               </div>
             </div>
 
@@ -514,6 +598,10 @@ function Stat({ label, value }) {
       <span>{label}</span>
     </div>
   );
+}
+
+function accountStatusLabel(status) {
+  return status === "blocked" ? "🚫 Gesperrt" : "🟢 Aktiv";
 }
 
 function subscriptionLabel(type) {
@@ -682,59 +770,11 @@ const levelCheckStyle = {
   alignItems: 'center',
 };
 
-const actionGridStyle = {
-  display: 'grid',
-  gap: '10px',
-};
-
-const smallBlueButtonStyle = {
-  border: 'none',
-  backgroundColor: '#2563eb',
-  color: '#ffffff',
-  padding: '12px',
-  borderRadius: '12px',
-  fontWeight: '800',
-  cursor: 'pointer',
-};
-
-const smallGrayButtonStyle = {
-  border: 'none',
-  backgroundColor: '#e2e8f0',
-  color: '#334155',
-  padding: '12px',
-  borderRadius: '12px',
-  fontWeight: '800',
-  cursor: 'pointer',
-};
-
-const dangerButtonStyle = {
-  border: 'none',
-  backgroundColor: '#fee2e2',
-  color: '#991b1b',
-  padding: '12px',
-  borderRadius: '12px',
-  fontWeight: '800',
-  cursor: 'pointer',
-};
-
-const successButtonStyle = {
-  border: 'none',
-  backgroundColor: '#dcfce7',
-  color: '#166534',
-  padding: '12px',
-  borderRadius: '12px',
-  fontWeight: '800',
-  cursor: 'pointer',
-};
-
-const deleteButtonStyle = {
-  border: 'none',
-  backgroundColor: '#dc2626',
-  color: '#ffffff',
-  padding: '12px',
-  borderRadius: '12px',
-  fontWeight: '800',
-  cursor: 'pointer',
+const managementHintStyle = {
+  margin: '0 0 4px',
+  color: '#64748b',
+  fontSize: '14px',
+  lineHeight: 1.5,
 };
 
 const emptyStyle = {

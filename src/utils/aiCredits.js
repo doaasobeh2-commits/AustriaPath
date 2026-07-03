@@ -35,7 +35,7 @@ export function canUseAI(user, serviceType = "ai_exam") {
 
   const cost = ACCESS_CONTROL.aiCosts[serviceType] || 1;
 
-  return safeUser.status === ACCESS_CONTROL.statuses.approved &&
+  return safeUser.status !== ACCESS_CONTROL.statuses.blocked &&
     safeUser.aiCredits >= cost;
 }
 

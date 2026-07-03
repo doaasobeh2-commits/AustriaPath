@@ -15,6 +15,10 @@ function getStoredUsers() {
   }
 }
 
+function normalizeAccountStatus(status) {
+  return status === "blocked" ? "blocked" : "approved";
+}
+
 function normalizeAdminUser(user) {
   if (user.email?.toLowerCase() !== ADMIN_EMAIL) {
     return {
@@ -28,6 +32,18 @@ function normalizeAdminUser(user) {
     role: "admin",
     status: "approved",
     allowedLevels: ["A2", "B1", "B2"],
+  };
+}
+
+function normalizeStoredUser(user) {
+  if (user.email?.toLowerCase() === ADMIN_EMAIL) {
+    return normalizeAdminUser(user);
+  }
+
+  return {
+    ...user,
+    role: "student",
+    status: normalizeAccountStatus(user.status),
   };
 }
 
@@ -124,7 +140,7 @@ export function getUsers() {
     );
 
     if (hasAdmin) {
-      return users.map(normalizeAdminUser);
+      return users.map(normalizeStoredUser);
     }
 
     const seedAdmin = buildSeedAdminUser();
@@ -136,7 +152,7 @@ export function getUsers() {
 }
 
 export function saveUsers(users) {
-  const fixedUsers = users.map(normalizeAdminUser);
+  const fixedUsers = users.map(normalizeStoredUser);
 
   const hasAdmin = fixedUsers.some(
     (user) => user.email?.toLowerCase() === ADMIN_EMAIL
@@ -181,7 +197,7 @@ export function resolveSessionUser() {
     );
 
     if (!storedUser) return null;
-    if (storedUser.status !== "approved") return null;
+    if (storedUser.status === "blocked") return null;
 
     return toSessionUser(storedUser);
   } catch {
@@ -287,16 +303,9 @@ export function authenticateUser(email, password) {
     ...user,
     email: cleanEmail,
     role: "student",
-    status: "approved",
+    status: normalizeAccountStatus(user.status),
     lastLogin: new Date().toISOString(),
   };
-
-  if (user.status !== "approved") {
-    const updatedUsers = users.map((item) =>
-      item.email?.toLowerCase() === cleanEmail ? studentUser : item
-    );
-    saveUsers(updatedUsers);
-  }
 
   saveCurrentUser(studentUser);
 
