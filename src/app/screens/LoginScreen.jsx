@@ -1,7 +1,6 @@
 import React, { useState } from "react";
+import { ADMIN_EMAIL } from "../../config/authConfig";
 import { getUsers, saveUsers, saveCurrentUser } from "../userAccess";
-
-const ADMIN_EMAIL = "fadisobehau@gmail.com";
 
 export default function LoginScreen({ onLogin, onRegister }) {
   const [email, setEmail] = useState("");
@@ -20,31 +19,39 @@ export default function LoginScreen({ onLogin, onRegister }) {
       (item) => item.email?.toLowerCase() === cleanEmail
     );
 
-    // Admin login
-    if (cleanEmail === ADMIN_EMAIL) {
+    if (!user) {
+      alert("Dieses Konto existiert nicht. Bitte zuerst registrieren.");
+      return;
+    }
+
+    if (user.password !== password) {
+      alert("E-Mail oder Passwort ist falsch.");
+      return;
+    }
+
+    const isAdminAccount = cleanEmail === ADMIN_EMAIL;
+
+    if (!isAdminAccount && user.status !== "approved") {
+      alert("Ihr Konto wartet noch auf Freigabe durch den Administrator.");
+      return;
+    }
+
+    if (isAdminAccount) {
       const adminUser = {
-        ...(user || {}),
-        id: user?.id || "admin-1",
-        name: "Fadi Sobeh",
-        email: ADMIN_EMAIL,
-        password,
-        level: user?.level || "B1",
-        allowedLevels: ["A2", "B1", "B2"],
+        ...user,
+        email: cleanEmail,
         role: "admin",
         status: "approved",
-        plan: user?.plan || "free",
-        aiCredits: typeof user?.aiCredits === "number" ? user.aiCredits : 0,
+        allowedLevels: ["A2", "B1", "B2"],
+        aiCredits: typeof user.aiCredits === "number" ? user.aiCredits : 0,
         usedAiCredits:
-          typeof user?.usedAiCredits === "number" ? user.usedAiCredits : 0,
-        createdAt: user?.createdAt || new Date().toISOString(),
+          typeof user.usedAiCredits === "number" ? user.usedAiCredits : 0,
         lastLogin: new Date().toISOString(),
       };
 
-      const updatedUsers = user
-        ? users.map((u) =>
-            u.email?.toLowerCase() === ADMIN_EMAIL ? adminUser : u
-          )
-        : [...users, adminUser];
+      const updatedUsers = users.map((item) =>
+        item.email?.toLowerCase() === ADMIN_EMAIL ? adminUser : item
+      );
 
       saveUsers(updatedUsers);
       saveCurrentUser(adminUser);
@@ -67,22 +74,6 @@ export default function LoginScreen({ onLogin, onRegister }) {
       );
 
       onLogin(adminUser);
-      return;
-    }
-
-    // Normal user login
-    if (!user) {
-      alert("Dieses Konto existiert nicht. Bitte zuerst registrieren.");
-      return;
-    }
-
-    if (user.password !== password) {
-      alert("E-Mail oder Passwort ist falsch.");
-      return;
-    }
-
-    if (user.status !== "approved") {
-      alert("Ihr Konto wartet noch auf Freigabe durch den Administrator.");
       return;
     }
 

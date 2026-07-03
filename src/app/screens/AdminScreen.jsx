@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { getUsers, updateUserLevel, updateUserAllowedLevels } from '../userAccess';
+import {
+  getAdminUserRecord,
+  getUsers,
+  updateUserLevel,
+  updateUserAllowedLevels,
+} from '../userAccess';
 import { a2Models } from '../../data/modelsA2';
 import { b1Models } from '../../data/modelsb1/';
 import { b2Models } from '../../data/modelsB2';
@@ -61,7 +66,9 @@ const [parentModelId, setParentModelId] = useState('');
   };
 
  const login = () => {
-  if (password === "admin123") {
+  const adminUser = getAdminUserRecord();
+
+  if (adminUser && password === adminUser.password) {
     setUnlocked(true);
     setPassword("");
   } else {

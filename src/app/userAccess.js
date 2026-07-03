@@ -1,14 +1,43 @@
+import {
+  ADMIN_EMAIL,
+  getAdminInitialPassword,
+} from "../config/authConfig";
+
 export const USERS_KEY = "austriaPathUsers";
 export const CURRENT_USER_KEY = "austriaPathCurrentUser";
 
-const ADMIN_EMAIL = "fadisobehau@gmail.com";
+function getStoredUsers() {
+  try {
+    return JSON.parse(localStorage.getItem(USERS_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
 
-function getAdminUser() {
+function normalizeAdminUser(user) {
+  if (user.email?.toLowerCase() !== ADMIN_EMAIL) {
+    return user;
+  }
+
+  return {
+    ...user,
+    role: "admin",
+    status: "approved",
+    allowedLevels: ["A2", "B1", "B2"],
+  };
+}
+
+function buildSeedAdminUser() {
+  const password = getAdminInitialPassword();
+  if (!password) {
+    return null;
+  }
+
   return {
     id: "admin-1",
     name: "Fadi Sobeh",
     email: ADMIN_EMAIL,
-    password: "admin123",
+    password,
     level: "B1",
     allowedLevels: ["A2", "B1", "B2"],
     plan: "free",
@@ -21,54 +50,46 @@ function getAdminUser() {
   };
 }
 
+export function getAdminUserRecord() {
+  const users = getUsers();
+  return (
+    users.find((user) => user.email?.toLowerCase() === ADMIN_EMAIL) || null
+  );
+}
+
 export function getUsers() {
   try {
-    const users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
+    const users = getStoredUsers();
     const hasAdmin = users.some(
       (user) => user.email?.toLowerCase() === ADMIN_EMAIL
     );
 
     if (hasAdmin) {
-      return users.map((user) =>
-        user.email?.toLowerCase() === ADMIN_EMAIL
-          ? {
-              ...user,
-              role: "admin",
-              status: "approved",
-              allowedLevels: ["A2", "B1", "B2"],
-            }
-          : user
-      );
+      return users.map(normalizeAdminUser);
     }
 
-    return [getAdminUser(), ...users];
+    const seedAdmin = buildSeedAdminUser();
+    return seedAdmin ? [seedAdmin, ...users] : users;
   } catch {
-    return [getAdminUser()];
+    const seedAdmin = buildSeedAdminUser();
+    return seedAdmin ? [seedAdmin] : [];
   }
 }
 
 export function saveUsers(users) {
-  const fixedUsers = users.map((user) =>
-    user.email?.toLowerCase() === ADMIN_EMAIL
-      ? {
-          ...user,
-          role: "admin",
-          status: "approved",
-          allowedLevels: ["A2", "B1", "B2"],
-        }
-      : user
-  );
+  const fixedUsers = users.map(normalizeAdminUser);
 
   const hasAdmin = fixedUsers.some(
     (user) => user.email?.toLowerCase() === ADMIN_EMAIL
   );
 
-  const finalUsers = hasAdmin
-    ? fixedUsers
-    : [getAdminUser(), ...fixedUsers];
+  const seedAdmin = buildSeedAdminUser();
+  const finalUsers =
+    hasAdmin || !seedAdmin ? fixedUsers : [seedAdmin, ...fixedUsers];
 
   localStorage.setItem(USERS_KEY, JSON.stringify(finalUsers));
 }
+
 export function getCurrentUser() {
   try {
     return JSON.parse(localStorage.getItem(CURRENT_USER_KEY)) || null;
@@ -100,15 +121,36 @@ export function registerUser({
   const users = getUsers();
 
   if (cleanEmail === ADMIN_EMAIL) {
+    const existingAdmin = users.find(
+      (user) => user.email?.toLowerCase() === ADMIN_EMAIL
+    );
+
     const adminUser = {
-      ...getAdminUser(),
+      id: existingAdmin?.id || "admin-1",
       name: name || "Fadi Sobeh",
+      email: ADMIN_EMAIL,
       password,
+      level: existingAdmin?.level || level || "B1",
+      allowedLevels: ["A2", "B1", "B2"],
+      plan: existingAdmin?.plan || "free",
+      levelSource: "system_admin",
+      role: "admin",
+      status: "approved",
+      aiCredits:
+        typeof existingAdmin?.aiCredits === "number" ? existingAdmin.aiCredits : 0,
+      usedAiCredits:
+        typeof existingAdmin?.usedAiCredits === "number"
+          ? existingAdmin.usedAiCredits
+          : 0,
+      createdAt:
+        existingAdmin?.createdAt || createdAt || new Date().toISOString(),
     };
 
-    const updatedUsers = users.map((user) =>
-      user.email?.toLowerCase() === ADMIN_EMAIL ? adminUser : user
-    );
+    const updatedUsers = existingAdmin
+      ? users.map((user) =>
+          user.email?.toLowerCase() === ADMIN_EMAIL ? adminUser : user
+        )
+      : [...users, adminUser];
 
     saveUsers(updatedUsers);
     saveCurrentUser(adminUser);

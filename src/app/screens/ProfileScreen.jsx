@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { ADMIN_EMAIL } from '../../config/authConfig';
 import { buildWeeklySession } from '../../data/weeklyPlanLibrary';
 import { buildPremiumExamParts } from '../../data/premiumExamBuilder';
 export function ProfileScreen({ setActiveTab }) {
@@ -328,7 +329,7 @@ return (
   ⚙️ Kontoeinstellungen
 </button>
             </div>
-{userEmail?.toLowerCase() === 'fadisobehau@gmail.com' && (
+{userEmail?.toLowerCase() === ADMIN_EMAIL && (
   <button
   onClick={() => {
     alert("Benutzerverwaltung clicked");

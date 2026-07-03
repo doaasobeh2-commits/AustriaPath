@@ -28,8 +28,7 @@ import UserManagementScreen from "./screens/UserManagementScreen";
 import PlacementTestScreen from "./screens/PlacementTestScreen";
 import AISessionScreen from "./screens/AISessionScreen";
 import PremiumExamSessionScreen from "./screens/PremiumExamSessionScreen";
-
-const ADMIN_EMAIL = "fadisobehau@gmail.com";
+import { ADMIN_EMAIL } from "../config/authConfig";
 
 const getStoredUser = () => {
   try {

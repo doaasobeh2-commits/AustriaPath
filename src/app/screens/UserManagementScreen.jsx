@@ -5,8 +5,7 @@ import {
   resetCredits,
   consumeAiCredits,
 } from '../../data/subscriptionEngine';
-
-const USERS_KEY = 'austriaPathUsers';
+import { getUsers, USERS_KEY } from '../userAccess';
 function getUserCode(user) {
   if (user.userCode) return user.userCode;
   const raw = String(user.id || user.email || Date.now());
@@ -16,36 +15,7 @@ function getUserCode(user) {
   return `AP-${String(num).padStart(6, '0').slice(0, 6)}`;
 }
 function loadUsers() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
-    if (saved.length) return saved;
-  } catch {}
-console.log("Loaded users:", saved);
- return [
-  {
-    id: "admin-1",
-    name: "Fadi Sobeh",
-    email: "fadisobehau@gmail.com",
-    level: "B1",
-    allowedLevels: ["A2", "B1", "B2"],
-    language: "Deutsch",
-    role: "admin",
-    status: "approved",
-    source: "system_admin",
-    createdAt: new Date().toISOString(),
-    lastLogin: new Date().toISOString(),
-    subscription: {
-      type: "free",
-      status: "inactive",
-      remainingExams: 0,
-      startDate: null,
-      endDate: null,
-    },
-    aiLevel: "-",
-    completedExams: 0,
-    notes: "System administrator",
-  },
-];
+  return getUsers();
 }
 
 function saveUsers(users) {
