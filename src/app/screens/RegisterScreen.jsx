@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { registerUser, saveCurrentUser } from "../userAccess";
+import { registerUser } from "../userAccess";
 
 export default function RegisterScreen({ onRegisterSuccess, onBack }) {
   const [name, setName] = useState("");
@@ -42,19 +42,6 @@ export default function RegisterScreen({ onRegisterSuccess, onBack }) {
       aiCredits: 5,
       createdAt: new Date().toISOString(),
     });
-
-    saveCurrentUser(newUser);
-
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("currentUser", JSON.stringify(newUser));
-    localStorage.setItem("userName", newUser.name);
-    localStorage.setItem("userEmail", newUser.email);
-    localStorage.setItem("userLevel", newUser.level || "B1");
-    localStorage.setItem("userRole", newUser.role || "student");
-    localStorage.setItem(
-      "userLanguage",
-      localStorage.getItem("userLanguage") || "Deutsch"
-    );
 
     if (onRegisterSuccess) {
       onRegisterSuccess(newUser);

@@ -5,6 +5,7 @@ import {
 
 export const USERS_KEY = "austriaPathUsers";
 export const CURRENT_USER_KEY = "austriaPathCurrentUser";
+const LEGACY_USER_KEY = "currentUser";
 
 function getStoredUsers() {
   try {
@@ -16,11 +17,69 @@ function getStoredUsers() {
 
 function normalizeAdminUser(user) {
   if (user.email?.toLowerCase() !== ADMIN_EMAIL) {
-    return user;
+    return {
+      ...user,
+      role: "student",
+    };
   }
 
   return {
     ...user,
+    role: "admin",
+    status: "approved",
+    allowedLevels: ["A2", "B1", "B2"],
+  };
+}
+
+function readSessionEmail() {
+  let email = null;
+
+  for (const key of [CURRENT_USER_KEY, LEGACY_USER_KEY]) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+
+      const parsed = JSON.parse(raw);
+      const candidate = parsed?.email?.trim().toLowerCase();
+      if (!candidate) continue;
+
+      if (email && email !== candidate) {
+        return null;
+      }
+
+      email = candidate;
+    } catch {
+      return null;
+    }
+  }
+
+  const legacyEmail = localStorage.getItem("userEmail")?.trim().toLowerCase();
+  if (legacyEmail) {
+    if (email && email !== legacyEmail) {
+      return null;
+    }
+    email = email || legacyEmail;
+  }
+
+  return email;
+}
+
+function toSessionUser(storedUser) {
+  const cleanEmail = storedUser.email?.trim().toLowerCase();
+  const { password: _password, ...safeUser } = storedUser;
+
+  if (cleanEmail !== ADMIN_EMAIL) {
+    return {
+      ...safeUser,
+      email: cleanEmail,
+      role: "student",
+      status: "approved",
+    };
+  }
+
+  return {
+    ...safeUser,
+    email: cleanEmail,
     role: "admin",
     status: "approved",
     allowedLevels: ["A2", "B1", "B2"],
@@ -91,11 +150,7 @@ export function saveUsers(users) {
 }
 
 export function getCurrentUser() {
-  try {
-    return JSON.parse(localStorage.getItem(CURRENT_USER_KEY)) || null;
-  } catch {
-    return null;
-  }
+  return resolveSessionUser();
 }
 
 export function saveCurrentUser(user) {
@@ -114,51 +169,47 @@ export function clearSession() {
 
 export function resolveSessionUser() {
   try {
-    const raw =
-      localStorage.getItem(CURRENT_USER_KEY) ||
-      localStorage.getItem("currentUser");
+    if (localStorage.getItem("isLoggedIn") !== "true") {
+      return null;
+    }
 
-    if (!raw) return null;
-
-    const sessionUser = JSON.parse(raw);
-    const cleanEmail = sessionUser?.email?.trim().toLowerCase();
-
+    const cleanEmail = readSessionEmail();
     if (!cleanEmail) return null;
 
-    const users = getUsers();
-    const storedUser = users.find(
+    const storedUser = getUsers().find(
       (user) => user.email?.toLowerCase() === cleanEmail
     );
 
     if (!storedUser) return null;
     if (storedUser.status !== "approved") return null;
 
-    if (cleanEmail !== ADMIN_EMAIL) {
-      return {
-        ...storedUser,
-        email: cleanEmail,
-        role: "student",
-        status: "approved",
-      };
-    }
-
-    return {
-      ...storedUser,
-      email: cleanEmail,
-      role: "admin",
-      status: "approved",
-      allowedLevels: ["A2", "B1", "B2"],
-    };
+    return toSessionUser(storedUser);
   } catch {
     return null;
   }
 }
 
+export function validateSessionOnStartup() {
+  const resolved = resolveSessionUser();
+
+  if (!resolved) {
+    if (localStorage.getItem("isLoggedIn") === "true") {
+      clearSession();
+    }
+    return null;
+  }
+
+  syncSessionUser(resolved);
+  return resolved;
+}
+
 export function syncSessionUser(resolvedUser) {
   if (!resolvedUser) return;
 
-  saveCurrentUser(resolvedUser);
-  localStorage.setItem("currentUser", JSON.stringify(resolvedUser));
+  const { password: _password, ...sessionUser } = resolvedUser;
+
+  saveCurrentUser(sessionUser);
+  localStorage.setItem(LEGACY_USER_KEY, JSON.stringify(sessionUser));
   localStorage.setItem("isLoggedIn", "true");
   localStorage.setItem("userEmail", resolvedUser.email);
   localStorage.setItem("userRole", resolvedUser.role);

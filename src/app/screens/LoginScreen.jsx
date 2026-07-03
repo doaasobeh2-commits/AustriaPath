@@ -55,25 +55,7 @@ export default function LoginScreen({ onLogin, onRegister }) {
 
       saveUsers(updatedUsers);
       saveCurrentUser(adminUser);
-
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("currentUser", JSON.stringify(adminUser));
-      localStorage.setItem(
-        "austriaPathCurrentUser",
-        JSON.stringify(adminUser)
-      );
-      localStorage.setItem("userName", adminUser.name);
-      localStorage.setItem("userEmail", adminUser.email);
-      localStorage.setItem("userLevel", adminUser.level);
-      localStorage.setItem("userRole", "admin");
-      localStorage.removeItem("isAdminPreview");
-
-      localStorage.setItem(
-        "userLanguage",
-        adminUser.language || localStorage.getItem("userLanguage") || "Deutsch"
-      );
-
-      onLogin(adminUser);
+      onLogin();
       return;
     }
 
@@ -89,22 +71,7 @@ export default function LoginScreen({ onLogin, onRegister }) {
     };
 
     saveCurrentUser(safeUser);
-
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("currentUser", JSON.stringify(safeUser));
-    localStorage.setItem("austriaPathCurrentUser", JSON.stringify(safeUser));
-    localStorage.setItem("userName", safeUser.name || cleanEmail.split("@")[0]);
-    localStorage.setItem("userEmail", safeUser.email);
-    localStorage.setItem("userLevel", safeUser.level || "B1");
-    localStorage.setItem("userRole", safeUser.role);
-    localStorage.removeItem("isAdminPreview");
-
-    localStorage.setItem(
-      "userLanguage",
-      safeUser.language || localStorage.getItem("userLanguage") || "Deutsch"
-    );
-
-    onLogin(safeUser);
+    onLogin();
   };
 
   return (

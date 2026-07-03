@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PremiumScheduleScreen from "./screens/PremiumScheduleScreen";
 import { OnboardingScreen } from "./screens/OnboardingScreen";
 import { AdminScreen } from "./screens/AdminScreen";
@@ -33,9 +33,10 @@ import {
   clearSession,
   resolveSessionUser,
   syncSessionUser,
+  validateSessionOnStartup,
 } from "./userAccess";
 
-const initialSessionUser = resolveSessionUser();
+const initialSessionUser = validateSessionOnStartup();
 
 function getInitialTab(user) {
   return isAdminAccount(user) ? "admin" : "home";
@@ -59,6 +60,8 @@ export default function App() {
     localStorage.getItem("isAdminPreview") === "true";
 
   const completeLogin = () => {
+    localStorage.setItem("isLoggedIn", "true");
+
     const resolved = resolveSessionUser();
 
     if (!resolved) {
@@ -71,6 +74,25 @@ export default function App() {
     setIsLoggedIn(true);
     setActiveTab(isAdminAccount(resolved) ? "admin" : "home");
   };
+
+  useEffect(() => {
+    const resolved = validateSessionOnStartup();
+
+    if (!resolved) {
+      setIsLoggedIn(false);
+      setCurrentUser(null);
+      return;
+    }
+
+    setCurrentUser(resolved);
+    setIsLoggedIn(true);
+
+    if (!isAdminAccount(resolved)) {
+      setActiveTab((tab) =>
+        tab === "admin" || tab === "userManagement" ? "home" : tab
+      );
+    }
+  }, []);
 
   const handleLogout = () => {
     clearSession();
