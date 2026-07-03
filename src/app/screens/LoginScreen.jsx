@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { getUsers, saveUsers, saveCurrentUser } from "../userAccess";
+import { getUsers, saveCurrentUser } from "../userAccess";
 
 const ADMIN_EMAIL = "fadisobehau@gmail.com";
 
@@ -16,38 +16,33 @@ export default function LoginScreen({ onLogin, onRegister }) {
     }
 
     const users = getUsers();
-    let user = users.find((item) => item.email?.toLowerCase() === cleanEmail);
+    const user = users.find(
+      (item) => item.email?.toLowerCase() === cleanEmail
+    );
 
     if (!user) {
-      user = {
-        id: Date.now(),
-        name: cleanEmail === ADMIN_EMAIL ? "Fadi Sobeh" : cleanEmail.split("@")[0],
-        email: cleanEmail,
-        password,
-        level: localStorage.getItem("userLevel") || "B1",
-        allowedLevels: ["A2", "B1"],
-        plan: "free",
-        levelSource: "login_created",
-        role: cleanEmail === ADMIN_EMAIL ? "admin" : "student",
-        status: "active",
-        aiCredits: 0,
-        usedAiCredits: 0,
-        createdAt: new Date().toISOString(),
-      };
-
-      saveUsers([...users, user]);
+      alert("Dieses Konto existiert nicht. Bitte zuerst registrieren.");
+      return;
     }
 
-    if (user.password && user.password !== password) {
+    if (user.password !== password) {
       alert("E-Mail oder Passwort ist falsch.");
+      return;
+    }
+
+    if (user.status !== "approved" && cleanEmail !== ADMIN_EMAIL) {
+      alert("Ihr Konto wartet noch auf Freigabe durch den Administrator.");
       return;
     }
 
     const safeUser = {
       ...user,
       email: cleanEmail,
-      role: cleanEmail === ADMIN_EMAIL ? "admin" : "student",
-      status: "active",
+      role:
+        cleanEmail === ADMIN_EMAIL && user.role === "admin"
+          ? "admin"
+          : "student",
+      status: cleanEmail === ADMIN_EMAIL ? "approved" : user.status,
       aiCredits: typeof user.aiCredits === "number" ? user.aiCredits : 0,
       usedAiCredits:
         typeof user.usedAiCredits === "number" ? user.usedAiCredits : 0,
@@ -58,7 +53,7 @@ export default function LoginScreen({ onLogin, onRegister }) {
     localStorage.setItem("isLoggedIn", "true");
     localStorage.setItem("currentUser", JSON.stringify(safeUser));
     localStorage.setItem("userName", safeUser.name || cleanEmail.split("@")[0]);
-    localStorage.setItem("userEmail", safeUser.email || cleanEmail);
+    localStorage.setItem("userEmail", safeUser.email);
     localStorage.setItem("userLevel", safeUser.level || "B1");
     localStorage.setItem("userRole", safeUser.role);
     localStorage.removeItem("isAdminPreview");

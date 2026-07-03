@@ -9,8 +9,7 @@ export function AdminScreen({ setActiveTab }) {
 const STORAGE_KEY = 'austriaPathAdminData';
 
 
-
-  const [unlocked, setUnlocked] = useState(true);
+const [unlocked, setUnlocked] = useState(false);
   const [password, setPassword] = useState('');
   const [users, setUsers] = useState(getUsers());
   const [editingId, setEditingId] = useState(null);
@@ -62,13 +61,8 @@ const [parentModelId, setParentModelId] = useState('');
   };
 
   const login = () => {
-    if (password === 'admin123') {
-      setUnlocked(true);
-      setPassword('');
-    } else {
-      alert('Falsches Passwort');
-    }
-  };
+  alert("Admin-Zugang ist nur über das echte Admin-Konto erlaubt.");
+};
 
   const normalize = (text) =>
     (text || '').trim().toLowerCase().replace(/\s+/g, ' ');

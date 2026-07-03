@@ -69,12 +69,12 @@ export function registerUser({
     email,
     password,
     level,
-    status: email === 'fadisobehau@gmail.com' ? 'approved' : status || 'pending',
+   status: status || 'pending',
     aiCredits: typeof aiCredits === 'number' ? aiCredits : 5,
     allowedLevels: getDefaultAllowedLevels(level),
     plan: 'free',
     levelSource: 'self_selected',
-    role: email === 'fadisobehau@gmail.com' ? 'admin' : 'student',
+  role: 'student',
     createdAt: createdAt || new Date().toISOString(),
   };
 

@@ -12,8 +12,7 @@ export default function RegisterScreen({ onRegisterSuccess, onLogin }) {
 
   const handleRegister = () => {
     const cleanEmail = email.trim().toLowerCase();
-    const isFamilyApproved =
-      familyCode.trim().toLowerCase() === "fadijibril";
+   const isFamilyApproved = false;
 
     if (!name.trim() || !cleanEmail || !password) {
       alert("Bitte füllen Sie alle Pflichtfelder aus.");

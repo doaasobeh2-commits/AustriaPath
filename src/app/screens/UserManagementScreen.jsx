@@ -5,12 +5,7 @@ import {
   resetCredits,
   consumeAiCredits,
 } from '../../data/subscriptionEngine';
-const loginAsUser = (user) => {
-  localStorage.setItem('isLoggedIn', 'true');
-  localStorage.setItem('userRole', 'user');
-  localStorage.setItem('currentUser', JSON.stringify(user));
-  window.location.reload();
-};
+
 const USERS_KEY = 'austriaPathUsers';
 function getUserCode(user) {
   if (user.userCode) return user.userCode;
@@ -142,14 +137,7 @@ const testConsumeCredits = (user) => {
   updateUser(user.id, result.user);
 };
 
-const loginAsUser = (user) => {
-  localStorage.setItem('isLoggedIn', 'true');
-  localStorage.setItem('userRole', 'user');
-  localStorage.setItem('currentUser', JSON.stringify(user));
-  localStorage.setItem('isAdminPreview', 'true');
 
-  window.location.reload();
-};
 const addActivity = (user, action, details = '') => {
   const item = {
     date: new Date().toISOString(),
@@ -728,20 +716,7 @@ const actionGridStyle = {
   display: 'grid',
   gap: '10px',
 };
-<button
-  style={{
-    border: 'none',
-    backgroundColor: '#2563eb',
-    color: '#ffffff',
-    padding: '12px',
-    borderRadius: '12px',
-    fontWeight: '800',
-    cursor: 'pointer',
-  }}
-  onClick={() => loginAsUser(selectedUser)}
->
-  👤 Login als Benutzer
-</button>
+
 const smallBlueButtonStyle = {
   border: 'none',
   backgroundColor: '#2563eb',

@@ -36,7 +36,10 @@ const currentUser = JSON.parse(
   localStorage.getItem("austriaPathCurrentUser") || "null"
 );
 
-const isAdmin = currentUser?.email?.toLowerCase() === ADMIN_EMAIL;
+const isAdmin =
+  currentUser?.email?.toLowerCase() === ADMIN_EMAIL &&
+  currentUser?.role === "admin" &&
+  currentUser?.status === "approved";
 
 const isAdminPreview =
   localStorage.getItem('isAdminPreview') === 'true';
@@ -57,7 +60,7 @@ const isAdminPreview =
     localStorage.removeItem('currentUser');
     localStorage.removeItem('userRole');
     localStorage.removeItem('isAdminPreview');
-
+localStorage.removeItem("austriaPathCurrentUser");
     setIsLoggedIn(false);
     setActiveTab('home');
     setSelectedLevel(null);
@@ -100,11 +103,15 @@ if (!isLoggedIn) {
 
   setIsLoggedIn(true);
 
-  if (email === ADMIN_EMAIL) {
-    setActiveTab("admin");
-  } else {
-    setActiveTab("home");
-  }
+  if (
+  email === ADMIN_EMAIL &&
+  loggedUser?.role === "admin" &&
+  loggedUser?.status === "approved"
+) {
+  setActiveTab("admin");
+} else {
+  setActiveTab("home");
+}
 }}
         onRegister={() => setAuthScreen('register')}
         onForgotPassword={() => setAuthScreen('forgot')}
@@ -330,8 +337,12 @@ if (!isLoggedIn) {
 )}
 {activeTab === 'aiSession' && (() => {
   const session = JSON.parse(
-  
-  );
+  localStorage.getItem("austriaPathAiSession") || "null"
+);
+
+if (!session) {
+  return <ProfileScreen setActiveTab={setActiveTab} />;
+}
 
   return (
     <AISessionScreen
