@@ -30,10 +30,13 @@ import PlacementTestScreen from './screens/PlacementTestScreen';
 import WeeklyPlanSessionScreen from './screens/WeeklyPlanSessionScreen';
 import AISessionScreen from "./screens/AISessionScreen";
 import PremiumExamSessionScreen from './screens/PremiumExamSessionScreen';
+const ADMIN_EMAIL = "fadisobehau@gmail.com";
 export default function App() {
-  const currentUser = JSON.parse(
-  localStorage.getItem('currentUser') || 'null'
+const currentUser = JSON.parse(
+  localStorage.getItem("austriaPathCurrentUser") || "null"
 );
+
+const isAdmin = currentUser?.email?.toLowerCase() === ADMIN_EMAIL;
 
 const isAdminPreview =
   localStorage.getItem('isAdminPreview') === 'true';
@@ -85,22 +88,24 @@ if (!isLoggedIn) {
   }
     return authScreen === 'login' ? (
       <LoginScreen
-        onLogin={(email) => {
-          localStorage.setItem('isLoggedIn', 'true');
-          const cleanEmail = String(email || '').trim().toLowerCase();
-          setIsLoggedIn(true);
-localStorage.setItem(
-  'userRole',
-  cleanEmail === 'fadisobehau@gmail.com'
-    ? 'admin'
-    : 'user'
-);
-          if (cleanEmail === 'fadisobehau@gmail.com') {
-            setActiveTab('admin');
-          } else {
-            setActiveTab('home');
-          }
-        }}
+     onLogin={(user) => {
+  localStorage.setItem("isLoggedIn", "true");
+
+  const loggedUser =
+    typeof user === "object" && user !== null
+      ? user
+      : JSON.parse(localStorage.getItem("austriaPathCurrentUser") || "null");
+
+  const email = loggedUser?.email?.toLowerCase();
+
+  setIsLoggedIn(true);
+
+  if (email === ADMIN_EMAIL) {
+    setActiveTab("admin");
+  } else {
+    setActiveTab("home");
+  }
+}}
         onRegister={() => setAuthScreen('register')}
         onForgotPassword={() => setAuthScreen('forgot')}
       />
@@ -137,7 +142,7 @@ localStorage.setItem(
     <button
       onClick={() => {
         localStorage.removeItem('isAdminPreview');
-        localStorage.removeItem('currentUser');
+       localStorage.removeItem('isAdminPreview');
         window.location.reload();
       }}
       style={{
@@ -189,10 +194,19 @@ localStorage.setItem(
           )}
 
           {activeTab === 'admin' && (
-            <AdminScreen setActiveTab={setActiveTab} />
-          )}
+            isAdmin ? (
+  
+    <AdminScreen setActiveTab={setActiveTab} />
+  ) : (
+    <HomeScreen setActiveTab={setActiveTab} />
+  )
+)}
 {activeTab === 'userManagement' && (
-  <UserManagementScreen setActiveTab={setActiveTab} />
+ isAdmin ? (
+    <UserManagementScreen setActiveTab={setActiveTab} />
+  ) : (
+    <HomeScreen setActiveTab={setActiveTab} />
+  )
 )}
           {activeTab === 'exams' && (
             <IntelligentExamScreen
@@ -316,7 +330,7 @@ localStorage.setItem(
 )}
 {activeTab === 'aiSession' && (() => {
   const session = JSON.parse(
-    localStorage.getItem('austriaPathCurrentAISession') || '{}'
+  
   );
 
   return (

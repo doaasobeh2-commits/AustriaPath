@@ -36,21 +36,15 @@ export function ProfileScreen({ setActiveTab }) {
 
  const currentUser = (() => {
   try {
-    return JSON.parse(localStorage.getItem('currentUser')) || {};
+    return JSON.parse(localStorage.getItem('austriaPathCurrentUser')) || {};
   } catch {
     return {};
   }
 })();
 
-const userName =
-  localStorage.getItem('userName') ||
-  currentUser.name ||
-  'Fadi Sobeh';
+const userName = currentUser.name || 'Benutzer';
 
-const userEmail =
-  localStorage.getItem('userEmail') ||
-  currentUser.email ||
-  'user@example.com';
+const userEmail = currentUser.email || 'user@example.com';
 
 const profileImage = localStorage.getItem('userProfileImage') || '';
 

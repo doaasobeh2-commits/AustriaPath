@@ -430,12 +430,6 @@ const addActivity = (user, action, details = '') => {
       <div style={cardStyle}>
   <h2>⚙️ Verwaltung</h2>
 
-  <button
-    style={openButtonStyle}
-    onClick={() => loginAsUser(selectedUser)}
-  >
-    👤 Login als Benutzer
-  </button>
 
   {selectedUser.status === "approved" || selectedUser.status === "active" ? (
     <button
