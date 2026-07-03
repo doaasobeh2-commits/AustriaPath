@@ -14,6 +14,7 @@ import AccountSettingsScreen from "./screens/AccountSettingsScreen";
 import ExaminerLabScreen from "./screens/ExaminerLabScreen";
 import LoginScreen from "./screens/LoginScreen";
 import RegisterScreen from "./screens/RegisterScreen";
+import AuthWelcomeScreen from "./screens/AuthWelcomeScreen";
 import ForgotPasswordScreen from "./screens/ForgotPasswordScreen";
 import { DatabaseScreen } from "./screens/DatabaseScreen";
 import { WritingScreen } from "./screens/WritingScreen";
@@ -51,7 +52,7 @@ export default function App() {
   const [selectedLevel, setSelectedLevel] = useState(null);
   const [levelTarget, setLevelTarget] = useState(null);
   const [selectedWritingModel, setSelectedWritingModel] = useState(null);
-  const [authScreen, setAuthScreen] = useState("login");
+  const [authScreen, setAuthScreen] = useState("welcome");
   const [showOnboarding, setShowOnboarding] = useState(true);
 
   const isAdmin = isAdminAccount(currentUser);
@@ -103,7 +104,7 @@ export default function App() {
     setSelectedLevel(null);
     setLevelTarget(null);
     setSelectedWritingModel(null);
-    setAuthScreen("login");
+    setAuthScreen("welcome");
   };
 
   const openWithLevel = (target) => {
@@ -119,23 +120,36 @@ export default function App() {
 
   if (!isLoggedIn) {
     if (authScreen === "forgot") {
-      return <ForgotPasswordScreen onBack={() => setAuthScreen("login")} />;
+      return (
+        <ForgotPasswordScreen onBack={() => setAuthScreen("login")} />
+      );
     }
 
-    return authScreen === "login" ? (
-      <LoginScreen
-        onLogin={() => {
-          completeLogin();
-        }}
+    if (authScreen === "login") {
+      return (
+        <LoginScreen
+          onLogin={completeLogin}
+          onRegister={() => setAuthScreen("register")}
+          onForgotPassword={() => setAuthScreen("forgot")}
+          onBack={() => setAuthScreen("welcome")}
+        />
+      );
+    }
+
+    if (authScreen === "register") {
+      return (
+        <RegisterScreen
+          onBack={() => setAuthScreen("welcome")}
+          onLogin={() => setAuthScreen("login")}
+          onRegisterSuccess={completeLogin}
+        />
+      );
+    }
+
+    return (
+      <AuthWelcomeScreen
+        onLogin={() => setAuthScreen("login")}
         onRegister={() => setAuthScreen("register")}
-        onForgotPassword={() => setAuthScreen("forgot")}
-      />
-    ) : (
-      <RegisterScreen
-        onBack={() => setAuthScreen("login")}
-        onRegisterSuccess={() => {
-          completeLogin();
-        }}
       />
     );
   }

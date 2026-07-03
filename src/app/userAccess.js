@@ -227,76 +227,103 @@ function getDefaultAllowedLevels(level) {
   return ["A2"];
 }
 
-export function registerUser({
-  name,
-  email,
-  password,
-  level,
-  status,
-  aiCredits,
-  createdAt,
-}) {
+export function authenticateUser(email, password) {
   const cleanEmail = email.trim().toLowerCase();
+
+  if (!cleanEmail || !password) {
+    return {
+      ok: false,
+      message: "Bitte E-Mail und Passwort eingeben.",
+    };
+  }
+
   const users = getUsers();
+  const user = users.find((item) => item.email?.toLowerCase() === cleanEmail);
 
-  if (cleanEmail === ADMIN_EMAIL) {
-    const existingAdmin = users.find(
-      (user) => user.email?.toLowerCase() === ADMIN_EMAIL
-    );
+  if (!user) {
+    return {
+      ok: false,
+      message: "Dieses Konto existiert nicht. Bitte zuerst registrieren.",
+    };
+  }
 
+  if (user.password !== password) {
+    return {
+      ok: false,
+      message: "E-Mail oder Passwort ist falsch.",
+    };
+  }
+
+  if (user.status === "blocked") {
+    return {
+      ok: false,
+      message: "Ihr Konto wurde gesperrt. Bitte kontaktieren Sie den Support.",
+    };
+  }
+
+  const isAdminLogin = cleanEmail === ADMIN_EMAIL;
+
+  if (isAdminLogin) {
     const adminUser = {
-      id: existingAdmin?.id || "admin-1",
-      name: name || "Fadi Sobeh",
-      email: ADMIN_EMAIL,
-      password,
-      level: existingAdmin?.level || level || "B1",
-      allowedLevels: ["A2", "B1", "B2"],
-      plan: existingAdmin?.plan || "free",
-      levelSource: "system_admin",
+      ...user,
+      email: cleanEmail,
       role: "admin",
       status: "approved",
-      aiCredits:
-        typeof existingAdmin?.aiCredits === "number" ? existingAdmin.aiCredits : 0,
-      usedAiCredits:
-        typeof existingAdmin?.usedAiCredits === "number"
-          ? existingAdmin.usedAiCredits
-          : 0,
-      createdAt:
-        existingAdmin?.createdAt || createdAt || new Date().toISOString(),
+      allowedLevels: ["A2", "B1", "B2"],
+      lastLogin: new Date().toISOString(),
     };
 
-    const updatedUsers = existingAdmin
-      ? users.map((user) =>
-          user.email?.toLowerCase() === ADMIN_EMAIL ? adminUser : user
-        )
-      : [...users, adminUser];
+    const updatedUsers = users.map((item) =>
+      item.email?.toLowerCase() === ADMIN_EMAIL ? adminUser : item
+    );
 
     saveUsers(updatedUsers);
     saveCurrentUser(adminUser);
-    return adminUser;
+
+    return { ok: true, user: adminUser };
   }
 
-  const existingUser = users.find(
+  const studentUser = {
+    ...user,
+    email: cleanEmail,
+    role: "student",
+    status: "approved",
+    lastLogin: new Date().toISOString(),
+  };
+
+  if (user.status !== "approved") {
+    const updatedUsers = users.map((item) =>
+      item.email?.toLowerCase() === cleanEmail ? studentUser : item
+    );
+    saveUsers(updatedUsers);
+  }
+
+  saveCurrentUser(studentUser);
+
+  return { ok: true, user: studentUser };
+}
+
+export function registerStudentUser({ name, email, password, level }) {
+  const cleanEmail = email.trim().toLowerCase();
+
+  if (cleanEmail === ADMIN_EMAIL) {
+    return {
+      ok: false,
+      message:
+        "Diese E-Mail ist für den Administrator reserviert. Bitte verwenden Sie Anmelden.",
+    };
+  }
+
+  const storedUsers = getStoredUsers();
+  const existingUser = storedUsers.find(
     (user) => user.email?.toLowerCase() === cleanEmail
   );
 
   if (existingUser) {
-    const fixedUser = {
-      ...existingUser,
-      status: existingUser.status || "pending",
-      role: existingUser.role || "student",
-      aiCredits:
-        typeof existingUser.aiCredits === "number"
-          ? existingUser.aiCredits
-          : 5,
-      allowedLevels:
-        existingUser.allowedLevels && existingUser.allowedLevels.length > 0
-          ? existingUser.allowedLevels
-          : getDefaultAllowedLevels(existingUser.level || level || "A2"),
+    return {
+      ok: false,
+      message: "Diese E-Mail ist bereits registriert. Bitte melden Sie sich an.",
     };
-
-    saveCurrentUser(fixedUser);
-    return fixedUser;
   }
 
   const newUser = {
@@ -305,21 +332,26 @@ export function registerUser({
     email: cleanEmail,
     password,
     level,
-    status: status || "approved",
-    aiCredits: typeof aiCredits === "number" ? aiCredits : 5,
+    status: "approved",
+    aiCredits: 5,
     allowedLevels: getDefaultAllowedLevels(level),
     plan: "free",
     levelSource: "self_selected",
     role: "student",
-    createdAt: createdAt || new Date().toISOString(),
+    emailVerified: false,
+    emailVerificationStatus: "pending",
+    createdAt: new Date().toISOString(),
   };
 
-  const updatedUsers = [...users, newUser];
-
-  saveUsers(updatedUsers);
+  saveUsers([...storedUsers, newUser]);
   saveCurrentUser(newUser);
 
-  return newUser;
+  return { ok: true, user: newUser };
+}
+
+/** @deprecated Use registerStudentUser instead */
+export function registerUser(fields) {
+  return registerStudentUser(fields);
 }
 
 export function updateUserLevel(userId, newLevel) {

@@ -1,143 +1,87 @@
 import React, { useState } from "react";
-import { ADMIN_EMAIL } from "../../config/authConfig";
-import { getUsers, saveUsers, saveCurrentUser } from "../userAccess";
+import { authenticateUser } from "../userAccess";
+import {
+  authCardStyle,
+  authInputStyle,
+  authPageStyle,
+  authPrimaryButtonStyle,
+  authSubtitleStyle,
+  authTextButtonStyle,
+  authTitleStyle,
+} from "../auth/authStyles";
 
-export default function LoginScreen({ onLogin, onRegister }) {
+export default function LoginScreen({
+  onLogin,
+  onRegister,
+  onForgotPassword,
+  onBack,
+}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleLogin = () => {
-    const cleanEmail = email.trim().toLowerCase();
+    const result = authenticateUser(email, password);
 
-    if (!cleanEmail || !password) {
-      alert("Bitte E-Mail und Passwort eingeben.");
+    if (!result.ok) {
+      alert(result.message);
       return;
     }
 
-    const users = getUsers();
-    const user = users.find(
-      (item) => item.email?.toLowerCase() === cleanEmail
-    );
-
-    if (!user) {
-      alert("Dieses Konto existiert nicht. Bitte zuerst registrieren.");
-      return;
-    }
-
-    if (user.password !== password) {
-      alert("E-Mail oder Passwort ist falsch.");
-      return;
-    }
-
-    const isAdminAccount = cleanEmail === ADMIN_EMAIL;
-
-    if (!isAdminAccount && user.status !== "approved") {
-      alert("Ihr Konto wartet noch auf Freigabe durch den Administrator.");
-      return;
-    }
-
-    if (isAdminAccount) {
-      const adminUser = {
-        ...user,
-        email: cleanEmail,
-        role: "admin",
-        status: "approved",
-        allowedLevels: ["A2", "B1", "B2"],
-        aiCredits: typeof user.aiCredits === "number" ? user.aiCredits : 0,
-        usedAiCredits:
-          typeof user.usedAiCredits === "number" ? user.usedAiCredits : 0,
-        lastLogin: new Date().toISOString(),
-      };
-
-      const updatedUsers = users.map((item) =>
-        item.email?.toLowerCase() === ADMIN_EMAIL ? adminUser : item
-      );
-
-      saveUsers(updatedUsers);
-      saveCurrentUser(adminUser);
-      onLogin();
-      return;
-    }
-
-    const safeUser = {
-      ...user,
-      email: cleanEmail,
-      role: "student",
-      status: "approved",
-      aiCredits: typeof user.aiCredits === "number" ? user.aiCredits : 0,
-      usedAiCredits:
-        typeof user.usedAiCredits === "number" ? user.usedAiCredits : 0,
-      lastLogin: new Date().toISOString(),
-    };
-
-    saveCurrentUser(safeUser);
     onLogin();
   };
 
   return (
-    <div style={{ padding: "24px", maxWidth: "450px", margin: "50px auto" }}>
-      <h1>Willkommen zurück</h1>
+    <div style={authPageStyle}>
+      <div style={authCardStyle}>
+        <h1 style={authTitleStyle}>Anmelden</h1>
+        <p style={authSubtitleStyle}>
+          Melden Sie sich mit Ihrer E-Mail und Ihrem Passwort an.
+        </p>
 
-      <p style={{ color: "#64748b" }}>
-        Melden Sie sich an, um Ihren Fortschritt zu speichern.
-      </p>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="E-Mail"
+          style={authInputStyle}
+          autoComplete="email"
+        />
 
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="E-Mail"
-        style={inputStyle}
-      />
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Passwort"
+          style={authInputStyle}
+          autoComplete="current-password"
+        />
 
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Passwort"
-        style={inputStyle}
-      />
+        <button type="button" onClick={handleLogin} style={authPrimaryButtonStyle}>
+          Anmelden
+        </button>
 
-      <button onClick={handleLogin} style={primaryButtonStyle}>
-        Anmelden
-      </button>
+        {onForgotPassword && (
+          <button
+            type="button"
+            onClick={onForgotPassword}
+            style={authTextButtonStyle}
+          >
+            Passwort vergessen?
+          </button>
+        )}
 
-      <button onClick={onRegister} style={secondaryButtonStyle}>
-        Neues Konto erstellen
-      </button>
+        {onRegister && (
+          <button type="button" onClick={onRegister} style={authTextButtonStyle}>
+            Noch kein Konto? Jetzt registrieren
+          </button>
+        )}
+
+        {onBack && (
+          <button type="button" onClick={onBack} style={authTextButtonStyle}>
+            ← Zurück
+          </button>
+        )}
+      </div>
     </div>
   );
 }
-
-const inputStyle = {
-  width: "100%",
-  padding: "12px",
-  marginTop: "12px",
-  borderRadius: "10px",
-  border: "1px solid #d1d5db",
-  boxSizing: "border-box",
-};
-
-const primaryButtonStyle = {
-  width: "100%",
-  padding: "14px",
-  marginTop: "20px",
-  border: "none",
-  borderRadius: "10px",
-  background: "#2563eb",
-  color: "white",
-  fontWeight: "bold",
-  cursor: "pointer",
-};
-
-const secondaryButtonStyle = {
-  width: "100%",
-  padding: "14px",
-  marginTop: "12px",
-  border: "1px solid #2563eb",
-  borderRadius: "10px",
-  background: "#ffffff",
-  color: "#2563eb",
-  fontWeight: "bold",
-  cursor: "pointer",
-};

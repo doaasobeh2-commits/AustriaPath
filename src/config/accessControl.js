@@ -1,6 +1,6 @@
 export const ACCESS_CONTROL = {
-  adminApprovalEnabled: true,
-  defaultUserStatus: "pending",
+  adminApprovalEnabled: false,
+  defaultUserStatus: "approved",
 
   statuses: {
     pending: "pending",
