@@ -1,5 +1,5 @@
 /**
- * Backend API route constants for future integration.
+ * Backend API route constants.
  */
 import { apiBase } from "./apiConfig.js";
 

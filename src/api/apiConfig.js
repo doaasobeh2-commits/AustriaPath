@@ -1,5 +1,8 @@
 /**
  * API environment config — backend flag vs base URL are separate concerns.
+ *
+ * VITE_USE_BACKEND: boolean flag only ("true" enables backend mode).
+ * VITE_API_BASE: API path prefix (default "/v1"). Must not be "true" or "false".
  */
 
 export const DEFAULT_API_BASE = "/v1";
