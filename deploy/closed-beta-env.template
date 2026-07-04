@@ -1,0 +1,53 @@
+# AustriaPath Closed Beta — fill in locally, NEVER commit this file with real values.
+# Copy to deploy/closed-beta-env.local (gitignored) and paste secrets as you create them.
+
+# ─── 1. NEON POSTGRESQL ───────────────────────────────────────────────────────
+# Where: Neon dashboard → Project → Connection string (pooled, SSL)
+# Paste into: Railway service variables → DATABASE_URL
+DATABASE_URL=
+
+# ─── 2. RAILWAY BACKEND ───────────────────────────────────────────────────────
+# Where: Railway → your API service → Settings → Networking → Public domain
+# Example: https://austria-path-api-production.up.railway.app
+RAILWAY_PUBLIC_URL=
+
+# Paste ALL of these into: Railway → API service → Variables
+NODE_ENV=production
+PORT=3000
+SESSION_SECRET=
+CORS_ORIGIN=
+COOKIE_SECURE=true
+ADMIN_EMAIL=fadisobehau@gmail.com
+ADMIN_BOOTSTRAP_SECRET=
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4.1-mini
+RESEND_API_KEY=
+EMAIL_FROM=
+# Optional for beta (leave empty to skip Stripe checkout):
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_PRICE_PLACEMENT=
+STRIPE_PRICE_WEEKLY_PLAN=
+STRIPE_PRICE_AI_EXAM=
+STRIPE_PRICE_INTENSIVE_WEEK=
+STRIPE_PRICE_PREMIUM_MONTH=
+
+# Closed beta — comma-separated; registration 403 for emails not listed (login unchanged)
+BETA_ALLOWED_EMAILS=
+
+# ─── 3. VERCEL FRONTEND ───────────────────────────────────────────────────────
+# Where: Vercel → Project → Settings → Environment Variables (Production)
+VITE_USE_BACKEND=true
+VITE_API_BASE=/v1
+VITE_ADMIN_EMAIL=fadisobehau@gmail.com
+VITE_ADMIN_INITIAL_PASSWORD=
+
+# Where: Vercel → Project → Settings → Deployment Protection
+VERCEL_BETA_PASSWORD=
+
+# Your production URL after first deploy:
+VERCEL_PRODUCTION_URL=
+
+# ─── 4. VERCEL.JSON PROXY ─────────────────────────────────────────────────────
+# Replace YOUR-RAILWAY-URL in vercel.json rewrite destination with host only:
+# https://YOUR-RAILWAY-URL/v1/:path*

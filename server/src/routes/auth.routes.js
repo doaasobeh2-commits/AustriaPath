@@ -17,6 +17,7 @@ import {
   loginEmailRateLimit,
   registerRateLimit,
 } from "../middleware/rateLimit.js";
+import { enforceBetaRegistrationAllowlist } from "../config/betaAllowlist.js";
 
 const router = Router();
 
@@ -30,7 +31,7 @@ function setSessionCookie(res, token, expiresAt) {
   });
 }
 
-router.post("/register", registerRateLimit, async (req, res, next) => {
+router.post("/register", registerRateLimit, enforceBetaRegistrationAllowlist, async (req, res, next) => {
   try {
     const user = await registerUser(req.body);
     success(res, { user }, 201);

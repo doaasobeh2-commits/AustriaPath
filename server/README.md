@@ -14,6 +14,8 @@ Implements Gate 0 Contract Pack `2.0.0-gate0`.
 
 **Migration import** creates completed exam session + council decision stubs for each legacy report so `exam_reports` FK constraints are satisfied.
 
+**Closed beta registration** — when `BETA_ALLOWED_EMAILS` is set on the server, `POST /auth/register` returns `403` for emails not in the comma-separated list. Login and existing users are unaffected. Unset or empty = unrestricted (dev/test).
+
 ## Quick start
 
 ```bash

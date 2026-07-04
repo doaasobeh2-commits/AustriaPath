@@ -15,6 +15,7 @@ import { query } from "../db/client.js";
 import { env } from "../config/env.js";
 import { createOneTimeToken, consumeOneTimeToken } from "../repositories/tokenStoreRepository.js";
 import { sendPasswordResetEmail, sendVerificationEmail } from "../services/emailService.js";
+import { assertBetaRegistrationAllowed } from "../config/betaAllowlist.js";
 
 const SESSION_DAYS = 7;
 const TOKEN_ROUTE_RESET = "auth:password-reset";
@@ -41,6 +42,9 @@ function validateRegister({ name, email, password, level }) {
 export async function registerUser(body) {
   validateRegister(body);
   const email = body.email.trim().toLowerCase();
+
+  assertBetaRegistrationAllowed(email);
+
   if (isReservedAdminEmail(email)) {
     throw new AppError("EMAIL_RESERVED", "Diese E-Mail ist reserviert.", 409);
   }
