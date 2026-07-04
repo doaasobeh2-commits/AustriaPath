@@ -2,7 +2,7 @@
  * HTTP client — Gate 0 envelope parser.
  */
 
-import { apiBase } from "./useBackend.js";
+import { buildApiUrl } from "./apiConfig.js";
 
 export class ApiError extends Error {
   /**
@@ -24,7 +24,7 @@ export class ApiError extends Error {
  * @param {RequestInit & { json?: unknown }} [options]
  */
 export async function apiFetch(path, options = {}) {
-  const url = path.startsWith("http") ? path : `${apiBase()}${path}`;
+  const url = buildApiUrl(path);
   const headers = {
     Accept: "application/json",
     ...(options.headers || {}),

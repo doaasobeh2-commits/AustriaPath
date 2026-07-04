@@ -1,8 +1,9 @@
 /**
  * Backend API route constants for future integration.
- * Base path is configured when backend ships — do not call these URLs until live.
  */
-export const API_BASE = import.meta.env.VITE_API_BASE || "/v1";
+import { apiBase } from "./apiConfig.js";
+
+export const API_BASE = apiBase();
 
 export const API_ENDPOINTS = Object.freeze({
   auth: {
