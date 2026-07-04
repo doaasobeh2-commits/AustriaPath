@@ -1,11 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { a2Models } from '../../data/modelsA2';
 import {
   getAkademieLevelData,
   mergeAkademieLists,
 } from '../../data/akademieContent';
-
-const STORAGE_KEY = 'austriaPathAdminData';
+import { getAdminAkademieFeed } from '../../utils/adminContent';
 
 const splitItems = (value) => {
   if (!value) return [];
@@ -23,24 +22,19 @@ const splitItems = (value) => {
     .filter(Boolean);
 };
 
-const normalizeStatus = (value) => String(value || '').trim().toLowerCase();
-
 function getAdminAkademieItems(level) {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return [];
-
-    const data = JSON.parse(saved);
-    const list = Array.isArray(data) ? data : data.items || data.models || [];
-
-    return list.filter((item) => {
-      const itemLevel = item.level || item.niveau || 'A2';
-      return itemLevel === level && normalizeStatus(item.status) === 'published';
-    });
-  } catch (error) {
-    console.error('Fehler beim Laden der Akademie-Daten:', error);
-    return [];
-  }
+  const feed = getAdminAkademieFeed(level);
+  return [
+    {
+      grammar: feed.grammar,
+      satzbau: feed.satzbau,
+      konnektoren: feed.konnektoren,
+      words: feed.words,
+      verbs: feed.verbs,
+      mistakes: feed.mistakes,
+      akademieEntries: feed.akademieEntries,
+    },
+  ];
 }
 
 function extractAkademieData(items = []) {
@@ -70,6 +64,19 @@ function extractAkademieData(items = []) {
 
     mistakes.push(...splitItems(item.mistakes));
     mistakes.push(...splitItems(item.fehler));
+
+    (item.akademieEntries || []).forEach((entry) => {
+      if (entry.approved === false) return;
+      const label = entry.title + (entry.rule ? ` — ${entry.rule}` : '');
+      if (entry.category === 'grammar') grammar.push(label);
+      else if (entry.category === 'connector') konnektoren.push(label);
+      else if (entry.category === 'vocabulary') words.push(label);
+      else if (entry.category === 'verb') verbs.push(label);
+      else if (entry.category === 'mistake') mistakes.push(entry.explanation || label);
+      else if (entry.category === 'sentence') satzbau.push(...(entry.examSentences || [label]));
+      (entry.mistakes || []).forEach((m) => mistakes.push(m));
+      (entry.examSentences || []).forEach((s) => satzbau.push(s));
+    });
   });
 
   return {
@@ -94,13 +101,20 @@ const SECTIONS = [
 export function AkademieScreen({ setActiveTab, selectedLevel = 'A2' }) {
   const level = selectedLevel || 'A2';
   const [section, setSection] = useState('grammatik');
+  const [contentVersion, setContentVersion] = useState(0);
+
+  useEffect(() => {
+    const refresh = () => setContentVersion((v) => v + 1);
+    window.addEventListener('austriaPathContentUpdated', refresh);
+    return () => window.removeEventListener('austriaPathContentUpdated', refresh);
+  }, []);
 
   const staticItems = useMemo(() => {
     if (level === 'A2') return a2Models;
     return [];
   }, [level]);
 
-  const adminItems = useMemo(() => getAdminAkademieItems(level), [level]);
+  const adminItems = useMemo(() => getAdminAkademieItems(level), [level, contentVersion]);
   const levelData = useMemo(() => getAkademieLevelData(level), [level]);
 
   const data = useMemo(() => {
