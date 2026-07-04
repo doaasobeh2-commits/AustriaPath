@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.austriapath.at/schemas/final-report.json",
+  "title": "FinalReport",
+  "type": "object",
+  "required": ["reportId", "productType", "mode", "evaluationMethod", "cefrLevel", "overallScore", "confidence", "summary", "disclaimer", "rulesVersion", "blueprintId", "createdAt"],
+  "properties": {
+    "reportId": { "type": "string", "format": "uuid" },
+    "sessionId": { "type": "string", "format": "uuid" },
+    "productType": { "$ref": "enums.json#/$defs/ProductType" },
+    "mode": { "$ref": "enums.json#/$defs/ExamMode" },
+    "evaluationMethod": { "$ref": "enums.json#/$defs/EvaluationMethod" },
+    "schemaVersion": { "type": "string", "default": "2.0.0" },
+    "cefrLevel": { "$ref": "enums.json#/$defs/CefrLabel" },
+    "overallScore": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "confidence": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "readinessBand": { "$ref": "enums.json#/$defs/ReadinessBand" },
+    "skillResults": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "score": { "type": "number" },
+          "level": { "$ref": "enums.json#/$defs/CefrLabel" }
+        }
+      }
+    },
+    "strengths": { "type": "array", "items": { "type": "string" } },
+    "weaknesses": { "type": "array", "items": { "type": "string" } },
+    "recurringMistakes": { "type": "array", "items": { "type": "string" } },
+    "focusAreas": { "type": "array", "items": { "type": "string" } },
+    "summary": { "type": "string" },
+    "recommendations": { "type": "array", "items": { "type": "string" } },
+    "studyAdvice": { "type": "array", "items": { "type": "string" } },
+    "improvementPriorities": { "type": "array", "items": { "type": "string" } },
+    "weeklyFocusSkills": {
+      "type": "array",
+      "items": { "$ref": "enums.json#/$defs/SkillId" }
+    },
+    "humanReview": { "$ref": "#/$defs/HumanReviewPublic" },
+    "disclaimer": { "type": "string" },
+    "rulesVersion": { "type": "string" },
+    "blueprintId": { "type": "string" },
+    "createdAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "HumanReviewPublic": {
+      "type": "object",
+      "required": ["status", "changedReport", "reviewedAt"],
+      "properties": {
+        "status": { "$ref": "enums.json#/$defs/HumanReviewStatus" },
+        "summary": { "type": "string" },
+        "changedReport": { "type": "boolean" },
+        "reviewedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

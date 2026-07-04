@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.austriapath.at/schemas/rule-registry.json",
+  "title": "RuleRegistry",
+  "type": "object",
+  "required": ["meta", "globalPrinciples", "criticalRules", "levels", "promotedRules"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["registryVersion", "updatedAt", "schemaVersion"],
+      "properties": {
+        "registryVersion": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "approvedBy": { "type": "string" },
+        "schemaVersion": { "type": "string" }
+      }
+    },
+    "globalPrinciples": { "type": "array" },
+    "criticalRules": { "type": "array" },
+    "levels": { "type": "object" },
+    "promotedRules": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/PromotedRule" }
+    }
+  },
+  "$defs": {
+    "PromotedRule": {
+      "type": "object",
+      "required": ["id", "sourceLabItemId", "approvedBy", "approvedAt", "ruleText"],
+      "properties": {
+        "id": { "type": "string" },
+        "sourceLabItemId": { "type": "string" },
+        "approvedBy": { "type": "string" },
+        "approvedAt": { "type": "string", "format": "date-time" },
+        "skill": { "$ref": "enums.json#/$defs/SkillId" },
+        "level": { "$ref": "enums.json#/$defs/CefrLabel" },
+        "ruleText": { "type": "string" },
+        "structuredPatch": { "type": "object" }
+      }
+    }
+  }
+}

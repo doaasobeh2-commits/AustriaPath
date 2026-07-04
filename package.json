@@ -12,16 +12,27 @@
     "preview": "vite preview",
     "audit": "npm audit --audit-level=moderate",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "server:dev": "node --watch server/src/index.js",
+    "server:start": "node server/src/index.js",
+    "server:migrate": "node server/src/db/migrate.js"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.3.14",
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "pg": "^8.16.3",
     "react": "18.3.1",
     "react-dom": "18.3.1",
+    "stripe": "^18.3.0",
     "tw-animate-css": "1.3.8"
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.1.12",
     "@vitejs/plugin-react": "4.7.0",
+    "supertest": "^7.1.4",
     "tailwindcss": "4.1.12",
     "vite": "6.3.5",
     "vitest": "^3.2.4"

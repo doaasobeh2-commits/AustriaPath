@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   grantPlan,
   addCredits,
@@ -7,6 +7,8 @@ import {
 } from '../../data/subscriptionEngine';
 import { getUsers, USERS_KEY } from '../userAccess';
 import AdminActionBar from '../components/AdminActionBar';
+import { useBackend } from '../../api/useBackend.js';
+import { listAdminUsers, patchAdminUser } from '../../api/repositories/index.js';
 function getUserCode(user) {
   if (user.userCode) return user.userCode;
   const raw = String(user.id || user.email || Date.now());
@@ -23,11 +25,46 @@ function saveUsers(users) {
   localStorage.setItem(USERS_KEY, JSON.stringify(users));
 }
 
+function mapApiUser(u) {
+  return {
+    id: u.id,
+    email: u.email,
+    name: u.name || u.email,
+    role: u.role,
+    status: u.status || 'approved',
+    level: u.level || 'B1',
+    allowedLevels: u.allowedLevels || u.allowed_levels || ['A2', 'B1', 'B2'],
+    subscription: { type: u.plan || 'free', status: 'active' },
+    aiCredits: u.aiCredits ?? 0,
+    createdAt: u.createdAt,
+  };
+}
+
 export default function UserManagementScreen({ setActiveTab }) {
-  const [users, setUsers] = useState(loadUsers);
+  const [users, setUsers] = useState(() => (useBackend() ? [] : loadUsers()));
+  const [loading, setLoading] = useState(useBackend());
   const [selectedUser, setSelectedUser] = useState(null);
   const [search, setSearch] = useState('');
   const [processingAction, setProcessingAction] = useState(null);
+
+  useEffect(() => {
+    if (!useBackend()) return;
+    listAdminUsers()
+      .then((rows) => setUsers(rows.map(mapApiUser)))
+      .catch(() => setUsers([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const persistUserPatch = async (id, changes) => {
+    if (!useBackend()) return;
+    const apiFields = {};
+    if (changes.status) apiFields.status = changes.status;
+    if (changes.level) apiFields.level = changes.level;
+    if (changes.allowedLevels) apiFields.allowedLevels = changes.allowedLevels;
+    if (Object.keys(apiFields).length) {
+      await patchAdminUser(id, apiFields);
+    }
+  };
 
   const runAction = (actionId, fn) => {
     if (processingAction) return;
@@ -74,7 +111,8 @@ export default function UserManagementScreen({ setActiveTab }) {
     });
 
     setUsers(next);
-    saveUsers(next);
+    if (!useBackend()) saveUsers(next);
+    else persistUserPatch(id, changes).catch(() => {});
 
     if (String(selectedUser?.id) === String(id)) {
       setSelectedUser((old) => ({ ...old, ...changes }));
@@ -176,13 +214,21 @@ const addActivity = (user, action, details = '') => {
       if (!confirmed) return;
 
       runAction("reset-password", () => {
-        alert("Passwort-Reset wird nach Backend-Integration aktiviert.");
+        if (useBackend()) {
+          alert("Passwort-Reset-E-Mail wird vom Backend versendet (Forgot-Password-Flow).");
+        } else {
+          alert("Passwort-Reset wird nach Backend-Integration aktiviert.");
+        }
       });
     };
 
     const handleVerifyEmail = () => {
       runAction("verify-email", () => {
-        alert("E-Mail-Bestätigung wird nach Backend-Integration aktiviert.");
+        if (useBackend()) {
+          alert("E-Mail-Verifizierung erfolgt über den Bestätigungslink des Benutzers.");
+        } else {
+          alert("E-Mail-Bestätigung wird nach Backend-Integration aktiviert.");
+        }
       });
     };
 
@@ -565,7 +611,9 @@ const addActivity = (user, action, details = '') => {
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      {filteredUsers.length === 0 ? (
+      {loading ? (
+        <div style={emptyStyle}>Benutzer werden geladen…</div>
+      ) : filteredUsers.length === 0 ? (
         <div style={emptyStyle}>Keine Benutzer gefunden.</div>
       ) : (
         filteredUsers.map((user) => (

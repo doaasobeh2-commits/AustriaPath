@@ -28,7 +28,7 @@ export default function RegisterScreen({
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [notRobot, setNotRobot] = useState(false);
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     const cleanEmail = email.trim().toLowerCase();
 
     if (!name.trim() || !cleanEmail || !password) {
@@ -58,7 +58,7 @@ export default function RegisterScreen({
       return;
     }
 
-    const result = registerStudentUser({
+    const result = await registerStudentUser({
       name: name.trim(),
       email: cleanEmail,
       password,

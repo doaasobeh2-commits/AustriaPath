@@ -1,6 +1,17 @@
 import React from 'react';
 import { getUserLanguage } from '../../utils/userPreferences';
 import { applyClientPlanSelection } from '../../utils/clientSubscription';
+import { useBackend } from '../../api/useBackend.js';
+import { checkoutSubscription } from '../../api/repositories/index.js';
+
+const PLAN_TYPE_MAP = {
+  placement: 'placement_test',
+  placement_test: 'placement_test',
+  weekly_plan: 'weekly_plan',
+  ai_exam: 'ai_exam',
+  intensive_week: 'intensive_week',
+  premium_month: 'premium_month',
+};
 
 export default function SubscriptionScreen({ setActiveTab }) {
   const language = getUserLanguage();
@@ -8,7 +19,23 @@ export default function SubscriptionScreen({ setActiveTab }) {
   const t = content[language] || content.Deutsch;
   const plans = t.plans;
 
-  const handleSelectPlan = (plan) => {
+  const handleSelectPlan = async (plan) => {
+    const engineType = PLAN_TYPE_MAP[plan.type] || plan.type;
+
+    if (useBackend()) {
+      try {
+        const result = await checkoutSubscription(engineType);
+        if (result.checkoutUrl) {
+          window.location.href = result.checkoutUrl;
+          return;
+        }
+        alert('Zahlung ist derzeit nicht verfügbar. Bitte kontaktieren Sie den Support.');
+      } catch {
+        alert('Checkout fehlgeschlagen. Bitte später erneut versuchen.');
+      }
+      return;
+    }
+
     const now = new Date();
 
     const subscription = {

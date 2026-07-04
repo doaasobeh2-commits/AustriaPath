@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.austriapath.at/schemas/error-response.json",
+  "title": "ApiErrorResponse",
+  "type": "object",
+  "required": ["success", "error", "meta"],
+  "properties": {
+    "success": { "const": false },
+    "error": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "AUTH_REQUIRED", "AUTH_INVALID", "AUTH_BLOCKED", "FORBIDDEN",
+            "EMAIL_ALREADY_REGISTERED", "EMAIL_RESERVED",
+            "SUBSCRIPTION_INACTIVE", "SUBSCRIPTION_EXPIRED", "SUBSCRIPTION_TYPE_MISMATCH",
+            "NO_REMAINING_EXAMS", "PAYMENT_FAILED",
+            "SESSION_NOT_FOUND", "SESSION_NOT_ACTIVE", "SESSION_EXPIRED",
+            "SESSION_INCOMPLETE", "SECTION_INDEX_MISMATCH", "INVALID_PRODUCT_TYPE",
+            "PROFILE_CONFLICT", "REPORT_NOT_FOUND",
+            "AI_CREDITS_EXHAUSTED", "OPENAI_UPSTREAM_ERROR", "PROMPT_TOO_LONG",
+            "LAB_ITEM_NOT_FOUND", "LAB_ALREADY_RESOLVED",
+            "REGISTRY_VERSION_NOT_FOUND", "RULE_CONFLICT",
+            "VALIDATION_ERROR", "NOT_FOUND", "RATE_LIMITED",
+            "IDEMPOTENCY_MISMATCH", "INTERNAL_ERROR", "API_VERSION_UNSUPPORTED"
+          ]
+        },
+        "message": { "type": "string" },
+        "details": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "meta": { "$ref": "meta.json" }
+  },
+  "additionalProperties": false
+}

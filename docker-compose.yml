@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: austria
+      POSTGRES_PASSWORD: austria
+      POSTGRES_DB: austria_path
+    ports:
+      - "5432:5432"
+    volumes:
+      - austria_pg_data:/var/lib/postgresql/data
+
+volumes:
+  austria_pg_data:

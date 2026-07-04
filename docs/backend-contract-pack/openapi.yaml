@@ -1,0 +1,879 @@
+openapi: 3.1.0
+info:
+  title: AustriaPath API
+  version: 2.0.0-gate0
+  description: |
+    **Gate 0 — Architecture Freeze** master API contract.
+    Aligned with Exam Platform Phases A–G (`1.0.0-phase-g`).
+
+    - Contract pack: `docs/backend-contract-pack/`
+    - JSON Schemas: `docs/backend-contract-pack/schemas/`
+    - Response envelope: all success responses wrap `data` + `meta`
+
+    **Do not implement divergent endpoints** without contract pack version bump.
+
+servers:
+  - url: https://api.austriapath.at/v1
+    description: Production
+  - url: http://localhost:3000/v1
+    description: Local development
+
+tags:
+  - name: Auth
+  - name: Users
+  - name: Subscription
+  - name: ExamSessions
+  - name: Reports
+  - name: StudentProfile
+  - name: RuleRegistry
+  - name: AI
+  - name: AdminExaminerLab
+  - name: AdminRuleRegistry
+  - name: AdminUsers
+  - name: Migration
+  - name: Webhooks
+  - name: Health
+
+security:
+  - cookieAuth: []
+  - bearerAuth: []
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      security: []
+      responses:
+        "200":
+          description: OK
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register student
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponseEnvelope"
+        "409":
+          $ref: "#/components/responses/Error"
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponseEnvelope"
+        "401":
+          $ref: "#/components/responses/Error"
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Current user
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserEnvelope"
+
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "200":
+          description: Always OK
+
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token: { type: string }
+                password: { type: string, minLength: 8 }
+      responses:
+        "200":
+          description: Password reset
+
+  /users/me/legal-consent:
+    post:
+      tags: [Users]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [privacyVersion, termsVersion]
+              properties:
+                privacyVersion: { type: string }
+                termsVersion: { type: string }
+      responses:
+        "201":
+          description: Consent recorded
+
+  /users/me/export:
+    get:
+      tags: [Users]
+      summary: GDPR export
+      responses:
+        "200":
+          description: Export bundle
+
+  /users/me:
+    delete:
+      tags: [Users]
+      summary: Request account deletion
+      responses:
+        "202":
+          description: Deletion queued
+
+  /subscription:
+    get:
+      tags: [Subscription]
+      summary: Current subscription
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionEnvelope"
+
+  /subscription/checkout:
+    post:
+      tags: [Subscription]
+      summary: Create Stripe checkout session
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planType]
+              properties:
+                planType:
+                  $ref: "#/components/schemas/SubscriptionType"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  checkoutUrl: { type: string, format: uri }
+                  sessionId: { type: string }
+
+  /subscription/consume-exam:
+    post:
+      tags: [Subscription]
+      summary: Consume one exam attempt (prefer atomic start via exam-sessions)
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [productType]
+              properties:
+                productType:
+                  $ref: "#/components/schemas/ProductType"
+                examIndex: { type: integer, minimum: 1 }
+                examTotal: { type: integer, minimum: 1 }
+      responses:
+        "200":
+          description: Attempt consumed
+        "403":
+          $ref: "#/components/responses/Error"
+
+  /exam-sessions:
+    post:
+      tags: [ExamSessions]
+      summary: Start exam session
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExamSessionStartRequest"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamSessionStartEnvelope"
+        "403":
+          $ref: "#/components/responses/Error"
+
+  /exam-sessions/active:
+    get:
+      tags: [ExamSessions]
+      summary: Get active session for product
+      parameters:
+        - name: productType
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/ProductType"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamSessionEnvelope"
+        "404":
+          $ref: "#/components/responses/Error"
+
+  /exam-sessions/{sessionId}:
+    get:
+      tags: [ExamSessions]
+      summary: Get session state
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamSessionEnvelope"
+
+  /exam-sessions/{sessionId}/sections:
+    post:
+      tags: [ExamSessions]
+      summary: Submit section answer
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SectionSubmitRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SectionSubmitEnvelope"
+        "410":
+          $ref: "#/components/responses/Error"
+
+  /exam-sessions/{sessionId}/complete:
+    post:
+      tags: [ExamSessions]
+      summary: Complete exam — council, report, profile
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamCompleteEnvelope"
+        "409":
+          $ref: "#/components/responses/Error"
+
+  /exam-sessions/{sessionId}/cancel:
+    post:
+      tags: [ExamSessions]
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: Cancelled
+
+  /reports:
+    get:
+      tags: [Reports]
+      summary: List own reports
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20, maximum: 50 }
+        - name: productType
+          in: query
+          schema:
+            $ref: "#/components/schemas/ProductType"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportListEnvelope"
+
+  /reports/latest:
+    get:
+      tags: [Reports]
+      summary: Latest report
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinalReportEnvelope"
+
+  /reports/{reportId}:
+    get:
+      tags: [Reports]
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinalReportEnvelope"
+
+  /student-profile:
+    get:
+      tags: [StudentProfile]
+      summary: Get V2 student learning profile
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentProfileEnvelope"
+
+  /rule-registry:
+    get:
+      tags: [RuleRegistry]
+      summary: Current registry metadata
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RuleRegistryMetaEnvelope"
+
+  /rule-registry/effective:
+    get:
+      tags: [RuleRegistry]
+      summary: Materialized rubric for judge (service/engine)
+      parameters:
+        - name: level
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/CefrLabel"
+        - name: skill
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/SkillId"
+        - name: version
+          in: query
+          schema: { type: string }
+        - name: effectiveAt
+          in: query
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: Effective skill rubric JSON
+
+  /ai/completions:
+    post:
+      tags: [AI]
+      summary: Unified AI gateway
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiCompletionRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiCompletionEnvelope"
+        "402":
+          $ref: "#/components/responses/Error"
+
+  /ai/usage:
+    get:
+      tags: [AI]
+      summary: Credit balance and recent usage
+      responses:
+        "200":
+          description: Usage summary
+
+  /admin/examiner-lab/dashboard:
+    get:
+      tags: [AdminExaminerLab]
+      summary: Lab dashboard
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LabDashboardEnvelope"
+
+  /admin/examiner-lab/queue:
+    get:
+      tags: [AdminExaminerLab]
+      summary: List lab queue
+      responses:
+        "200":
+          description: Queue items
+
+  /admin/examiner-lab/queue/{labItemId}/resolve:
+    post:
+      tags: [AdminExaminerLab]
+      summary: Resolve lab item
+      parameters:
+        - name: labItemId
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LabResolveRequest"
+      responses:
+        "200":
+          description: Resolved
+
+  /admin/rule-registry/promote:
+    post:
+      tags: [AdminRuleRegistry]
+      summary: Promote rule directly
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RulePromoteRequest"
+      responses:
+        "201":
+          description: Promoted
+
+  /admin/users:
+    get:
+      tags: [AdminUsers]
+      summary: List users
+      responses:
+        "200":
+          description: User list
+
+  /admin/users/{userId}:
+    patch:
+      tags: [AdminUsers]
+      summary: Admin update user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Updated
+
+  /migration/import:
+    post:
+      tags: [Migration]
+      summary: One-time localStorage import
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MigrationImportRequest"
+      responses:
+        "200":
+          description: Import result
+
+  /webhooks/stripe:
+    post:
+      tags: [Webhooks]
+      security: []
+      summary: Stripe webhook handler
+      parameters:
+        - name: Stripe-Signature
+          in: header
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Received
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: austria_path_session
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      schema: { type: string, format: uuid }
+
+  responses:
+    Error:
+      description: Error response
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    ProductType:
+      type: string
+      enum: [placement_test, weekly_plan, ai_exam, intensive_week, premium_month]
+    ExamMode:
+      type: string
+      enum: [diagnostic, practice, exam]
+    SkillId:
+      type: string
+      enum: [writing, reading, listening, picture_description, planning, discussion, self_introduction]
+    CefrLabel:
+      type: string
+      enum: [A2, "A2+", B1, "B1+", B2, "B2+"]
+    SubscriptionType:
+      type: string
+      enum: [free, placement_test, weekly_plan, ai_exam, intensive_week, premium_month]
+
+    ResponseMeta:
+      type: object
+      required: [requestId, apiVersion, timestamp]
+      properties:
+        requestId: { type: string, format: uuid }
+        apiVersion: { type: string }
+        timestamp: { type: string, format: date-time }
+
+    ErrorResponse:
+      type: object
+      required: [success, error, meta]
+      properties:
+        success: { const: false }
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            details: { type: object }
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    RegisterRequest:
+      type: object
+      required: [name, email, password, level]
+      properties:
+        name: { type: string }
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+        level: { type: string, enum: [A2, B1, B2] }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+
+    User:
+      type: object
+      description: See schemas/user.json
+
+    AuthResponseEnvelope:
+      type: object
+      properties:
+        success: { const: true }
+        data:
+          type: object
+          properties:
+            user:
+              $ref: "#/components/schemas/User"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    UserEnvelope:
+      type: object
+      properties:
+        success: { const: true }
+        data:
+          type: object
+          properties:
+            user:
+              $ref: "#/components/schemas/User"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    SubscriptionEnvelope:
+      type: object
+      properties:
+        success: { const: true }
+        data:
+          type: object
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ExamSessionStartRequest:
+      type: object
+      required: [productType]
+      properties:
+        productType:
+          $ref: "#/components/schemas/ProductType"
+        levelOverride:
+          $ref: "#/components/schemas/CefrLabel"
+        examIndex: { type: integer }
+        examTotal: { type: integer }
+        focusSkillsOverride:
+          type: array
+          items:
+            $ref: "#/components/schemas/SkillId"
+        blueprint: { type: object }
+        idempotencyKey: { type: string, format: uuid }
+
+    ExamSession:
+      type: object
+      description: See schemas/exam-session.json
+
+    ExamSessionEnvelope:
+      type: object
+      properties:
+        success: { const: true }
+        data:
+          type: object
+          properties:
+            session:
+              $ref: "#/components/schemas/ExamSession"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ExamSessionStartEnvelope:
+      type: object
+      properties:
+        success: { const: true }
+        data:
+          type: object
+          properties:
+            sessionId: { type: string, format: uuid }
+            session:
+              $ref: "#/components/schemas/ExamSession"
+            rulesVersion: { type: string }
+            deadlineAt: { type: string, format: date-time }
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    SectionSubmitRequest:
+      type: object
+      required: [answer]
+      properties:
+        answer:
+          type: object
+          required: [sectionIndex, skill, modelId]
+          properties:
+            sectionIndex: { type: integer }
+            skill:
+              $ref: "#/components/schemas/SkillId"
+            modelId: { type: string }
+            freeText: { type: string }
+            mcqAnswers: { type: object }
+            durationSeconds: { type: integer }
+
+    SectionSubmitEnvelope:
+      type: object
+      properties:
+        success: { const: true }
+        data:
+          type: object
+          properties:
+            evaluation: { type: object }
+            session:
+              $ref: "#/components/schemas/ExamSession"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    FinalReport:
+      type: object
+      description: See schemas/final-report.json
+
+    ExamCompleteEnvelope:
+      type: object
+      properties:
+        success: { const: true }
+        data:
+          type: object
+          properties:
+            report:
+              $ref: "#/components/schemas/FinalReport"
+            profile: { type: object }
+            pendingHumanReview: { type: boolean }
+            labEnqueued: { type: boolean }
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    FinalReportEnvelope:
+      type: object
+      properties:
+        success: { const: true }
+        data:
+          type: object
+          properties:
+            report:
+              $ref: "#/components/schemas/FinalReport"
+            legacy: { type: object, description: "legacyReportAdapter shape for UI" }
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    ReportListEnvelope:
+      type: object
+      properties:
+        success: { const: true }
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/FinalReport"
+            pagination: { type: object }
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    StudentProfileEnvelope:
+      type: object
+      properties:
+        success: { const: true }
+        data:
+          type: object
+          properties:
+            profile: { type: object }
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    RuleRegistryMetaEnvelope:
+      type: object
+      properties:
+        success: { const: true }
+        data:
+          type: object
+          properties:
+            registryVersion: { type: string }
+            schemaVersion: { type: string }
+            updatedAt: { type: string, format: date-time }
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    AiCompletionRequest:
+      type: object
+      description: See schemas/ai-completion-request.json
+
+    AiCompletionEnvelope:
+      type: object
+      properties:
+        success: { const: true }
+        data: { type: object }
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    LabDashboardEnvelope:
+      type: object
+      properties:
+        success: { const: true }
+        data:
+          type: object
+          properties:
+            pendingCases: { type: array }
+            registryStats: { type: object }
+            recentResolutions: { type: array }
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+
+    LabResolveRequest:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [approve, reject, correct, propose_rule]
+        rationale: { type: string }
+        correctedDecision: { type: object }
+        ruleProposal: { type: object }
+
+    RulePromoteRequest:
+      type: object
+      required: [ruleText]
+      properties:
+        ruleText: { type: string }
+        skill:
+          $ref: "#/components/schemas/SkillId"
+        level:
+          $ref: "#/components/schemas/CefrLabel"
+        structuredPatch: { type: object }
+        sourceLabItemId: { type: string }
+        rationale: { type: string }
+
+    MigrationImportRequest:
+      type: object
+      required: [exportVersion, payload]
+      properties:
+        exportVersion: { type: string }
+        exportedAt: { type: string, format: date-time }
+        payload: { type: object }

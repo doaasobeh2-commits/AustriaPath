@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.austriapath.at/schemas/envelope.json",
+  "title": "ApiSuccessEnvelope",
+  "type": "object",
+  "required": ["success", "data", "meta"],
+  "properties": {
+    "success": { "const": true },
+    "data": {},
+    "meta": { "$ref": "meta.json" }
+  },
+  "additionalProperties": false
+}

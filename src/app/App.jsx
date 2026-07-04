@@ -14,6 +14,7 @@ import LoginScreen from "./screens/LoginScreen";
 import RegisterScreen from "./screens/RegisterScreen";
 import AuthWelcomeScreen from "./screens/AuthWelcomeScreen";
 import ForgotPasswordScreen from "./screens/ForgotPasswordScreen";
+import ResetPasswordScreen from "./screens/ResetPasswordScreen";
 import { DatabaseScreen } from "./screens/DatabaseScreen";
 import { WritingScreen } from "./screens/WritingScreen";
 import { ImageTrainingScreen } from "./screens/ImageTrainingScreen";
@@ -36,8 +37,11 @@ import {
   clearSession,
   resolveSessionUser,
   syncSessionUser,
+  validateSessionFromBackend,
   validateSessionOnStartup,
 } from "./userAccess";
+import { useBackend } from "../api/useBackend.js";
+import { verifyEmail } from "../api/repositories/index.js";
 import LegalPageScreen from "./components/LegalPageScreen";
 import LegalConsentScreen from "./screens/LegalConsentScreen";
 import { needsLegalConsent, saveLegalConsent } from "../legal/consent";
@@ -78,6 +82,15 @@ export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [legalView, setLegalView] = useState(null);
   const [, setConsentUpdated] = useState(0);
+  const [authTokenAction, setAuthTokenAction] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const resetToken = params.get("resetPassword");
+    const verifyToken = params.get("verifyEmail");
+    if (resetToken) return { type: "reset", token: resetToken };
+    if (verifyToken) return { type: "verify", token: verifyToken };
+    return null;
+  });
+  const [authTokenMessage, setAuthTokenMessage] = useState(null);
 
   const isAdmin = isAdminAccount(currentUser);
 
@@ -112,6 +125,38 @@ export default function App() {
   };
 
   useEffect(() => {
+    if (!useBackend() || !authTokenAction || authTokenAction.type !== "verify") return;
+
+    verifyEmail(authTokenAction.token)
+      .then(() => {
+        setAuthTokenMessage("E-Mail erfolgreich bestätigt. Sie können sich jetzt anmelden.");
+        setAuthTokenAction(null);
+        window.history.replaceState({}, "", window.location.pathname);
+      })
+      .catch(() => {
+        setAuthTokenMessage("Bestätigungslink ungültig oder abgelaufen.");
+        setAuthTokenAction(null);
+        window.history.replaceState({}, "", window.location.pathname);
+      });
+  }, [authTokenAction]);
+
+  useEffect(() => {
+    if (useBackend()) {
+      validateSessionFromBackend().then((resolved) => {
+        if (!resolved) {
+          setIsLoggedIn(false);
+          setCurrentUser(null);
+          return;
+        }
+        setCurrentUser(resolved);
+        setIsLoggedIn(true);
+        if (!isAdminAccount(resolved)) {
+          setActiveTab((tab) => getSafeTab(tab, resolved));
+        }
+      });
+      return;
+    }
+
     const resolved = validateSessionOnStartup();
 
     if (!resolved) {
@@ -182,6 +227,23 @@ export default function App() {
   }
 
   if (!isLoggedIn) {
+    if (authTokenAction?.type === "reset") {
+      return (
+        <ResetPasswordScreen
+          token={authTokenAction.token}
+          onBack={() => {
+            setAuthTokenAction(null);
+            window.history.replaceState({}, "", window.location.pathname);
+            setAuthScreen("login");
+          }}
+          onSuccess={() => {
+            setAuthTokenAction(null);
+            window.history.replaceState({}, "", window.location.pathname);
+          }}
+        />
+      );
+    }
+
     if (authScreen === "forgot") {
       return (
         <ForgotPasswordScreen onBack={() => setAuthScreen("login")} />
@@ -190,12 +252,34 @@ export default function App() {
 
     if (authScreen === "login") {
       return (
-        <LoginScreen
+        <>
+          {authTokenMessage && (
+            <div
+              style={{
+                position: "fixed",
+                top: 16,
+                left: "50%",
+                transform: "translateX(-50%)",
+                zIndex: 9999,
+                background: "#ecfdf5",
+                color: "#166534",
+                border: "1px solid #bbf7d0",
+                borderRadius: 12,
+                padding: "12px 16px",
+                maxWidth: 420,
+                textAlign: "center",
+              }}
+            >
+              {authTokenMessage}
+            </div>
+          )}
+          <LoginScreen
           onLogin={completeLogin}
           onRegister={() => setAuthScreen("register")}
           onForgotPassword={() => setAuthScreen("forgot")}
           onBack={() => setAuthScreen("welcome")}
         />
+        </>
       );
     }
 

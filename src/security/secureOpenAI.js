@@ -1,4 +1,6 @@
 import { reportClientError } from "../utils/errorReporting.js";
+import { useBackend } from "../api/useBackend.js";
+import { requestAiCompletion } from "../api/repositories/index.js";
 
 const MAX_PROMPT_LENGTH = 8000;
 const MAX_ANSWER_LENGTH = 8000;
@@ -22,7 +24,7 @@ function sanitizeMessages(messages) {
 
 export async function requestOpenAIProxy(payload = {}) {
   const body = {
-    mode: trimText(payload.mode, 64),
+    mode: trimText(payload.mode, 64) || "conversational",
     prompt: trimText(payload.prompt, MAX_PROMPT_LENGTH),
     studentAnswer: trimText(payload.studentAnswer, MAX_ANSWER_LENGTH),
     context:
@@ -31,6 +33,20 @@ export async function requestOpenAIProxy(payload = {}) {
         : {},
     messages: sanitizeMessages(payload.messages),
   };
+
+  if (useBackend()) {
+    try {
+      const data = await requestAiCompletion(body);
+      return {
+        success: true,
+        result: typeof data.result === "string" ? data.result : "",
+        creditsRemaining: data.creditsRemaining,
+      };
+    } catch (error) {
+      reportClientError(error, { mode: body.mode, backend: true });
+      throw error;
+    }
+  }
 
   const response = await fetch("/api/ai/openai", {
     method: "POST",

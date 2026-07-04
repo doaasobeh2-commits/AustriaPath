@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.austriapath.at/schemas/user.json",
+  "title": "User",
+  "type": "object",
+  "required": ["id", "email", "name", "role", "status", "level", "allowedLevels", "subscription", "permissions", "aiCredits", "usedAiCredits"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "email": { "type": "string", "format": "email" },
+    "name": { "type": "string" },
+    "role": { "$ref": "enums.json#/$defs/UserRole" },
+    "status": { "$ref": "enums.json#/$defs/UserStatus" },
+    "level": { "$ref": "enums.json#/$defs/CefrLabel" },
+    "allowedLevels": {
+      "type": "array",
+      "items": { "$ref": "enums.json#/$defs/CefrLabel" }
+    },
+    "emailVerified": { "type": "boolean" },
+    "subscription": { "$ref": "#/$defs/SubscriptionSnapshot" },
+    "permissions": { "$ref": "#/$defs/UserPermissions" },
+    "aiCredits": { "type": "integer", "minimum": 0 },
+    "usedAiCredits": { "type": "integer", "minimum": 0 }
+  },
+  "$defs": {
+    "UserPermissions": {
+      "type": "object",
+      "properties": {
+        "placementTest": { "type": "boolean" },
+        "aiExam": { "type": "boolean" },
+        "weeklyPlan": { "type": "boolean" },
+        "reports": { "type": "boolean" },
+        "writingAI": { "type": "boolean" },
+        "imageAI": { "type": "boolean" },
+        "speakingAI": { "type": "boolean" },
+        "readingAI": { "type": "boolean" },
+        "listeningAI": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "SubscriptionSnapshot": {
+      "type": "object",
+      "required": ["type", "status"],
+      "properties": {
+        "type": { "$ref": "enums.json#/$defs/SubscriptionType" },
+        "status": { "$ref": "enums.json#/$defs/SubscriptionStatus" },
+        "remainingExams": { "type": "integer", "minimum": 0 },
+        "endDate": { "type": ["string", "null"], "format": "date-time" }
+      }
+    }
+  }
+}

@@ -4,6 +4,7 @@ import {
   buildPlacementProfile,
   savePlacementProfile,
 } from "../../data/utils/placementEngine";
+import { finalizePlacementTest } from '../../exam-platform/adapters/examEngineBridge.js';
 export default function PlacementTestScreen({ setActiveTab }) {
   const [selectedLevel, setSelectedLevel] = useState('A2');
   const [started, setStarted] = useState(false);
@@ -17,7 +18,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
   const totalMinutes = 8;
   const skillName = getStudentSkillName(currentModel?.skill);
 
-const saveAiEvaluation = (aiEvaluation) => {
+const saveAiEvaluation = async (aiEvaluation) => {
   const updated = {
     ...skillScores,
     [currentModel.skill]: aiEvaluation,
@@ -28,13 +29,25 @@ const saveAiEvaluation = (aiEvaluation) => {
   if (step + 1 < flow.length) {
     setStep(step + 1);
   } else {
-    const profile = buildPlacementProfile({
-      selectedLevel,
-      skillScores: updated,
-    });
-
-    savePlacementProfile(profile);
-    setResult(profile);
+    try {
+      const platformResult = await finalizePlacementTest({
+        selectedLevel,
+        skillScores: updated,
+        flow,
+      });
+      savePlacementProfile(platformResult.placementProfile);
+      setResult(platformResult.placementProfile);
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('Placement platform finalize failed:', error);
+      }
+      const profile = buildPlacementProfile({
+        selectedLevel,
+        skillScores: updated,
+      });
+      savePlacementProfile(profile);
+      setResult(profile);
+    }
   }
 };
 

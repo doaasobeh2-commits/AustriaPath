@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { getUserLanguage } from '../../utils/userPreferences';
+import { finalizeAiSessionParts } from '../../exam-platform/adapters/examEngineBridge.js';
 
 export default function AISessionScreen({
   mode = 'exam', // exam | weekly_plan | placement_test
@@ -229,7 +230,31 @@ const getAdaptiveMessage = (result) => {
 
   return messages[lang]?.[result] || messages.Deutsch[result];
 };
-const nextStep = () => {
+
+const buildSmartSummary = (strongCount, middleCount, weakCount) => {
+  if (weakCount === 0 && strongCount >= middleCount) {
+    return 'Sehr gute Sitzung. Die meisten Aufgaben wurden sicher gelöst. Der Schüler kann mit schwierigeren Aufgaben weitertrainieren.';
+  }
+  if (strongCount > weakCount && middleCount > 0) {
+    return 'Gute Sitzung. Der Schüler zeigt stabile Leistungen, braucht aber noch mehr Sicherheit in einzelnen Bereichen.';
+  }
+  if (weakCount > strongCount) {
+    return 'Die Sitzung zeigt klare Schwächen. Der Schüler braucht gezieltes Training mit einfachen, vollständigen Sätzen und mehr Struktur.';
+  }
+  return 'Die Sitzung ist gemischt. Einige Aufgaben wurden gut gelöst, andere brauchen noch Wiederholung und gezielte Übung.';
+};
+
+const buildSmartRecommendation = (focusAreas, weaknesses) => {
+  if (focusAreas.length > 0) {
+    return `Nächster Fokus: ${[...new Set(focusAreas)].slice(0, 2).join(' und ')} gezielt wiederholen.`;
+  }
+  if (weaknesses.length > 0) {
+    return `Wiederhole zuerst: ${[...new Set(weaknesses)].slice(0, 2).join(' und ')}.`;
+  }
+  return 'Weiter mit einer schwierigeren Aufgabe oder einer AI Probeprüfung.';
+};
+
+const nextStep = async () => {
   const savedStep = saveCurrentStep();
 
   if (step < sessionParts.length - 1) {
@@ -256,64 +281,86 @@ const focusAreas = weaknesses.length
   : sessionAnswers
       .filter((x) => x.result === 'middle')
       .map((x) => x.label || x.title || x.type);
-    if (import.meta.env.DEV) {
-      console.log('SESSION ANSWERS', sessionAnswers);
-      console.log('STRONG', strongCount, 'MIDDLE', middleCount, 'WEAK', weakCount);
+
+    /** @type {Record<string, string>} */
+    const uiAnswers = {};
+    sessionAnswers.forEach((saved, idx) => {
+      if (saved.answer) uiAnswers[`${idx}-writing`] = saved.answer;
+      Object.entries(saved.answers || {}).forEach(([key, value]) => {
+        uiAnswers[`${idx}-q-${key}`] = value;
+      });
+    });
+
+    let report;
+    try {
+      const platformResult = await finalizeAiSessionParts({
+        sessionType,
+        level,
+        parts: sessionParts,
+        uiAnswers,
+        legacyMeta: {
+          title,
+          results: sessionAnswers,
+          strongCount,
+          middleCount,
+          weakCount,
+        },
+      });
+      report = {
+        ...platformResult.legacyReport,
+        title,
+        sessionType,
+        mode,
+        level,
+        finishedAt: new Date().toISOString(),
+        partsCount: sessionParts.length,
+        strongCount,
+        middleCount,
+        weakCount,
+        strengths: platformResult.legacyReport?.strengths?.length
+          ? platformResult.legacyReport.strengths
+          : [...new Set(strengths)],
+        weaknesses: platformResult.legacyReport?.weaknesses?.length
+          ? platformResult.legacyReport.weaknesses
+          : [...new Set(weaknesses)],
+        focusAreas: platformResult.legacyReport?.focusAreas?.length
+          ? platformResult.legacyReport.focusAreas
+          : [...new Set(focusAreas)],
+        results: sessionAnswers,
+        platformReportId: platformResult.report?.reportId,
+      };
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('Platform session finalize failed:', error);
+      }
+      report = {
+        title,
+        sessionType,
+        mode,
+        level,
+        date: new Date().toLocaleDateString('de-DE'),
+        finishedAt: new Date().toISOString(),
+        partsCount: sessionParts.length,
+        strongCount,
+        middleCount,
+        weakCount,
+        strengths: [...new Set(strengths)],
+        weaknesses: [...new Set(weaknesses)],
+        focusAreas: [...new Set(focusAreas)],
+        results: sessionAnswers,
+        summary: buildSmartSummary(strongCount, middleCount, weakCount),
+        nextRecommendation: buildSmartRecommendation(focusAreas, weaknesses),
+      };
+      const oldReports = JSON.parse(
+        localStorage.getItem('austriaPathAIReports') || '[]'
+      );
+      localStorage.setItem(
+        'austriaPathAIReports',
+        JSON.stringify([report, ...oldReports])
+      );
     }
-const buildSmartSummary = () => {
-  if (weakCount === 0 && strongCount >= middleCount) {
-    return 'Sehr gute Sitzung. Die meisten Aufgaben wurden sicher gelöst. Der Schüler kann mit schwierigeren Aufgaben weitertrainieren.';
-  }
 
-  if (strongCount > weakCount && middleCount > 0) {
-    return 'Gute Sitzung. Der Schüler zeigt stabile Leistungen, braucht aber noch mehr Sicherheit in einzelnen Bereichen.';
-  }
-
-  if (weakCount > strongCount) {
-    return 'Die Sitzung zeigt klare Schwächen. Der Schüler braucht gezieltes Training mit einfachen, vollständigen Sätzen und mehr Struktur.';
-  }
-
-  return 'Die Sitzung ist gemischt. Einige Aufgaben wurden gut gelöst, andere brauchen noch Wiederholung und gezielte Übung.';
-};
-
-const buildSmartRecommendation = () => {
-  if (focusAreas.length > 0) {
-    return `Nächster Fokus: ${[...new Set(focusAreas)].slice(0, 2).join(' und ')} gezielt wiederholen.`;
-  }
-
-  if (weaknesses.length > 0) {
-    return `Wiederhole zuerst: ${[...new Set(weaknesses)].slice(0, 2).join(' und ')}.`;
-  }
-
-  return 'Weiter mit einer schwierigeren Aufgabe oder einer AI Probeprüfung.';
-};
-const report = {
-  title,
-  sessionType,
-  mode,
-  level,
-  date: new Date().toLocaleDateString('de-DE'),
-  finishedAt: new Date().toISOString(),
-  partsCount: sessionParts.length,
-
-  strongCount,
-  middleCount,
-  weakCount,
-
-  strengths: [...new Set(strengths)],
-  weaknesses: [...new Set(weaknesses)],
-  focusAreas: [...new Set(focusAreas)],
-
-  results: sessionAnswers,
-
-  summary: buildSmartSummary(),
-
-nextRecommendation: buildSmartRecommendation(),
-};
-    const oldReports = JSON.parse(
-      localStorage.getItem('austriaPathAIReports') || '[]'
-    );
-
+    if (report) {
     localStorage.setItem('austriaPathLastAIReport', JSON.stringify(report));
     localStorage.setItem(
   'austriaPathLastWeaknesses',
@@ -324,10 +371,16 @@ localStorage.setItem(
   'austriaPathLastStrengths',
   JSON.stringify(report.strengths || [])
 );
-    localStorage.setItem(
-      'austriaPathAIReports',
-      JSON.stringify([report, ...oldReports])
-    );
+    if (!report.platformReportId) {
+      const oldReports = JSON.parse(
+        localStorage.getItem('austriaPathAIReports') || '[]'
+      );
+      localStorage.setItem(
+        'austriaPathAIReports',
+        JSON.stringify([report, ...oldReports])
+      );
+    }
+    }
     localStorage.removeItem('austriaPathCurrentSessionAnswers');
 
     onFinish?.(report);

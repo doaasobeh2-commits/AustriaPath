@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.austriapath.at/schemas/student-profile.json",
+  "title": "StudentProfile",
+  "type": "object",
+  "required": ["profileVersion", "officialExamLevel", "officialSkillLevels", "weakSkills", "recurringMistakes", "globalUsedModelIds", "examHistory", "practiceHistory", "practiceStats", "reportSummaries", "aiRecommendations", "updatedAt"],
+  "properties": {
+    "profileVersion": { "type": "string", "const": "2.0.0" },
+    "officialExamLevel": { "$ref": "enums.json#/$defs/CefrLabel" },
+    "officialSkillLevels": {
+      "type": "object",
+      "additionalProperties": { "$ref": "enums.json#/$defs/CefrLabel" }
+    },
+    "weakSkills": { "type": "array", "items": { "type": "string" } },
+    "recurringMistakes": { "type": "array", "items": { "type": "string" } },
+    "readinessBand": { "$ref": "enums.json#/$defs/ReadinessBand" },
+    "globalUsedModelIds": { "type": "array", "items": { "type": "string" } },
+    "activePackage": { "$ref": "#/$defs/PackageState" },
+    "examHistory": { "type": "array", "items": { "$ref": "#/$defs/ExamHistoryRecord" } },
+    "practiceHistory": { "type": "array", "items": { "$ref": "#/$defs/PracticeSessionRecord" } },
+    "practiceStats": { "type": "object" },
+    "reportSummaries": { "type": "array" },
+    "aiRecommendations": { "type": "array", "items": { "type": "string" } },
+    "subscriptionSnapshot": { "type": "object" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "PackageState": {
+      "type": "object",
+      "required": ["type", "examIndex", "examTotal", "usedModelIdsInPackage"],
+      "properties": {
+        "type": { "$ref": "enums.json#/$defs/ProductType" },
+        "examIndex": { "type": "integer" },
+        "examTotal": { "type": "integer" },
+        "usedModelIdsInPackage": { "type": "array", "items": { "type": "string" } },
+        "startedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "ExamHistoryRecord": {
+      "type": "object",
+      "required": ["reportId", "productType", "date", "cefrLevel", "overallScore"],
+      "properties": {
+        "reportId": { "type": "string" },
+        "productType": { "$ref": "enums.json#/$defs/ProductType" },
+        "date": { "type": "string", "format": "date-time" },
+        "cefrLevel": { "$ref": "enums.json#/$defs/CefrLabel" },
+        "overallScore": { "type": "number" },
+        "confidence": { "type": "number" },
+        "usedModelIds": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "PracticeSessionRecord": {
+      "type": "object",
+      "required": ["reportId", "date", "focusSkills"],
+      "properties": {
+        "reportId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "focusSkills": { "type": "array", "items": { "type": "string" } },
+        "durationMinutes": { "type": "number" },
+        "practiceScore": { "type": "number" }
+      }
+    }
+  }
+}

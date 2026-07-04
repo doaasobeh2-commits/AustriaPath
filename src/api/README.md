@@ -1,19 +1,16 @@
-# API Integration Layer
+# API contracts (frontend)
 
-This folder defines **contracts only** — no fake backend implementations.
+**Gate 0:** The master API specification lives in [`docs/backend-contract-pack/`](../docs/backend-contract-pack/README.md).
 
-| File | Purpose |
-|------|---------|
-| `endpoints.js` | URL path constants (`API_ENDPOINTS`) |
-| `contracts.js` | JSDoc types, error codes, evaluation method enums |
+This folder retains route constants for SPA integration:
 
-## When backend ships
+- `endpoints.js` — path constants (extend with `/exam-sessions`, `/student-profile`, `/rule-registry`)
+- `contracts.js` — legacy JSDoc types; canonical enums align with `docs/backend-contract-pack/schemas/enums.json`
 
-1. Add `httpClient.js` — `fetch` wrapper with `credentials: 'include'`
-2. Add service modules: `authService.js`, `subscriptionService.js`, `aiService.js`, `reportsService.js`
-3. Feature flag: `VITE_USE_BACKEND=true` in `.env`
-4. Swap calls in `userAccess.js`, `secureOpenAI.js`, `SubscriptionScreen.jsx` behind the flag
+When implementing Phase H:
 
-**Do not** call `API_ENDPOINTS` URLs until backend is deployed — they will 404.
+1. Add `httpClient.js` per integration guide
+2. Add repository ports matching OpenAPI paths
+3. Use `practice_heuristic` (not `training_heuristic`) for evaluation method
 
-See [AustriaPath_Frontend_Backend_Integration.md](../../AustriaPath_Frontend_Backend_Integration.md).
+Do not implement backend logic in this folder.

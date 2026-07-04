@@ -11,6 +11,7 @@ import { a2Images } from './a2Images';
 import { b1Images } from './b1Images';
 
 import { examBank } from './examBank';
+import { buildPlatformPremiumPackage } from '../exam-platform/adapters/examEngineBridge.js';
 
 function cleanLevel(level = 'B1') {
   return String(level).replace('+', '').trim().toUpperCase() || 'B1';
@@ -331,6 +332,18 @@ return parts.map((part) => {
 }
 
 export function buildPremiumExamPackage({
+  level = 'B1',
+  packageType = 'ai_exam',
+  userProfile = null,
+} = {}) {
+  return {
+    ...buildPlatformPremiumPackage({ level, packageType }),
+    userProfile,
+  };
+}
+
+/** @deprecated Legacy random builder — kept for reference; use buildPremiumExamPackage. */
+export function buildPremiumExamPackageLegacy({
   level = 'B1',
   packageType = 'ai_exam',
   userProfile = null,

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.austriapath.at/schemas/ai-completion-request.json",
+  "title": "AiCompletionRequest",
+  "type": "object",
+  "required": ["mode"],
+  "properties": {
+    "mode": { "$ref": "enums.json#/$defs/AiGatewayMode" },
+    "prompt": { "type": "string", "maxLength": 8000 },
+    "studentAnswer": { "type": "string", "maxLength": 8000 },
+    "messages": {
+      "type": "array",
+      "maxItems": 30,
+      "items": {
+        "type": "object",
+        "required": ["role", "content"],
+        "properties": {
+          "role": { "type": "string", "enum": ["user", "assistant"] },
+          "content": { "type": "string", "maxLength": 8000 }
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "properties": {
+        "serviceType": { "type": "string" },
+        "level": { "$ref": "enums.json#/$defs/CefrLabel" },
+        "skill": { "$ref": "enums.json#/$defs/SkillId" },
+        "sessionId": { "type": "string", "format": "uuid" },
+        "sectionIndex": { "type": "integer" },
+        "engineName": { "type": "string" }
+      }
+    }
+  },
+  "oneOf": [
+    { "required": ["messages"] },
+    { "required": ["prompt"] }
+  ]
+}

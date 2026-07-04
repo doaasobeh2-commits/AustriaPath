@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { runExaminerMind } from "../../ai/examinerMind/runExaminerMind";
-import { runModelRouter } from "../../ai/examinerMind/learning/modelRouter";
+import {
+  startPlatformSession,
+  finalizePlatformSession,
+} from "../../exam-platform/adapters/examEngineBridge.js";
 export default function PremiumExamSessionScreen({ setActiveTab }) {
   const exam = useMemo(() => {
     try {
@@ -29,6 +31,8 @@ export default function PremiumExamSessionScreen({ setActiveTab }) {
   const [step, setStep] = useState(0);
   const [finished, setFinished] = useState(false);
   const [answers, setAnswers] = useState({});
+  const [platformSessionId, setPlatformSessionId] = useState(null);
+  const [completing, setCompleting] = useState(false);
 
   const parts = exam?.parts || [];
   const currentPart = parts[step] || null;
@@ -114,64 +118,46 @@ const buildExamSummary = (decision = {}) => {
  
 
  const finishExam = async () => {
-  const aiResult = await runExaminerMind({
-  examType: "OEIF",
-  level: exam.level,
- currentSection: {
-  ...currentPart,
-  allParts: exam.parts || [],
-  answers,
-},
-  answerText: answers[currentPart?.type] || "",
-  taskAnswered: true,
-  saveToProfile: true,
-});
-await runModelRouter({
-  engineName: "reportBuilder",
-  mode: "ai_exam",
-  prompt: "Bewerte diese Premium-Prüfung und erstelle einen kurzen Bericht auf Deutsch.",
-  studentAnswer: JSON.stringify(answers),
-  context: {
-    serviceType: "ai_exam",
-    level: exam.level,
-    examType: "OEIF",
-  },
-});
-    if (import.meta.env.DEV) {
-      console.log("Examiner Mind:", aiResult);
-    }
-  const report = {
-    title: `${exam.title} · ${exam.level}`,
-    date: new Date().toLocaleDateString('de-DE'),
-  summary: buildExamSummary(aiResult.decision),
-strongCount:
-(aiResult.decision?.strengths || []).length,
-middleCount:
-  aiResult.decision?.score >= 55 &&
-  aiResult.decision?.score < 75
-    ? 1
-    : 0,
-weakCount: aiResult.decision?.score < 55 ? 1 : 0,
-
-strengths: aiResult.decision?.strengths || [],
-weaknesses: aiResult.decision?.weaknesses || [],
-focusAreas: aiResult.decision?.focusAreas || [],
-    type: 'premium-exam',
-    level: exam.level,
-    packageType: exam.packageData?.packageType,
-    examNumber: exam.examNumber || exam.used,
-    total: exam.total,
-    examinerMind: aiResult,
-  };
-
+  setCompleting(true);
   try {
-    const oldReports = JSON.parse(localStorage.getItem('austriaPathAIReports') || '[]');
-    localStorage.setItem('austriaPathAIReports', JSON.stringify([report, ...oldReports]));
-  } catch {
-    localStorage.setItem('austriaPathAIReports', JSON.stringify([report]));
-  }
+    const productType =
+      exam.platformProductType ||
+      exam.packageData?.packageType ||
+      exam.packageType ||
+      "ai_exam";
 
- setActiveTab('profile');
+    let sessionId = platformSessionId;
+    if (!sessionId) {
+      const startedSession = await startPlatformSession({
+        productType,
+        level: exam.level,
+        examIndex: exam.examNumber || exam.used || 1,
+        blueprint: exam.platformBlueprint,
+      });
+      sessionId = startedSession.sessionId;
+    }
+
+    await finalizePlatformSession({
+      sessionId,
+      parts: exam.parts || [],
+      uiAnswers: answers,
+      legacyMeta: {
+        title: `${exam.title} · ${exam.level}`,
+        type: "premium-exam",
+        packageType: productType,
+        examNumber: exam.examNumber || exam.used,
+        total: exam.total,
+      },
+    });
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.error("Premium exam platform finalize failed:", error);
+    }
+  } finally {
+    setCompleting(false);
+    setFinished(true);
+    setActiveTab("profile");
+  }
 };
 
 
@@ -426,7 +412,30 @@ focusAreas: aiResult.decision?.focusAreas || [],
             Diese Prüfung simuliert einen vollständigen AI-Prüfer. Am Ende bekommst du einen Bericht.
           </p>
 
-          <button style={primaryButtonStyle} onClick={() => setStarted(true)}>
+          <button
+            style={primaryButtonStyle}
+            onClick={() => {
+              try {
+                const productType =
+                  exam.platformProductType ||
+                  exam.packageData?.packageType ||
+                  exam.packageType ||
+                  "ai_exam";
+                const startedSession = startPlatformSession({
+                  productType,
+                  level: exam.level,
+                  examIndex: exam.examNumber || exam.used || 1,
+                  blueprint: exam.platformBlueprint,
+                });
+                setPlatformSessionId(startedSession.sessionId);
+              } catch (error) {
+                if (import.meta.env.DEV) {
+                  console.error("Platform session start failed:", error);
+                }
+              }
+              setStarted(true);
+            }}
+          >
             ▶️ Prüfung starten
           </button>
         </div>
@@ -442,8 +451,12 @@ focusAreas: aiResult.decision?.focusAreas || [],
 
           {renderPartContent()}
 
-          <button style={primaryButtonStyle} onClick={nextStep}>
-            {step < parts.length - 1 ? 'Weiter' : 'Prüfung abschließen'}
+          <button style={primaryButtonStyle} onClick={nextStep} disabled={completing}>
+            {completing
+              ? "Wird ausgewertet..."
+              : step < parts.length - 1
+                ? "Weiter"
+                : "Prüfung abschließen"}
           </button>
         </div>
       )}

@@ -11,6 +11,16 @@ import {
 } from "../security/sessionIntegrity";
 import { readJsonStorage, writeJsonStorage } from "../security/secureStorage";
 import { isValidEmail } from "../security/sanitize";
+import { useBackend } from "../api/useBackend.js";
+import {
+  fetchMe,
+  loginViaApi,
+  logoutViaApi,
+  registerViaApi,
+} from "../api/authService.js";
+import { ApiError } from "../api/httpClient.js";
+import { hydrateBackendFromApi } from "../api/hydrateBackend.js";
+import { clearBackendCache } from "../api/backendCache.js";
 
 export const USERS_KEY = "austriaPathUsers";
 export const CURRENT_USER_KEY = "austriaPathCurrentUser";
@@ -145,6 +155,9 @@ export function getAdminUserRecord() {
 }
 
 export function getUsers() {
+  if (useBackend()) {
+    return [];
+  }
   try {
     const users = getStoredUsers();
     const hasAdmin = users.some(
@@ -194,6 +207,7 @@ export function clearSession() {
   localStorage.removeItem("userName");
   localStorage.removeItem("isAdminPreview");
   clearSessionIntegrity();
+  if (useBackend()) clearBackendCache();
 }
 
 export function resolveSessionUser() {
@@ -227,7 +241,25 @@ export function resolveSessionUser() {
   }
 }
 
+export async function validateSessionFromBackend() {
+  if (!useBackend()) return null;
+  try {
+    const user = await fetchMe();
+    const sessionUser = apiUserToSessionUser(user);
+    syncSessionUser(sessionUser);
+    await hydrateBackendFromApi();
+    return sessionUser;
+  } catch {
+    clearSession();
+    return null;
+  }
+}
+
 export function validateSessionOnStartup() {
+  if (useBackend()) {
+    return null;
+  }
+
   const resolved = resolveSessionUser();
 
   if (!resolved) {
@@ -267,7 +299,30 @@ function getDefaultAllowedLevels(level) {
   return ["A2"];
 }
 
-export function authenticateUser(email, password) {
+function apiUserToSessionUser(user) {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email?.trim().toLowerCase(),
+    level: user.level || "B1",
+    allowedLevels: user.allowedLevels || getDefaultAllowedLevels(user.level),
+    plan: user.subscription?.type || "free",
+    levelSource: "self_selected",
+    role: user.role || "student",
+    status: user.status || "approved",
+    aiCredits: user.aiCredits ?? 0,
+    usedAiCredits: user.usedAiCredits ?? 0,
+    emailVerified: user.emailVerified ?? false,
+    permissions: user.permissions,
+  };
+}
+
+function backendAuthErrorMessage(error) {
+  if (error instanceof ApiError) return error.message;
+  return "Verbindung zum Server fehlgeschlagen. Bitte später erneut versuchen.";
+}
+
+export async function authenticateUser(email, password) {
   const cleanEmail = email.trim().toLowerCase();
 
   if (!cleanEmail || !password) {
@@ -289,6 +344,18 @@ export function authenticateUser(email, password) {
       ok: false,
       message: "Passwort ist zu lang.",
     };
+  }
+
+  if (useBackend()) {
+    try {
+      const user = await loginViaApi(cleanEmail, password);
+      const sessionUser = apiUserToSessionUser(user);
+      syncSessionUser(sessionUser);
+      await hydrateBackendFromApi();
+      return { ok: true, user: stripPassword(sessionUser) };
+    } catch (error) {
+      return { ok: false, message: backendAuthErrorMessage(error) };
+    }
   }
 
   const users = getUsers();
@@ -350,7 +417,7 @@ export function authenticateUser(email, password) {
   return { ok: true, user: stripPassword(studentUser) };
 }
 
-export function registerStudentUser({ name, email, password, level }) {
+export async function registerStudentUser({ name, email, password, level }) {
   const cleanEmail = email.trim().toLowerCase();
 
   if (!name?.trim() || !password || !level) {
@@ -380,6 +447,15 @@ export function registerStudentUser({ name, email, password, level }) {
       message:
         "Diese E-Mail ist für den Administrator reserviert. Bitte verwenden Sie Anmelden.",
     };
+  }
+
+  if (useBackend()) {
+    try {
+      await registerViaApi({ name: name.trim(), email: cleanEmail, password, level });
+      return authenticateUser(cleanEmail, password);
+    } catch (error) {
+      return { ok: false, message: backendAuthErrorMessage(error) };
+    }
   }
 
   const storedUsers = getStoredUsers();

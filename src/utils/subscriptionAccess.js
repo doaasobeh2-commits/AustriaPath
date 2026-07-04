@@ -1,10 +1,20 @@
 import { getCurrentUser } from "../app/userAccess";
+import { useBackend } from "../api/useBackend.js";
+import { backendCache } from "../api/backendCache.js";
 
 /**
- * Canonical premium detection for upsell hints and feature gating (client-side beta only).
- * Backend must enforce subscription server-side in production.
+ * Canonical premium detection — uses API user/subscription when backend enabled.
  */
 export function isPremiumActive() {
+  if (useBackend()) {
+    const user = getCurrentUser();
+    const sub = user?.subscription || backendCache.subscription;
+    if (sub?.status === "active" && sub?.type && sub.type !== "free") {
+      return true;
+    }
+    return false;
+  }
+
   if (localStorage.getItem("premiumActive") === "true") {
     return true;
   }
@@ -46,6 +56,11 @@ export function isPremiumActive() {
 }
 
 export function getActiveSubscriptionType() {
+  if (useBackend()) {
+    const user = getCurrentUser();
+    return user?.subscription?.type || backendCache.subscription?.type || "free";
+  }
+
   try {
     const subscription = JSON.parse(
       localStorage.getItem("austriaPathSubscription") || "null"

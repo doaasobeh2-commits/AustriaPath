@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.austriapath.at/schemas/exam-session.json",
+  "title": "ExamSessionState",
+  "type": "object",
+  "required": ["sessionId", "productType", "mode", "blueprint", "currentSectionIndex", "answers", "evaluations", "status"],
+  "properties": {
+    "sessionId": { "type": "string", "format": "uuid" },
+    "productType": { "$ref": "enums.json#/$defs/ProductType" },
+    "mode": { "$ref": "enums.json#/$defs/ExamMode" },
+    "blueprint": { "$ref": "#/$defs/ExamBlueprint" },
+    "currentSectionIndex": { "type": "integer", "minimum": 0 },
+    "answers": { "type": "array", "items": { "$ref": "#/$defs/SectionAnswer" } },
+    "evaluations": { "type": "array", "items": { "$ref": "#/$defs/SectionEvaluation" } },
+    "status": { "$ref": "enums.json#/$defs/ExamSessionStatus" },
+    "startedAt": { "type": "integer" },
+    "deadlineAt": { "type": "integer" }
+  },
+  "$defs": {
+    "ExamBlueprint": {
+      "type": "object",
+      "required": ["blueprintId", "productType", "mode", "targetLevel", "sections", "rulesVersion", "createdAt"],
+      "properties": {
+        "blueprintId": { "type": "string" },
+        "productType": { "$ref": "enums.json#/$defs/ProductType" },
+        "mode": { "$ref": "enums.json#/$defs/ExamMode" },
+        "targetLevel": { "$ref": "enums.json#/$defs/CefrLabel" },
+        "examIndex": { "type": "integer" },
+        "examTotal": { "type": "integer" },
+        "sections": { "type": "array", "items": { "$ref": "#/$defs/BlueprintSection" } },
+        "rulesVersion": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "BlueprintSection": {
+      "type": "object",
+      "required": ["sectionIndex", "modelId", "skill", "difficulty"],
+      "properties": {
+        "sectionIndex": { "type": "integer" },
+        "modelId": { "type": "string" },
+        "skill": { "$ref": "enums.json#/$defs/SkillId" },
+        "difficulty": { "$ref": "enums.json#/$defs/DifficultyBand" },
+        "timeLimitMinutes": { "type": "integer" },
+        "allowFollowUp": { "type": "boolean" }
+      }
+    },
+    "SectionAnswer": {
+      "type": "object",
+      "required": ["sectionIndex", "skill", "modelId"],
+      "properties": {
+        "sectionIndex": { "type": "integer" },
+        "skill": { "$ref": "enums.json#/$defs/SkillId" },
+        "modelId": { "type": "string" },
+        "freeText": { "type": "string" },
+        "mcqAnswers": { "type": "object", "additionalProperties": { "type": "string" } },
+        "metadata": { "type": "object" },
+        "durationSeconds": { "type": "integer" }
+      }
+    },
+    "SectionEvaluation": {
+      "type": "object",
+      "required": ["sectionIndex", "skill", "modelId", "rawScore", "maxScore", "normalizedScore", "evaluatorId", "evaluatorVersion", "rulesVersion"],
+      "properties": {
+        "sectionIndex": { "type": "integer" },
+        "skill": { "$ref": "enums.json#/$defs/SkillId" },
+        "modelId": { "type": "string" },
+        "rawScore": { "type": "number" },
+        "maxScore": { "type": "number" },
+        "normalizedScore": { "type": "number" },
+        "skillLevel": { "$ref": "enums.json#/$defs/CefrLabel" },
+        "strengths": { "type": "array", "items": { "type": "string" } },
+        "weaknesses": { "type": "array", "items": { "type": "string" } },
+        "evaluatorId": { "type": "string" },
+        "evaluatorVersion": { "type": "string" },
+        "rulesVersion": { "type": "string" },
+        "lowConfidence": { "type": "boolean" }
+      }
+    }
+  }
+}

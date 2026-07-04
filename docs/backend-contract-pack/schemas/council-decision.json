@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.austriapath.at/schemas/council-decision.json",
+  "title": "CouncilDecision",
+  "type": "object",
+  "required": ["decisionId", "overallScore", "cefrLevel", "confidence", "strengths", "weaknesses", "skillResults", "needsHumanReview", "reflectionSummary", "examinerMindVersion", "rulesVersion", "decidedAt"],
+  "properties": {
+    "decisionId": { "type": "string", "format": "uuid" },
+    "overallScore": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "cefrLevel": { "$ref": "enums.json#/$defs/CefrLabel" },
+    "confidence": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "strengths": { "type": "array", "items": { "$ref": "enums.json#/$defs/SkillId" } },
+    "weaknesses": { "type": "array", "items": { "$ref": "enums.json#/$defs/SkillId" } },
+    "focusAreas": { "type": "array", "items": { "type": "string" } },
+    "recurringMistakes": { "type": "array", "items": { "type": "string" } },
+    "readinessBand": { "$ref": "enums.json#/$defs/ReadinessBand" },
+    "skillResults": { "type": "object" },
+    "needsHumanReview": { "type": "boolean" },
+    "humanReviewReason": { "type": "string" },
+    "reflectionSummary": { "type": "string" },
+    "evaluationMethod": { "$ref": "enums.json#/$defs/EvaluationMethod" },
+    "humanReadableStrengths": { "type": "array", "items": { "type": "string" } },
+    "humanReadableWeaknesses": { "type": "array", "items": { "type": "string" } },
+    "narrativeNotes": { "type": "array", "items": { "type": "string" } },
+    "examinerMindVersion": { "type": "string" },
+    "rulesVersion": { "type": "string" },
+    "decidedAt": { "type": "string", "format": "date-time" }
+  }
+}

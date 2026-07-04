@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.austriapath.at/schemas/ai-completion-response.json",
+  "title": "AiCompletionResponse",
+  "type": "object",
+  "required": ["creditsUsed", "creditsRemaining"],
+  "properties": {
+    "result": { "type": "string" },
+    "proposals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["proposalId", "type", "skill", "confidence", "modelId", "validated"],
+        "properties": {
+          "proposalId": { "type": "string" },
+          "type": { "type": "string", "enum": ["grammar", "vocabulary", "structure", "narrative", "follow_up_question"] },
+          "skill": { "$ref": "enums.json#/$defs/SkillId" },
+          "suggestedScoreDelta": { "type": "number" },
+          "suggestedStrengths": { "type": "array", "items": { "type": "string" } },
+          "suggestedWeaknesses": { "type": "array", "items": { "type": "string" } },
+          "narrativeDraft": { "type": "string" },
+          "confidence": { "type": "number" },
+          "modelId": { "type": "string" },
+          "validated": { "type": "boolean" }
+        }
+      }
+    },
+    "creditsUsed": { "type": "integer", "minimum": 0 },
+    "creditsRemaining": { "type": "integer", "minimum": 0 },
+    "mode": { "$ref": "enums.json#/$defs/AiGatewayMode" },
+    "completionId": { "type": "string", "format": "uuid" }
+  }
+}

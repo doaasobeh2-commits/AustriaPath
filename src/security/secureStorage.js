@@ -1,6 +1,15 @@
 import { MAX_JSON_STORAGE_BYTES } from "./storageRegistry";
+import {
+  isBackendAuthoritativeKey,
+  readBackendKey,
+  shouldBlockBackendWrite,
+  writeBackendKey,
+} from "../api/hydrateBackend.js";
 
 export function readJsonStorage(key, fallback = null) {
+  if (isBackendAuthoritativeKey(key)) {
+    return readBackendKey(key, fallback);
+  }
   try {
     const raw = localStorage.getItem(key);
     if (raw == null) return fallback;
@@ -13,6 +22,9 @@ export function readJsonStorage(key, fallback = null) {
 }
 
 export function writeJsonStorage(key, value) {
+  if (shouldBlockBackendWrite(key)) {
+    return writeBackendKey(key, value);
+  }
   try {
     const serialized = JSON.stringify(value);
     if (serialized.length > MAX_JSON_STORAGE_BYTES) {

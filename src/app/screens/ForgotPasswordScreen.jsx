@@ -1,13 +1,23 @@
 import React, { useState } from 'react';
+import { useBackend } from '../../api/useBackend.js';
+import { forgotPassword } from '../../api/repositories/index.js';
 
 export default function ForgotPasswordScreen({ onBack }) {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!email.trim()) {
       alert('Bitte E-Mail eingeben.');
       return;
+    }
+
+    if (useBackend()) {
+      try {
+        await forgotPassword(email.trim());
+      } catch {
+        /* always show success per contract */
+      }
     }
 
     setSent(true);
@@ -21,8 +31,9 @@ export default function ForgotPasswordScreen({ onBack }) {
         {!sent ? (
           <>
             <p style={subtitleStyle}>
-              Passwort-Zurücksetzen per E-Mail ist in der Beta noch nicht verfügbar.
-              Bitte wenden Sie sich an den Support oder den Administrator.
+              {useBackend()
+                ? 'Wir senden Ihnen einen Link zum Zurücksetzen Ihres Passworts, falls ein Konto mit dieser E-Mail existiert.'
+                : 'Passwort-Zurücksetzen per E-Mail ist in der Beta noch nicht verfügbar. Bitte wenden Sie sich an den Support oder den Administrator.'}
             </p>
 
             <input
@@ -40,7 +51,9 @@ export default function ForgotPasswordScreen({ onBack }) {
         ) : (
           <>
             <div style={successBoxStyle}>
-              In der Beta ist kein E-Mail-Versand aktiv. Bitte kontaktieren Sie den Support, wenn Sie Ihr Passwort zurücksetzen müssen.
+              {useBackend()
+                ? 'Falls ein Konto existiert, wurde ein Link zum Zurücksetzen des Passworts versendet.'
+                : 'In der Beta ist kein E-Mail-Versand aktiv. Bitte kontaktieren Sie den Support, wenn Sie Ihr Passwort zurücksetzen müssen.'}
             </div>
 
             <button onClick={onBack} style={mainButtonStyle}>

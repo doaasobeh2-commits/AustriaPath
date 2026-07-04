@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.austriapath.at/schemas/enums.json",
+  "title": "AustriaPathEnums",
+  "$defs": {
+    "ProductType": {
+      "type": "string",
+      "enum": ["placement_test", "weekly_plan", "ai_exam", "intensive_week", "premium_month"]
+    },
+    "ExamMode": {
+      "type": "string",
+      "enum": ["diagnostic", "practice", "exam"]
+    },
+    "SkillId": {
+      "type": "string",
+      "enum": ["writing", "reading", "listening", "picture_description", "planning", "discussion", "self_introduction"]
+    },
+    "CefrLabel": {
+      "type": "string",
+      "enum": ["A2", "A2+", "B1", "B1+", "B2", "B2+"]
+    },
+    "DifficultyBand": {
+      "type": "string",
+      "enum": ["leicht", "mittel", "stark"]
+    },
+    "ReadinessBand": {
+      "type": "string",
+      "enum": ["building", "developing", "approaching", "strong"]
+    },
+    "EvaluationMethod": {
+      "type": "string",
+      "enum": ["examiner_mind", "practice_heuristic", "rule_placement", "pending_human_review", "llm_conversational"]
+    },
+    "ExamSessionStatus": {
+      "type": "string",
+      "enum": ["pending", "active", "awaiting_review", "completed", "cancelled", "expired"]
+    },
+    "UserRole": {
+      "type": "string",
+      "enum": ["student", "admin", "examiner"]
+    },
+    "UserStatus": {
+      "type": "string",
+      "enum": ["approved", "blocked"]
+    },
+    "SubscriptionType": {
+      "type": "string",
+      "enum": ["free", "placement_test", "weekly_plan", "ai_exam", "intensive_week", "premium_month"]
+    },
+    "SubscriptionStatus": {
+      "type": "string",
+      "enum": ["inactive", "active", "expired", "cancelled"]
+    },
+    "LabQueueStatus": {
+      "type": "string",
+      "enum": ["pending", "in_review", "resolved"]
+    },
+    "LabActionType": {
+      "type": "string",
+      "enum": ["approve", "reject", "correct", "propose_rule"]
+    },
+    "HumanReviewStatus": {
+      "type": "string",
+      "enum": ["pending", "confirmed", "corrected", "disputed"]
+    },
+    "AiGatewayMode": {
+      "type": "string",
+      "enum": ["examiner_judge", "llm_proposal", "conversational", "report_narrative"]
+    }
+  }
+}

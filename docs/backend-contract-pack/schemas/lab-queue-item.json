@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.austriapath.at/schemas/lab-queue-item.json",
+  "title": "LabQueueItem",
+  "type": "object",
+  "required": ["labItemId", "reportId", "sessionId", "status", "queuedAt"],
+  "properties": {
+    "labItemId": { "type": "string" },
+    "reportId": { "type": "string", "format": "uuid" },
+    "sessionId": { "type": "string", "format": "uuid" },
+    "userId": { "type": "string", "format": "uuid" },
+    "status": { "$ref": "enums.json#/$defs/LabQueueStatus" },
+    "classification": { "type": "string" },
+    "councilDecision": { "$ref": "council-decision.json" },
+    "sectionEvaluations": { "type": "array" },
+    "studentReviewStatus": { "$ref": "enums.json#/$defs/HumanReviewStatus" },
+    "queuedAt": { "type": "string", "format": "date-time" },
+    "resolution": { "$ref": "#/$defs/LabResolution" }
+  },
+  "$defs": {
+    "LabResolution": {
+      "type": "object",
+      "required": ["action", "reviewerId", "resolvedAt"],
+      "properties": {
+        "action": { "$ref": "enums.json#/$defs/LabActionType" },
+        "reviewerId": { "type": "string", "format": "uuid" },
+        "rationale": { "type": "string" },
+        "correctedDecision": { "$ref": "council-decision.json" },
+        "resolvedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

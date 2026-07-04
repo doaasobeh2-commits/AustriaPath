@@ -19,8 +19,8 @@ export default function LoginScreen({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    const result = authenticateUser(email, password);
+  const handleLogin = async () => {
+    const result = await authenticateUser(email, password);
 
     if (!result.ok) {
       alert(result.message);
