@@ -120,7 +120,7 @@ Thomas: Ich arbeite manchmal selbst am Sonntag. Deshalb weiß ich, wie anstrenge
     ],
 
     tip:
-      'Achte beim Hören besonders auf Uhrzeiten, Gründe und Meinungen. Bei mehreren Personen geht es oft nicht um ein einzelnes Wort, sondern um die Haltung der Person.'
+      'Achten Sie beim Hören besonders auf Uhrzeiten, Gründe und Meinungen. Bei mehreren Sprecherinnen und Sprechern geht es oft nicht um ein einzelnes Wort, sondern um die Haltung der Person.'
   }
   ,
 {

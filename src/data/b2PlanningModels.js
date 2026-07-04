@@ -80,6 +80,45 @@ export const b2PlanningModels = [
     ],
     tip: "Bei Integrations-Themen: respektvoll formulieren und praktische Schritte nennen.",
   },
+  {
+    id: "b2-plan-03",
+    title: "Kinderbetreuung und Arbeitszeiten",
+    situation:
+      "Sie und ein Kollege / eine Kollegin müssen ein Projekt fertigstellen, haben aber Probleme mit der Kinderbetreuung an bestimmten Tagen. Sie planen gemeinsam Lösungen.",
+    points: [
+      "Welche Tage sind problematisch?",
+      "Kann jemand von zu Hause arbeiten oder die Zeiten verschieben?",
+      "Gibt es Unterstützung (Partner, Großeltern, Kindergarten)?",
+      "Wie teilen Sie die Aufgaben im Projekt auf?"
+    ],
+    dialog: [
+      "A: Mir fällt auf, dass wir nächste Woche Dienstag und Donnerstag beide früh nicht im Büro sein können.",
+      "B: Stimmt — der Kindergarten ist an diesen Tagen geschlossen. Könnten wir wichtige Meetings auf den Nachmittag legen?",
+      "A: Das wäre möglich. Ich könnte vormittags von zu Hause arbeiten und die Präsentation vorbereiten.",
+      "B: Gut. Ich übernehme den Kontakt zum Kunden und schicke die Unterlagen bis Mittwoch.",
+      "A: Sollen wir unseren Chef kurz informieren, damit alle Bescheid wissen?",
+      "B: Ja, und wir sollten einen Plan B haben, falls jemand krank wird.",
+    ],
+    words: [
+      "die Kinderbetreuung",
+      "der Kindergarten",
+      "die Arbeitszeit",
+      "die Vertretung",
+      "die Deadline",
+    ],
+    verbs: ["verschieben", "informieren", "aufteilen", "vorbereiten", "übernehmen"],
+    sentences: [
+      "Könnten wir … auf den Nachmittag legen?",
+      "Ich könnte vormittags von zu Hause arbeiten.",
+      "Sollen wir … informieren, damit …?",
+    ],
+    grammar: ["Konjunktiv II", "damit-Satz", "Passiv-Erkennen: ist geschlossen"],
+    mistakes: [
+      "❌ Der Kindergarten ist zu an diesen Tagen.",
+      "✅ Der Kindergarten ist an diesen Tagen geschlossen.",
+    ],
+    tip: "Nennen Sie konkrete Tage, Vorschläge und wer welche Aufgabe übernimmt — typisch für Alltag und Beruf in Österreich.",
+  },
 ];
 
 export const b2DiscussionModels = [
@@ -138,5 +177,37 @@ export const b2DiscussionModels = [
       "✅ Der Nahverkehr sollte vor allem dort ausgebaut werden, wo die Nachfrage hoch ist.",
     ],
     tip: "Verbinden Sie Umwelt-, Wirtschafts- und Sozialargumente.",
+  },
+  {
+    id: "b2-disk-06",
+    title: "Miete, Nachbarn und Wohnqualität",
+    type: "Diskussion",
+    level: "B2",
+    situation:
+      "In einem Wiener Gemeindebau gibt es Streit wegen Lärm, Rauch auf dem Balkon und steigender Betriebskosten. Mieterinnen und Mieter diskutieren mit der Hausverwaltung.",
+    task:
+      "Erörtern Sie, welche Rechte und Pflichten Mieter haben, wie man Konflikte sachlich lösen kann und welche Rolle die Hausverwaltung spielt.",
+    example:
+      "Einerseits hat jede Person das Recht auf Ruhe in der Wohnung. Andererseits muss man in einem Mehrparteienhaus Rücksicht nehmen und Regeln akzeptieren. Meiner Meinung nach sollte man zuerst das Gespräch mit den Nachbarn suchen und erst danach die Hausverwaltung einschalten. Bei ernsthaften Problemen kann ein schriftliches Protokoll helfen.",
+    words: [
+      "die Miete",
+      "die Betriebskosten",
+      "der Nachbar",
+      "die Ruhezeit",
+      "die Hausverwaltung",
+      "die Rücksichtnahme",
+    ],
+    verbs: ["beschweren", "einhalten", "vermitteln", "protokollieren", "kündigen"],
+    sentences: [
+      "Einerseits …, andererseits …",
+      "Meiner Meinung nach sollte man zuerst …",
+      "Bei ernsthaften Problemen kann … helfen.",
+    ],
+    grammar: ["Modalverb sollen / muss", "Passiv: wird eingeschaltet", "Nebensatz mit dass/wenn"],
+    mistakes: [
+      "❌ Ich mache Lärm Beschwerde.",
+      "✅ Ich mache eine Beschwerde wegen des Lärms. / Ich beschwere mich über den Lärm.",
+    ],
+    tip: "Typische österreichische Alltagsthemen: Ruhezeiten, Betriebskosten, schriftliche Kommunikation mit der Verwaltung.",
   },
 ];

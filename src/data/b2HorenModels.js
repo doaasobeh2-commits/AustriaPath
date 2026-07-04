@@ -276,5 +276,95 @@ Experte: Viele Menschen sparen Zeit, weil sie nicht pendeln müssen. Gleichzeiti
       'Relativsatz',
       'Infinitiv mit zu'
     ]
+  },
+
+  {
+    id: 'b2-hoeren-03',
+    level: 'B2',
+    title: 'Apotheke, Arzt und Krankenversicherung',
+    difficulty: 'schwer',
+    text: `
+Guten Tag, Apotheke am Ring, Sie sprechen mit Frau Novak.
+
+Ja, das Rezept ist elektronisch bei uns eingegangen. Die Rezeptgebühr beträgt derzeit 7,30 Euro. Wenn Sie von der Zuzahlung befreit sind, legen Sie bitte Ihre E-Card vor. Das Medikament ist ab morgen wieder lieferbar — ich reserviere es für Sie.
+
+Guten Tag, hier ist Dr. Berger aus der Ordination in der Mariahilfer Straße.
+
+Ich rufe wegen Ihrer Blutwerte an. Alles ist unauffällig, Sie müssen nichts weiter unternehmen. Bitte vereinbaren Sie in drei Monaten einen Kontrolltermin. Wenn Sie Fieber oder starke Schmerzen bekommen, wenden Sie sich an den ärztlichen Bereitschaftsdienst oder fahren Sie in die Notaufnahme.
+
+In Österreich sind gesetzlich Versicherte in der Regel über die Krankenkasse abgesichert. Für viele Leistungen beim Hausarzt fällt keine extra Rechnung an, in der Apotheke zahlt man jedoch oft die Rezeptgebühr. Wer länger krank ist, braucht eine Arbeitsunfähigkeitsbestätigung für den Arbeitgeber.
+
+Interviewer: Was raten Sie Patientinnen und Patienten vor einem Arztbesuch?
+
+Ärztin: Bringen Sie Ihre E-Card und, wenn möglich, eine Liste Ihrer Medikamente mit. Notieren Sie auch, seit wann die Beschwerden bestehen — das spart Zeit und hilft bei der Diagnose.
+    `.trim(),
+    questions: [
+      {
+        q: 'Was kostet laut Apotheke die Rezeptgebühr?',
+        a: 'Derzeit 7,30 Euro.'
+      },
+      {
+        q: 'Was soll man tun, wenn man von der Zuzahlung befreit ist?',
+        a: 'Die E-Card vorlegen.'
+      },
+      {
+        q: 'Was sagt Dr. Berger über die Blutwerte?',
+        a: 'Alles ist unauffällig, man muss nichts weiter unternehmen.'
+      },
+      {
+        q: 'Wann soll ein Kontrolltermin vereinbart werden?',
+        a: 'In drei Monaten.'
+      },
+      {
+        q: 'Wohin soll man sich bei Fieber oder starken Schmerzen wenden?',
+        a: 'An den ärztlichen Bereitschaftsdienst oder in die Notaufnahme.'
+      },
+      {
+        q: 'Wo zahlt man laut Text oft extra?',
+        a: 'In der Apotheke (Rezeptgebühr).'
+      },
+      {
+        q: 'Was braucht man laut Text bei längerer Krankheit für den Arbeitgeber?',
+        a: 'Eine Arbeitsunfähigkeitsbestätigung.'
+      },
+      {
+        q: 'Was empfiehlt die Ärztin vor dem Arztbesuch mitzubringen?',
+        a: 'E-Card und möglichst eine Liste der Medikamente.'
+      }
+    ],
+    solution: `
+1. 7,30 Euro.
+2. E-Card vorlegen.
+3. Alles unauffällig, nichts weiter unternehmen.
+4. In drei Monaten.
+5. Bereitschaftsdienst oder Notaufnahme.
+6. In der Apotheke.
+7. Arbeitsunfähigkeitsbestätigung.
+8. E-Card und Medikamentenliste.
+    `.trim(),
+    words: [
+      'die Rezeptgebühr',
+      'die E-Card',
+      'die Zuzahlung',
+      'der Bereitschaftsdienst',
+      'die Arbeitsunfähigkeit',
+      'die Krankenkasse',
+      'die Ordination'
+    ],
+    verbs: [
+      'reservieren',
+      'vereinbaren',
+      'wenden',
+      'absichern',
+      'notieren',
+      'befreien',
+      'einreichen'
+    ],
+    grammar: [
+      'Passiv: ist eingegangen / sind abgesichert',
+      'Konditional: Wenn …, legen Sie … vor',
+      'Infinitiv mit zu: nichts weiter unternehmen',
+      'Relativsatz: Wer länger krank ist, …'
+    ]
   }
 ];

@@ -14,20 +14,23 @@ export const a2Models = [
 
 Sehr geehrte Damen und Herren,
 
-ich habe am 20. Mai einen Termin bei Ihnen. Leider kann ich nicht kommen, weil ich krank bin.
+am 20. Mai habe ich einen Termin in Ihrer Praxis. Leider muss ich diesen Termin absagen, weil ich krank bin. Es tut mir leid.
 
-Es tut mir leid. Ich möchte den Termin absagen.
-
-Könnte ich bitte einen neuen Termin in der nächsten Woche bekommen?
+Könnten Sie mir bitte einen neuen Termin in der nächsten Woche anbieten?
 
 Vielen Dank für Ihr Verständnis.
 
 Mit freundlichen Grüßen
 Ali Hassan`,
-    words: ["der Termin", "krank", "nächste Woche", "das Verständnis", "die Praxis"],
-    verbs: ["haben", "kommen", "absagen", "bekommen", "danken"],
-    grammar: ["Präsens", "Modalverb können", "weil", "höfliche Frage"],
-    tip: "Schreiben Sie kurz und klar. Beantworten Sie alle Punkte der Aufgabe."
+    words: ["der Termin", "krank", "die nächste Woche", "das Verständnis", "die Praxis"],
+    verbs: ["haben", "kommen", "absagen", "anbieten", "danken"],
+    grammar: ["Präsens", "Modalverb können (Konjunktiv II: könnten)", "weil-Satz", "höfliche Frage"],
+    mistakes: [
+      "❌ Ich habe Termin am 20. Mai. → ✅ Am 20. Mai habe ich einen Termin in Ihrer Praxis.",
+      "❌ … weil ich bin krank. → ✅ … weil ich krank bin.",
+      "❌ Können ich einen Termin? → ✅ Könnten Sie mir bitte einen Termin anbieten?",
+    ],
+    tip: "Nennen Sie zuerst den alten Termin, dann den Grund und die Bitte um einen neuen Termin — kurz, höflich und in der richtigen Reihenfolge."
   },
 
   {
@@ -44,39 +47,44 @@ Ali Hassan`,
 
 Sehr geehrte Damen und Herren,
 
-ich habe einen Sohn. Er ist vier Jahre alt. Ich möchte ihn gern in Ihrem Kindergarten anmelden.
+mein Sohn ist vier Jahre alt. Ich möchte ihn gern in Ihrem Kindergarten anmelden.
 
-Ich habe Ihren Kindergarten ausgewählt, weil er in der Nähe von unserer Wohnung ist.
+Ich habe mich für Ihren Kindergarten entschieden, weil er in der Nähe unserer Wohnung liegt und gute Bewertungen hat.
 
-Könnten Sie mir bitte Informationen zum Essen geben? Gibt es auch besondere Aktivitäten für Kinder?
+Könnten Sie mir bitte Informationen zum Essen geben? Werden die Mahlzeiten vor Ort zubereitet? Gibt es auch besondere Aktivitäten für die Kinder?
 
 Ich freue mich auf Ihre Antwort.
 
 Mit freundlichen Grüßen
 Ali Hassan`,
     words: ["der Kindergarten", "die Anmeldung", "das Essen", "die Aktivität", "die Nähe"],
-    verbs: ["haben", "anmelden", "auswählen", "geben", "sich freuen"],
-    grammar: ["Präsens", "Perfekt", "weil", "höfliche Frage"],
-    tip: "Bei einer Anmeldung sollten Sie immer kurz sagen, wen Sie anmelden möchten."
+    verbs: ["anmelden", "sich entscheiden", "liegen", "geben", "sich freuen"],
+    grammar: ["Präsens", "weil-Satz", "höfliche Frage (Könnten Sie …?)", "Relativsatz: der … hat"],
+    mistakes: [
+      "❌ Ich habe einen Sohn. Er ist vier. → ✅ Mein Sohn ist vier Jahre alt.",
+      "❌ … in der Nähe von unserer Wohnung. → ✅ … in der Nähe unserer Wohnung.",
+      "❌ Gibt es besondere Aktivitäten? (ohne Kontext) → ✅ Gibt es auch besondere Aktivitäten für die Kinder?",
+    ],
+    tip: "Schreiben Sie zuerst, wen Sie anmelden möchten, dann warum Sie diesen Kindergarten gewählt haben, danach Ihre Fragen."
   },
 
   {
     id: 3,
     level: "A2",
-    title: "Arbeitsamt Termin verschieben",
+    title: "AMS-Termin verschieben",
     category: "Termin",
     task: [
       "Entschuldigen Sie sich für den Termin.",
       "Erklären Sie den Grund.",
       "Bitten Sie um einen neuen Termin."
     ],
-    schreiben: `Betreff: Neuer Termin beim Arbeitsamt
+    schreiben: `Betreff: Termin beim AMS verschieben
 
 Sehr geehrte Damen und Herren,
 
-ich habe morgen einen Termin beim Arbeitsamt. Leider kann ich nicht kommen, weil mein Kind krank ist.
+morgen habe ich einen Termin beim AMS. Leider kann ich nicht kommen, weil mein Kind krank ist und ich zu Hause bleiben muss.
 
-Ich entschuldige mich für die Absage.
+Ich entschuldige mich für die kurzfristige Absage.
 
 Könnten Sie mir bitte einen neuen Termin geben? Am besten passt mir nächste Woche am Vormittag.
 
@@ -84,10 +92,15 @@ Vielen Dank für Ihre Hilfe.
 
 Mit freundlichen Grüßen
 Ali Hassan`,
-    words: ["das Arbeitsamt", "der Termin", "die Absage", "der Vormittag", "die Hilfe"],
-    verbs: ["haben", "kommen", "sich entschuldigen", "geben", "passen"],
-    grammar: ["Präsens", "Modalverb können", "weil", "höfliche Frage"],
-    tip: "Nennen Sie immer den Grund und bitten Sie höflich um einen neuen Termin."
+    words: ["das AMS", "der Termin", "die Absage", "der Vormittag", "die Hilfe"],
+    verbs: ["haben", "kommen", "bleiben", "sich entschuldigen", "passen"],
+    grammar: ["Präsens", "Modalverb müssen", "weil-Satz", "höfliche Frage"],
+    mistakes: [
+      "❌ Ich habe Termin morgen. → ✅ Morgen habe ich einen Termin beim AMS.",
+      "❌ … weil mein Kind ist krank. → ✅ … weil mein Kind krank ist.",
+      "❌ Geben Sie mir Termin. → ✅ Könnten Sie mir bitte einen neuen Termin geben?",
+    ],
+    tip: "In Österreich heißt die Arbeitsagentur AMS (Arbeitsmarktservice). Nennen Sie den Grund und schlagen Sie, wenn möglich, einen Wunschtermin vor."
   },
 
   {
@@ -100,24 +113,29 @@ Ali Hassan`,
       "Fragen Sie nach dem Preis.",
       "Fragen Sie nach einem Termin für den Einstufungstest."
     ],
-    schreiben: `Betreff: Anfrage zum Sprachkurs
+    schreiben: `Betreff: Anfrage zum Deutschkurs
 
 Sehr geehrte Damen und Herren,
 
-ich habe Ihre Anzeige für einen Sprachkurs gelesen. Ich interessiere mich für den Kurs.
+ich habe Ihre Anzeige für einen Deutschkurs gelesen und interessiere mich dafür.
 
-Wann beginnt der Kurs? Wie viel kostet der Kurs pro Monat?
+Könnten Sie mir bitte mitteilen, wann der Kurs beginnt und wie viel er pro Monat kostet?
 
-Ich möchte auch einen Einstufungstest machen. Könnten Sie mir bitte einen Termin geben?
+Außerdem möchte ich gerne einen Einstufungstest machen. Wann wäre dafür ein Termin möglich?
 
 Vielen Dank im Voraus.
 
 Mit freundlichen Grüßen
 Ali Hassan`,
     words: ["der Sprachkurs", "die Anzeige", "der Preis", "der Einstufungstest", "der Monat"],
-    verbs: ["lesen", "sich interessieren", "beginnen", "kosten", "machen"],
-    grammar: ["Präsens", "Perfekt", "W-Fragen", "höfliche Frage"],
-    tip: "Bei einer Anfrage sind direkte Fragen wichtig: Wann? Wie viel? Wo?"
+    verbs: ["lesen", "sich interessieren", "beginnen", "kosten", "mitteilen"],
+    grammar: ["Präsens", "Perfekt", "W-Fragen", "Nebensatz mit dass/wann", "höfliche Frage"],
+    mistakes: [
+      "❌ Ich interessiere mich für den Kurs sehr. → ✅ Ich interessiere mich sehr für den Kurs. / … interessiere mich dafür.",
+      "❌ Wie viel kostet der Kurs? (ohne Höflichkeit) → ✅ Könnten Sie mir bitte mitteilen, wie viel der Kurs kostet?",
+      "❌ Ich will Einstufungstest. → ✅ Ich möchte gerne einen Einstufungstest machen.",
+    ],
+    tip: "Formulieren Sie Ihre Fragen klar (Wann? Wie viel?) und nutzen Sie höfliche Formen wie „Könnten Sie mir bitte mitteilen …?“"
   },
 
   {
@@ -136,9 +154,9 @@ Sehr geehrte Damen und Herren,
 
 ich schreibe Ihnen, weil der Aufzug in unserem Haus seit zwei Tagen nicht funktioniert.
 
-Das ist ein großes Problem für mich, weil ich im vierten Stock wohne und ein kleines Kind habe.
+Das ist für mich ein großes Problem, weil ich im vierten Stock wohne und ein kleines Kind habe. Mit dem Kinderwagen ist die Treppe sehr schwierig.
 
-Bitte schicken Sie so schnell wie möglich einen Techniker.
+Bitte schicken Sie so schnell wie möglich einen Techniker zur Reparatur.
 
 Vielen Dank für Ihre Hilfe.
 
@@ -146,8 +164,13 @@ Mit freundlichen Grüßen
 Ali Hassan`,
     words: ["der Aufzug", "das Problem", "der vierte Stock", "der Techniker", "die Hausverwaltung"],
     verbs: ["schreiben", "funktionieren", "wohnen", "haben", "schicken"],
-    grammar: ["Präsens", "weil", "seit + Dativ", "Imperativ mit bitte"],
-    tip: "Bei einer Beschwerde schreiben Sie höflich, aber klar, was passieren soll."
+    grammar: ["Präsens", "weil-Satz", "seit + Dativ", "höfliche Bitte mit bitte"],
+    mistakes: [
+      "❌ Der Aufzug ist kaputt seit zwei Tagen. → ✅ Der Aufzug funktioniert seit zwei Tagen nicht.",
+      "❌ Ich wohne im vierten Etage. → ✅ Ich wohne im vierten Stock.",
+      "❌ Schicken Techniker! → ✅ Bitte schicken Sie so schnell wie möglich einen Techniker.",
+    ],
+    tip: "Beschreiben Sie das Problem konkret, erklären Sie kurz, warum es wichtig ist, und formulieren Sie eine klare Bitte an die Hausverwaltung."
   },
 
   {

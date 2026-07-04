@@ -8,19 +8,19 @@ export const b1Models = [
       {
         title: "E-Mail A: Ausbildung als Traumberuf",
         task: [
-          "Warum schreiben Sie?",
-          "Wer Sie sind",
+          "Schreiben Sie, warum Sie diese E-Mail schreiben.",
+          "Stellen Sie sich kurz vor.",
           "Welche Ausbildung möchten Sie machen?",
-          "Informationen über Ausbildungsmöglichkeiten"
+          "Bitten Sie um Informationen zu Ausbildungsmöglichkeiten."
         ]
       },
       {
         title: "E-Mail B: Garten mieten",
         task: [
-          "Grund für Ihr Schreiben",
-          "Warum Sie Gärten mögen",
-          "Fragen zur Mietdauer und zu den Kosten",
-          "Was Sie gern im Garten machen möchten"
+          "Schreiben Sie den Grund für Ihre E-Mail.",
+          "Erklären Sie, warum Sie Gärten mögen.",
+          "Fragen Sie nach Mietdauer und Kosten.",
+          "Beschreiben Sie, was Sie gern im Garten machen möchten."
         ]
       }
     ]
@@ -35,19 +35,19 @@ export const b1Models = [
       {
         title: "E-Mail A: Ausbildung der Tochter",
         task: [
-          "Grund für die Anfrage",
-          "Welchen Rat würden Sie ihr geben?",
-          "Welche Vorkenntnisse sind erforderlich?",
-          "Wie lange dauert die Ausbildung?"
+          "Schreiben Sie, warum Sie diese E-Mail schreiben.",
+          "Welchen Rat würden Sie Ihrer Tochter geben?",
+          "Fragen Sie, welche Vorkenntnisse erforderlich sind.",
+          "Fragen Sie, wie lange die Ausbildung dauert."
         ]
       },
       {
         title: "E-Mail B: Sporttaschen Bestellung",
         task: [
-          "Grund des Schreibens",
-          "Grund für Ihre Bestellung der Taschen",
-          "Farbe und Größe der Taschen",
-          "Problem bei der Bezahlung"
+          "Schreiben Sie den Grund für Ihre E-Mail.",
+          "Erklären Sie, warum Sie die Taschen bestellen.",
+          "Nennen Sie Farbe und Größe der Taschen.",
+          "Beschreiben Sie Ihr Problem bei der Bezahlung."
         ]
       }
     ]
