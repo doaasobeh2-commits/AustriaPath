@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
-const OPENAI_API_KEY = 'sk-...';
+import { requestOpenAIProxy } from '../../security/secureOpenAI';
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const recognition = SpeechRecognition ? new SpeechRecognition() : null;
@@ -48,11 +47,6 @@ export function ExamScreen() {
   }, [conversationHistory, examStep]);
 
   const callOpenAI = async (inputText, isFinalTrigger = false) => {
-    if (!OPENAI_API_KEY || OPENAI_API_KEY.includes('sk-...')) {
-      alert('Please enter your OpenAI API Key at the top of the file first!');
-      return;
-    }
-
     setIsLoading(true);
     
     let currentMessages = [...conversationHistory];
@@ -65,21 +59,8 @@ export function ExamScreen() {
     }
 
     try {
-      const response = await fetch('https://openai.com', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini', 
-          messages: currentMessages,
-          temperature: 0.7
-        })
-      });
-
-      const data = await response.json();
-      const aiReply = data.choices[0].message.content;
+      const data = await requestOpenAIProxy({ messages: currentMessages });
+      const aiReply = data.result || 'Der KI-Dienst ist gerade nicht erreichbar.';
 
       if (isFinalTrigger) {
         setFinalReport(aiReply);
@@ -87,16 +68,20 @@ export function ExamScreen() {
       } else {
         setAiResponse(aiReply);
         setConversationHistory([...currentMessages, { role: 'assistant', content: aiReply }]);
-        
+
         if (aiReply.toLowerCase().includes('planen') || aiReply.toLowerCase().includes('aufgabe 2')) {
           setExamStep('planning');
         } else if (aiReply.toLowerCase().includes('bild') || aiReply.toLowerCase().includes('aufgabe 3')) {
           setExamStep('image');
         }
       }
-    } catch (error) {
-      console.error('Error calling OpenAI:', error);
-      alert('An error occurred while connecting to the AI server. Please check your API key and connection.');
+    } catch (err) {
+      if (isFinalTrigger) {
+        setFinalReport('Technischer Fehler bei der Bewertung.');
+        setExamStep('evaluation');
+      } else {
+        setAiResponse('Es gibt ein technisches Problem mit der KI-Verbindung.');
+      }
     } finally {
       setIsLoading(false);
     }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import PremiumScheduleScreen from "./screens/PremiumScheduleScreen";
 import { OnboardingScreen } from "./screens/OnboardingScreen";
 import { AdminScreen } from "./screens/AdminScreen";
@@ -29,13 +29,22 @@ import UserManagementScreen from "./screens/UserManagementScreen";
 import PlacementTestScreen from "./screens/PlacementTestScreen";
 import AISessionScreen from "./screens/AISessionScreen";
 import PremiumExamSessionScreen from "./screens/PremiumExamSessionScreen";
+import AIPrueferScreen from "./screens/AIPrueferScreen";
 import { isAdminAccount } from "../config/authConfig";
+import {
+  getSafeTab,
+  isAdminPreviewAllowed,
+} from "../security/routeGuard";
+import { readJsonStorage } from "../security/secureStorage";
 import {
   clearSession,
   resolveSessionUser,
   syncSessionUser,
   validateSessionOnStartup,
 } from "./userAccess";
+import LegalPageScreen from "./components/LegalPageScreen";
+import LegalConsentScreen from "./screens/LegalConsentScreen";
+import { needsLegalConsent, saveLegalConsent } from "../legal/consent";
 
 const initialSessionUser = validateSessionOnStartup();
 
@@ -54,11 +63,24 @@ export default function App() {
   const [selectedWritingModel, setSelectedWritingModel] = useState(null);
   const [authScreen, setAuthScreen] = useState("welcome");
   const [showOnboarding, setShowOnboarding] = useState(true);
+  const [legalView, setLegalView] = useState(null);
+  const [, setConsentUpdated] = useState(0);
 
   const isAdmin = isAdminAccount(currentUser);
 
   const isAdminPreview =
+    isAdminPreviewAllowed(currentUser) &&
     localStorage.getItem("isAdminPreview") === "true";
+
+  const setActiveTabGuarded = useCallback(
+    (tab) => {
+      setActiveTab((current) => {
+        const requested = typeof tab === "function" ? tab(current) : tab;
+        return getSafeTab(requested, currentUser);
+      });
+    },
+    [currentUser]
+  );
 
   const completeLogin = () => {
     localStorage.setItem("isLoggedIn", "true");
@@ -89,11 +111,16 @@ export default function App() {
     setIsLoggedIn(true);
 
     if (!isAdminAccount(resolved)) {
-      setActiveTab((tab) =>
-        tab === "admin" || tab === "userManagement" ? "home" : tab
-      );
+      setActiveTab((tab) => getSafeTab(tab, resolved));
     }
   }, []);
+
+  useEffect(() => {
+    const safeTab = getSafeTab(activeTab, currentUser);
+    if (safeTab !== activeTab) {
+      setActiveTab(safeTab);
+    }
+  }, [activeTab, currentUser]);
 
   const handleLogout = () => {
     clearSession();
@@ -114,8 +141,31 @@ export default function App() {
     setActiveTab("levelSelect");
   };
 
+  const guardedTab = getSafeTab(activeTab, currentUser);
+
+  if (legalView) {
+    return (
+      <LegalPageScreen
+        pageId={legalView}
+        onBack={() => setLegalView(null)}
+      />
+    );
+  }
+
   if (showOnboarding) {
     return <OnboardingScreen onFinish={() => setShowOnboarding(false)} />;
+  }
+
+  if (needsLegalConsent()) {
+    return (
+      <LegalConsentScreen
+        onAccept={() => {
+          saveLegalConsent();
+          setConsentUpdated((value) => value + 1);
+        }}
+        onOpenLegal={setLegalView}
+      />
+    );
   }
 
   if (!isLoggedIn) {
@@ -142,6 +192,7 @@ export default function App() {
           onBack={() => setAuthScreen("welcome")}
           onLogin={() => setAuthScreen("login")}
           onRegisterSuccess={completeLogin}
+          onOpenLegal={setLegalView}
         />
       );
     }
@@ -150,6 +201,7 @@ export default function App() {
       <AuthWelcomeScreen
         onLogin={() => setAuthScreen("login")}
         onRegister={() => setAuthScreen("register")}
+        onOpenLegal={setLegalView}
       />
     );
   }
@@ -205,53 +257,65 @@ export default function App() {
         </div>
 
         <main style={mainStyle}>
-          {activeTab === "home" && <HomeScreen setActiveTab={setActiveTab} />}
-
-          {activeTab === "examinerLab" && (
-            <ExaminerLabScreen setActiveTab={setActiveTab} />
+          {guardedTab === "home" && (
+            <HomeScreen setActiveTab={setActiveTabGuarded} />
           )}
 
-          {activeTab === "levelSelect" && (
+          {guardedTab === "examinerLab" &&
+            (isAdmin ? (
+              <ExaminerLabScreen setActiveTab={setActiveTabGuarded} />
+            ) : (
+              <HomeScreen setActiveTab={setActiveTabGuarded} />
+            ))}
+
+          {guardedTab === "aiPruefer" &&
+            (isAdmin ? (
+              <AIPrueferScreen setActiveTab={setActiveTabGuarded} />
+            ) : (
+              <HomeScreen setActiveTab={setActiveTabGuarded} />
+            ))}
+
+          {guardedTab === "levelSelect" && (
             <LevelSelectScreen
               onSelectLevel={(level) => {
                 localStorage.setItem("userLevel", level);
                 setSelectedLevel(level);
-                setActiveTab(levelTarget || "practice");
+                setActiveTabGuarded(levelTarget || "practice");
               }}
             />
           )}
 
-          {activeTab === "akademie" && (
+          {guardedTab === "akademie" && (
             <AkademieScreen
-              setActiveTab={setActiveTab}
+              setActiveTab={setActiveTabGuarded}
               selectedLevel={selectedLevel}
             />
           )}
 
-          {activeTab === "admin" &&
+          {guardedTab === "admin" &&
             (isAdmin ? (
-              <AdminScreen setActiveTab={setActiveTab} />
+              <AdminScreen setActiveTab={setActiveTabGuarded} />
             ) : (
-              <HomeScreen setActiveTab={setActiveTab} />
+              <HomeScreen setActiveTab={setActiveTabGuarded} />
             ))}
 
-          {activeTab === "userManagement" &&
+          {guardedTab === "userManagement" &&
             (isAdmin ? (
-              <UserManagementScreen setActiveTab={setActiveTab} />
+              <UserManagementScreen setActiveTab={setActiveTabGuarded} />
             ) : (
-              <HomeScreen setActiveTab={setActiveTab} />
+              <HomeScreen setActiveTab={setActiveTabGuarded} />
             ))}
 
-          {activeTab === "exams" && (
+          {guardedTab === "exams" && (
             <IntelligentExamScreen
               level={selectedLevel}
               onBackToLevels={() => openWithLevel("exams")}
             />
           )}
 
-          {activeTab === "practice" && (
+          {guardedTab === "practice" && (
             <PracticeScreen
-              setActiveTab={setActiveTab}
+              setActiveTab={setActiveTabGuarded}
               selectedLevel={selectedLevel}
               setSelectedLevel={setSelectedLevel}
               setSelectedWritingModel={setSelectedWritingModel}
@@ -259,107 +323,106 @@ export default function App() {
             />
           )}
 
-          {activeTab === "b2model" && (
+          {guardedTab === "b2model" && (
             <B2ModelScreen
               model={selectedWritingModel}
-              setActiveTab={setActiveTab}
+              setActiveTab={setActiveTabGuarded}
             />
           )}
 
-          {activeTab === "lesen" && (
-            <LesenScreen setActiveTab={setActiveTab} selectedLevel={selectedLevel} />
+          {guardedTab === "lesen" && (
+            <LesenScreen setActiveTab={setActiveTabGuarded} selectedLevel={selectedLevel} />
           )}
 
-          {activeTab === "horen" && (
-            <HorenScreen setActiveTab={setActiveTab} selectedLevel={selectedLevel} />
+          {guardedTab === "horen" && (
+            <HorenScreen setActiveTab={setActiveTabGuarded} selectedLevel={selectedLevel} />
           )}
 
-          {activeTab === "writing" && (
+          {guardedTab === "writing" && (
             <WritingScreen
               selectedWritingModel={selectedWritingModel}
               selectedLevel={selectedLevel}
-              setActiveTab={setActiveTab}
+              setActiveTab={setActiveTabGuarded}
             />
           )}
 
-          {activeTab === "images" && (
+          {guardedTab === "images" && (
             <ImageTrainingScreen
-              setActiveTab={setActiveTab}
+              setActiveTab={setActiveTabGuarded}
               selectedLevel={selectedLevel}
             />
           )}
 
-          {activeTab === "planning" && (
-            <PlanningScreen setActiveTab={setActiveTab} selectedLevel={selectedLevel} />
+          {guardedTab === "planning" && (
+            <PlanningScreen setActiveTab={setActiveTabGuarded} selectedLevel={selectedLevel} />
           )}
 
-          {activeTab === "speaking" && (
-            <SpeakingScreen setActiveTab={setActiveTab} selectedLevel={selectedLevel} />
+          {guardedTab === "speaking" && (
+            <SpeakingScreen setActiveTab={setActiveTabGuarded} selectedLevel={selectedLevel} />
           )}
 
-          {activeTab === "database" && (
+          {guardedTab === "database" && (
             <DatabaseScreen
-              setActiveTab={setActiveTab}
-              onOpenWriting={() => setActiveTab("writing")}
+              setActiveTab={setActiveTabGuarded}
+              onOpenWriting={() => setActiveTabGuarded("writing")}
             />
           )}
 
-          {activeTab === "profile" && (
-            <ProfileScreen onLogout={handleLogout} setActiveTab={setActiveTab} />
+          {guardedTab === "profile" && (
+            <ProfileScreen onLogout={handleLogout} setActiveTab={setActiveTabGuarded} />
           )}
 
-          {activeTab === "accountSettings" && (
+          {guardedTab === "accountSettings" && (
             <AccountSettingsScreen
-              setActiveTab={setActiveTab}
+              setActiveTab={setActiveTabGuarded}
               onLogout={handleLogout}
+              onOpenLegal={setLegalView}
             />
           )}
 
-          {activeTab === "premium" && (
+          {guardedTab === "premium" && (
             <SubscriptionScreen
-              setActiveTab={setActiveTab}
-              onOpenPremiumExam={() => setActiveTab("premiumExam")}
+              setActiveTab={setActiveTabGuarded}
+              onOpenPremiumExam={() => setActiveTabGuarded("premiumExam")}
             />
           )}
 
-          {activeTab === "premiumSchedule" && (
-            <PremiumScheduleScreen setActiveTab={setActiveTab} />
+          {guardedTab === "premiumSchedule" && (
+            <PremiumScheduleScreen setActiveTab={setActiveTabGuarded} />
           )}
 
-          {activeTab === "placementTest" && (
-            <PlacementTestScreen setActiveTab={setActiveTab} />
+          {guardedTab === "placementTest" && (
+            <PlacementTestScreen setActiveTab={setActiveTabGuarded} />
           )}
 
-          {activeTab === "premiumExam" && (
-            <PremiumExamScreen setActiveTab={setActiveTab} />
+          {guardedTab === "premiumExam" && (
+            <PremiumExamScreen setActiveTab={setActiveTabGuarded} />
           )}
 
-          {activeTab === "weeklyPlanSetup" && (
-            <WeeklyPlanSetupScreen setActiveTab={setActiveTab} />
+          {guardedTab === "weeklyPlanSetup" && (
+            <WeeklyPlanSetupScreen setActiveTab={setActiveTabGuarded} />
           )}
 
-          {activeTab === "weeklySession" && (
+          {guardedTab === "weeklySession" && (
             <AISessionScreen
               sessionType="weekly_plan"
               mode="weekly_plan"
               title="KI-Wochentraining"
               level="B1"
-              onBack={() => setActiveTab("profile")}
+              onBack={() => setActiveTabGuarded("profile")}
               onFinish={() => {
                 alert("Training beendet");
-                setActiveTab("profile");
+                setActiveTabGuarded("profile");
               }}
             />
           )}
 
-          {activeTab === "aiSession" &&
+          {guardedTab === "aiSession" &&
             (() => {
-              const session = JSON.parse(
-                localStorage.getItem("austriaPathAiSession") || "null"
-              );
+              const session = readJsonStorage("austriaPathAiSession", null);
 
               if (!session) {
-                return <ProfileScreen setActiveTab={setActiveTab} />;
+                return <ProfileScreen setActiveTab={setActiveTabGuarded} />;
               }
 
               return (
@@ -369,11 +432,9 @@ export default function App() {
                   title={session.title || "KI-Wochentraining"}
                   level={session.level || "B1"}
                   parts={session.parts || []}
-                  onBack={() => setActiveTab("profile")}
+                  onBack={() => setActiveTabGuarded("profile")}
                   onFinish={(report) => {
-                    const savedPlan = JSON.parse(
-                      localStorage.getItem("austriaPathWeeklyPlan") || "null"
-                    );
+                    const savedPlan = readJsonStorage("austriaPathWeeklyPlan", null);
 
                     if (savedPlan) {
                       const updatedPlan = {
@@ -394,14 +455,14 @@ export default function App() {
                     }
 
                     alert("Training beendet. Bericht wurde im Profil gespeichert.");
-                    setActiveTab("profile");
+                    setActiveTabGuarded("profile");
                   }}
                 />
               );
             })()}
 
-          {activeTab === "premiumExamSession" && (
-            <PremiumExamSessionScreen setActiveTab={setActiveTab} />
+          {guardedTab === "premiumExamSession" && (
+            <PremiumExamSessionScreen setActiveTab={setActiveTabGuarded} />
           )}
         </main>
 
@@ -422,7 +483,7 @@ export default function App() {
                   setSelectedLevel(null);
                   setLevelTarget(null);
                   setSelectedWritingModel(null);
-                  setActiveTab(tab.id);
+                  setActiveTabGuarded(tab.id);
                 }
               }}
               style={{

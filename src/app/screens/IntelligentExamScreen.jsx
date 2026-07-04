@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
-const OPENAI_API_KEY = 'sk-proj-...';
-const MODEL_NAME = 'gpt-4o-mini';
+import { requestOpenAIProxy } from '../../security/secureOpenAI';
 
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -124,14 +122,28 @@ export function IntelligentExamScreen({ level, onBackToLevels }) {
   };
 
   const dispatchOpenAI = async (currentHistory) => {
-    if (!OPENAI_API_KEY || OPENAI_API_KEY === 'sk-proj-...') {
-      const demoReply =
-        level === 'A2'
-          ? 'Danke. Können Sie bitte noch mehr über Ihre Familie oder Ihre Hobbys erzählen?'
-          : level === 'B1'
-          ? 'Danke. Können Sie das bitte genauer erklären und ein Beispiel nennen?'
-          : 'Danke. Können Sie Ihre Meinung dazu ausführlicher begründen und einen Vergleich machen?';
+    const demoReply =
+      level === 'A2'
+        ? 'Danke. Können Sie bitte noch mehr über Ihre Familie oder Ihre Hobbys erzählen?'
+        : level === 'B1'
+        ? 'Danke. Können Sie das bitte genauer erklären und ein Beispiel nennen?'
+        : 'Danke. Können Sie Ihre Meinung dazu ausführlicher begründen und einen Vergleich machen?';
 
+    setIsLoading(true);
+
+    try {
+      const data = await requestOpenAIProxy({ messages: currentHistory });
+      const aiReply = data.result || demoReply;
+
+      setAiResponse(aiReply);
+      setConversationHistory([
+        ...currentHistory,
+        {
+          role: 'assistant',
+          content: aiReply
+        }
+      ]);
+    } catch (err) {
       setAiResponse(demoReply);
       setConversationHistory([
         ...currentHistory,
@@ -140,46 +152,6 @@ export function IntelligentExamScreen({ level, onBackToLevels }) {
           content: demoReply
         }
       ]);
-
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: MODEL_NAME,
-          messages: currentHistory
-        })
-      });
-
-      const payload = await res.json();
-
-      if (payload.choices && payload.choices[0]) {
-        const aiReply = payload.choices[0].message.content;
-
-        setAiResponse(aiReply);
-        setConversationHistory([
-          ...currentHistory,
-          {
-            role: 'assistant',
-            content: aiReply
-          }
-        ]);
-      } else {
-        setAiResponse(
-          'Entschuldigung, ich konnte keine Antwort erstellen. Bitte versuchen Sie es noch einmal.'
-        );
-      }
-    } catch (err) {
-      console.error(err);
-      setAiResponse('Es gibt ein technisches Problem mit der KI-Verbindung.');
     } finally {
       setIsLoading(false);
     }
@@ -216,8 +188,7 @@ export function IntelligentExamScreen({ level, onBackToLevels }) {
   const generateFinalReport = async () => {
     setIsLoading(true);
 
-    if (!OPENAI_API_KEY || OPENAI_API_KEY === 'sk-proj-...') {
-      const demoReport = `
+    const demoReport = `
 Demo Bewertung für ${level}:
 
 Gesamtnote: 72 / 100
@@ -234,47 +205,22 @@ Empfehlung:
 Üben Sie täglich 10 Minuten Selbstvorstellung, Planung und Bildbeschreibung.
 `;
 
-      setFinalReport(demoReport);
-      setExamStep('finished');
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: MODEL_NAME,
-          messages: [
-            ...conversationHistory,
-            {
-              role: 'user',
-              content: `Die ${level}-Prüfung ist beendet. Gib eine Bewertung auf Deutsch mit Punkten von 0 bis 100. Bewerte Grammatik, Wortschatz, Flüssigkeit und Kommunikation. Gib konkrete Tipps für das Niveau ${level}.`
-            }
-          ]
-        })
+      const data = await requestOpenAIProxy({
+        messages: [
+          ...conversationHistory,
+          {
+            role: 'user',
+            content: `Die ${level}-Prüfung ist beendet. Gib eine Bewertung auf Deutsch mit Punkten von 0 bis 100. Bewerte Grammatik, Wortschatz, Flüssigkeit und Kommunikation. Gib konkrete Tipps für das Niveau ${level}.`
+          }
+        ]
       });
 
-      const data = await res.json();
-
-      if (data.choices && data.choices[0]) {
-        setFinalReport(data.choices[0].message.content);
-      } else {
-        setFinalReport(
-          'Die Prüfung wurde beendet, aber es konnte keine Bewertung erstellt werden.'
-        );
-      }
-
-      setExamStep('finished');
+      setFinalReport(data.result || demoReport);
     } catch (err) {
-      console.error(err);
-      setFinalReport('Technischer Fehler bei der Bewertung.');
-      setExamStep('finished');
+      setFinalReport(demoReport);
     } finally {
+      setExamStep('finished');
       setIsLoading(false);
     }
   };

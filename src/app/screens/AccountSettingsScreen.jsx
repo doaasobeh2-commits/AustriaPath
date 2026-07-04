@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import LegalLinks from '../components/LegalLinks';
 
-export default function AccountSettingsScreen({ setActiveTab }) {
+export default function AccountSettingsScreen({ setActiveTab, onOpenLegal }) {
   const currentUser =
   JSON.parse(localStorage.getItem("currentUser")) || {};
 const [name, setName] = useState(
@@ -265,6 +266,14 @@ const [name, setName] = useState(
         </button>
       </div>
 
+      <div style={legalCardStyle}>
+        <h3 style={legalTitleStyle}>Rechtliches</h3>
+        <p style={legalTextStyle}>
+          Impressum, Datenschutz, AGB, Kontakt, Cookies und AI-Hinweise.
+        </p>
+        <LegalLinks onOpenLegal={onOpenLegal} compact />
+      </div>
+
       <div style={noteStyle}>
   <h3 style={noteTitleStyle}>🔒 Demnächst verfügbar</h3>
 
@@ -476,4 +485,26 @@ const noteTextStyle = {
   margin: 0,
   color: '#713f12',
   lineHeight: 1.6,
+};
+
+const legalCardStyle = {
+  backgroundColor: '#ffffff',
+  borderRadius: '22px',
+  padding: '18px',
+  marginTop: '16px',
+  boxShadow: '0 8px 22px rgba(15, 23, 42, 0.07)',
+  border: '1px solid #e2e8f0',
+};
+
+const legalTitleStyle = {
+  margin: '0 0 8px',
+  color: '#0f172a',
+  fontSize: '18px',
+};
+
+const legalTextStyle = {
+  margin: '0 0 4px',
+  color: '#64748b',
+  fontSize: '14px',
+  lineHeight: 1.5,
 };

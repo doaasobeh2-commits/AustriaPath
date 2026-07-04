@@ -7,8 +7,9 @@ import {
   authSubtitleStyle,
   authTitleStyle,
 } from "../auth/authStyles";
+import LegalLinks from "../components/LegalLinks";
 
-export default function AuthWelcomeScreen({ onLogin, onRegister }) {
+export default function AuthWelcomeScreen({ onLogin, onRegister, onOpenLegal }) {
   return (
     <div style={authPageStyle}>
       <div style={authCardStyle}>
@@ -29,6 +30,8 @@ export default function AuthWelcomeScreen({ onLogin, onRegister }) {
         >
           Konto erstellen
         </button>
+
+        <LegalLinks onOpenLegal={onOpenLegal} />
       </div>
     </div>
   );

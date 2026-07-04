@@ -1,47 +1,27 @@
 import React, { useMemo } from 'react';
-import { ADMIN_EMAIL } from '../../config/authConfig';
+import { isAdminAccount } from '../../config/authConfig';
+import { getCurrentUser } from '../userAccess';
 import { buildWeeklySession } from '../../data/weeklyPlanLibrary';
 import { buildPremiumExamParts } from '../../data/premiumExamBuilder';
+import { readJsonStorage } from '../../security/secureStorage';
 export function ProfileScreen({ setActiveTab }) {
   const placementProfile = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem('austriaPathPlacementProfile'));
-    } catch {
-      return null;
-    }
+    return readJsonStorage('austriaPathPlacementProfile', null);
   }, []);
 
   const weeklyPlan = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem('austriaPathWeeklyPlan'));
-    } catch {
-      return null;
-    }
+    return readJsonStorage('austriaPathWeeklyPlan', null);
   }, []);
 
   const premiumExams = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem('austriaPathPremiumExams')) || [];
-    } catch {
-      return [];
-    }
+    return readJsonStorage('austriaPathPremiumExams', []) || [];
   }, []);
 
   const reports = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem('austriaPathAIReports')) || [];
-    } catch {
-      return [];
-    }
+    return readJsonStorage('austriaPathAIReports', []) || [];
   }, []);
 
- const currentUser = (() => {
-  try {
-    return JSON.parse(localStorage.getItem('austriaPathCurrentUser')) || {};
-  } catch {
-    return {};
-  }
-})();
+ const currentUser = getCurrentUser() || {};
 
 const userName = currentUser.name || 'Benutzer';
 
@@ -329,12 +309,9 @@ return (
   ⚙️ Kontoeinstellungen
 </button>
             </div>
-{userEmail?.toLowerCase() === ADMIN_EMAIL && (
+{isAdminAccount(currentUser) && (
   <button
-  onClick={() => {
-    alert("Benutzerverwaltung clicked");
-    setActiveTab("userManagement");
-  }}
+  onClick={() => setActiveTab("userManagement")}
   style={{
     ...settingsButtonStyle,
     marginTop: "10px",

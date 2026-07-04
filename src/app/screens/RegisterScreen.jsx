@@ -18,6 +18,7 @@ export default function RegisterScreen({
   onRegisterSuccess,
   onBack,
   onLogin,
+  onOpenLegal,
 }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -53,7 +54,7 @@ export default function RegisterScreen({
     }
 
     if (!acceptedTerms) {
-      alert("Bitte akzeptieren Sie die Datenschutzbestimmungen.");
+      alert("Bitte akzeptieren Sie Datenschutz und AGB.");
       return;
     }
 
@@ -174,7 +175,31 @@ export default function RegisterScreen({
             checked={acceptedTerms}
             onChange={(e) => setAcceptedTerms(e.target.checked)}
           />
-          Ich akzeptiere die Datenschutzbestimmungen.
+          <span>
+            Ich akzeptiere die{" "}
+            {onOpenLegal ? (
+              <>
+                <button
+                  type="button"
+                  style={inlineLinkStyle}
+                  onClick={() => onOpenLegal("datenschutz")}
+                >
+                  Datenschutzerklärung
+                </button>{" "}
+                und die{" "}
+                <button
+                  type="button"
+                  style={inlineLinkStyle}
+                  onClick={() => onOpenLegal("agb")}
+                >
+                  AGB
+                </button>
+                .
+              </>
+            ) : (
+              "Datenschutzerklärung und AGB."
+            )}
+          </span>
         </label>
 
         <button
@@ -200,3 +225,14 @@ export default function RegisterScreen({
     </div>
   );
 }
+
+const inlineLinkStyle = {
+  border: "none",
+  background: "transparent",
+  color: "#2563eb",
+  fontWeight: "700",
+  cursor: "pointer",
+  padding: 0,
+  textDecoration: "underline",
+  fontSize: "inherit",
+};

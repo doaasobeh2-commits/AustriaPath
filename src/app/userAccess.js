@@ -1,18 +1,30 @@
 import {
   ADMIN_EMAIL,
   getAdminInitialPassword,
+  isAdminAccount,
 } from "../config/authConfig";
+import {
+  clearSessionIntegrity,
+  detectLegacyRoleMismatch,
+  verifySessionIntegrity,
+  writeSessionIntegrity,
+} from "../security/sessionIntegrity";
+import { readJsonStorage, writeJsonStorage } from "../security/secureStorage";
+import { isValidEmail } from "../security/sanitize";
 
 export const USERS_KEY = "austriaPathUsers";
 export const CURRENT_USER_KEY = "austriaPathCurrentUser";
 const LEGACY_USER_KEY = "currentUser";
 
+function stripPassword(user) {
+  if (!user || typeof user !== "object") return user;
+  const { password: _password, ...safeUser } = user;
+  return safeUser;
+}
+
 function getStoredUsers() {
-  try {
-    return JSON.parse(localStorage.getItem(USERS_KEY)) || [];
-  } catch {
-    return [];
-  }
+  const users = readJsonStorage(USERS_KEY, []);
+  return Array.isArray(users) ? users : [];
 }
 
 function normalizeAccountStatus(status) {
@@ -170,7 +182,7 @@ export function getCurrentUser() {
 }
 
 export function saveCurrentUser(user) {
-  localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+  writeJsonStorage(CURRENT_USER_KEY, stripPassword(user));
 }
 
 export function clearSession() {
@@ -181,6 +193,7 @@ export function clearSession() {
   localStorage.removeItem("userEmail");
   localStorage.removeItem("userName");
   localStorage.removeItem("isAdminPreview");
+  clearSessionIntegrity();
 }
 
 export function resolveSessionUser() {
@@ -199,7 +212,16 @@ export function resolveSessionUser() {
     if (!storedUser) return null;
     if (storedUser.status === "blocked") return null;
 
-    return toSessionUser(storedUser);
+    const sessionUser = toSessionUser(storedUser);
+
+    if (
+      detectLegacyRoleMismatch(sessionUser) ||
+      !verifySessionIntegrity(sessionUser)
+    ) {
+      return null;
+    }
+
+    return sessionUser;
   } catch {
     return null;
   }
@@ -216,6 +238,7 @@ export function validateSessionOnStartup() {
   }
 
   syncSessionUser(resolved);
+  writeSessionIntegrity(resolved);
   return resolved;
 }
 
@@ -235,6 +258,7 @@ export function syncSessionUser(resolvedUser) {
   );
   localStorage.setItem("userLevel", resolvedUser.level || "B1");
   localStorage.removeItem("isAdminPreview");
+  writeSessionIntegrity(resolvedUser);
 }
 
 function getDefaultAllowedLevels(level) {
@@ -250,6 +274,20 @@ export function authenticateUser(email, password) {
     return {
       ok: false,
       message: "Bitte E-Mail und Passwort eingeben.",
+    };
+  }
+
+  if (!isValidEmail(cleanEmail)) {
+    return {
+      ok: false,
+      message: "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+    };
+  }
+
+  if (password.length > 256) {
+    return {
+      ok: false,
+      message: "Passwort ist zu lang.",
     };
   }
 
@@ -294,9 +332,9 @@ export function authenticateUser(email, password) {
     );
 
     saveUsers(updatedUsers);
-    saveCurrentUser(adminUser);
+    saveCurrentUser(stripPassword(adminUser));
 
-    return { ok: true, user: adminUser };
+    return { ok: true, user: stripPassword(adminUser) };
   }
 
   const studentUser = {
@@ -307,13 +345,34 @@ export function authenticateUser(email, password) {
     lastLogin: new Date().toISOString(),
   };
 
-  saveCurrentUser(studentUser);
+  saveCurrentUser(stripPassword(studentUser));
 
-  return { ok: true, user: studentUser };
+  return { ok: true, user: stripPassword(studentUser) };
 }
 
 export function registerStudentUser({ name, email, password, level }) {
   const cleanEmail = email.trim().toLowerCase();
+
+  if (!name?.trim() || !password || !level) {
+    return {
+      ok: false,
+      message: "Bitte füllen Sie alle Pflichtfelder aus.",
+    };
+  }
+
+  if (!isValidEmail(cleanEmail)) {
+    return {
+      ok: false,
+      message: "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+    };
+  }
+
+  if (password.length > 256) {
+    return {
+      ok: false,
+      message: "Passwort ist zu lang.",
+    };
+  }
 
   if (cleanEmail === ADMIN_EMAIL) {
     return {
@@ -353,9 +412,9 @@ export function registerStudentUser({ name, email, password, level }) {
   };
 
   saveUsers([...storedUsers, newUser]);
-  saveCurrentUser(newUser);
+  saveCurrentUser(stripPassword(newUser));
 
-  return { ok: true, user: newUser };
+  return { ok: true, user: stripPassword(newUser) };
 }
 
 /** @deprecated Use registerStudentUser instead */
@@ -430,7 +489,7 @@ export function getCurrentUserAllowedLevels() {
 
   if (!currentUser) return ["A2"];
 
-  if (currentUser.role === "admin") {
+  if (isAdminAccount(currentUser)) {
     return ["A2", "B1", "B2"];
   }
 
