@@ -12,7 +12,11 @@ export const env = Object.freeze({
   nodeEnv: process.env.NODE_ENV || "development",
   port: Number(process.env.PORT || 3000),
   databaseUrl: process.env.DATABASE_URL || "",
-  usePglite: envBool("USE_PGLITE") || (!process.env.DATABASE_URL && process.env.NODE_ENV === "test"),
+  /** PGLite is allowed only in non-production test/dev — never in production. */
+  usePglite:
+    process.env.NODE_ENV !== "production" &&
+    (envBool("USE_PGLITE") ||
+      (process.env.NODE_ENV === "test" && !process.env.DATABASE_URL)),
   sessionSecret: process.env.SESSION_SECRET || process.env.JWT_SECRET || "dev-change-me-in-production",
   adminEmail: (process.env.ADMIN_EMAIL || process.env.VITE_ADMIN_EMAIL || "fadisobehau@gmail.com")
     .trim()

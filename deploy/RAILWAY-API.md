@@ -68,6 +68,40 @@ Optional: `STRIPE_*`, `OPENAI_MODEL`, Stripe price IDs.
 
 Railway injects `PORT`; the server reads `process.env.PORT`.
 
+### DATABASE_URL missing → API used PGLite (fixed in code)
+
+If `GET /v1/health/db` returned `"dbKind":"pglite"`, Railway had **no** `DATABASE_URL` on the **API Web Service**. The server now **refuses to start** in production without it.
+
+**Fix in Railway (required):**
+
+1. Open [Neon Console](https://console.neon.tech) → your project → **Connect**
+2. Branch: **main** (or production branch)
+3. Enable **Connection pooling**
+4. Copy the pooled URL (`postgresql://…@ep-…-pooler.….neon.tech/neondb?sslmode=require`)
+5. Railway → **API Web Service** (not Vercel, not a static site) → **Variables**
+6. Add or update **`DATABASE_URL`** = pasted Neon URL
+7. Ensure **`NODE_ENV`** = `production`
+8. Ensure **`USE_PGLITE`** is **not** set (delete if present)
+9. **Redeploy** the API service
+
+**Verify after deploy:**
+
+```powershell
+curl.exe -s "https://austriapath-production.up.railway.app/v1/health/db"
+```
+
+Expected:
+
+```json
+"dbKind": "pg",
+"usersTableExists": true,
+"publicTableCount": 20
+```
+
+If deploy **crashes** with `DATABASE_URL is required in production`, the variable is still missing on that service or the deploy target is wrong.
+
+**Optional:** Link Neon to Railway (Railway dashboard → **+ New** → **Database** → **Add Neon**) — Railway injects `DATABASE_URL` automatically into the linked service.
+
 ## After deploy — verify API
 
 ```powershell

@@ -27,15 +27,38 @@ function adaptSqlForPglite(sql) {
 export async function initDb() {
   if (pool || pglite) return getDb();
 
-  if (env.databaseUrl && !env.usePglite) {
-    pool = new pg.Pool({ connectionString: env.databaseUrl });
+  const isProduction = (process.env.NODE_ENV || "development") === "production";
+  const databaseUrl = process.env.DATABASE_URL?.trim() || env.databaseUrl?.trim();
+
+  if (isProduction) {
+    if (!databaseUrl) {
+      throw new Error(
+        "DATABASE_URL is required in production (Neon PostgreSQL). PGlite fallback is disabled."
+      );
+    }
+    if (process.env.USE_PGLITE === "true" || process.env.USE_PGLITE === "1") {
+      throw new Error("USE_PGLITE is not allowed in production.");
+    }
+    pool = new pg.Pool({ connectionString: databaseUrl });
     await pool.query("SELECT 1");
     return { kind: "pg", pool };
   }
 
-  const { PGlite } = await import("@electric-sql/pglite");
-  pglite = new PGlite();
-  return { kind: "pglite", pglite };
+  if (databaseUrl && !env.usePglite) {
+    pool = new pg.Pool({ connectionString: databaseUrl });
+    await pool.query("SELECT 1");
+    return { kind: "pg", pool };
+  }
+
+  if (env.usePglite) {
+    const { PGlite } = await import("@electric-sql/pglite");
+    pglite = new PGlite();
+    return { kind: "pglite", pglite };
+  }
+
+  throw new Error(
+    "DATABASE_URL is not set. Set PostgreSQL DATABASE_URL or USE_PGLITE=true for local embedded DB."
+  );
 }
 
 export function getDb() {

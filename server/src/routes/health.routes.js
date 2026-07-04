@@ -29,7 +29,7 @@ router.get("/db", async (_req, res, next) => {
       dbKind = "not_initialized";
     }
 
-    const configured = parseDatabaseUrl(env.databaseUrl);
+    const configured = parseDatabaseUrl(process.env.DATABASE_URL || env.databaseUrl);
 
     let database = null;
     let role = null;

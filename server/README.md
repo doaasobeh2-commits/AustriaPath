@@ -4,7 +4,7 @@ Implements Gate 0 Contract Pack `2.0.0-gate0`.
 
 ## Deviation notes (documented)
 
-**Embedded PostgreSQL (PGLite)** is used for automated tests and optional local dev when `DATABASE_URL` is unset. Production MUST use PostgreSQL 15+ via `DATABASE_URL`. PGLite runs the same DDL with `CITEXT` → `TEXT` and skips `pgcrypto`/`citext` extensions.
+**Embedded PostgreSQL (PGLite)** is used for automated tests when `USE_PGLITE=true` or `NODE_ENV=test` without `DATABASE_URL`. **Production (`NODE_ENV=production`) requires `DATABASE_URL`** and will not start without a valid PostgreSQL connection string. PGLite is never used in production.
 
 **SQL statement splitter** strips leading section comments before emitting statements — required because Gate 0 DDL groups `CREATE TABLE` blocks under `-- section` headers without altering the frozen schema file.
 

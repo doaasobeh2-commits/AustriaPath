@@ -3,11 +3,13 @@ import { createApp } from "./app.js";
 import { closeDb } from "./db/client.js";
 import { prepareDatabase } from "./db/startup.js";
 import { env } from "./config/env.js";
+import { assertProductionDatabaseConfig } from "./config/validateEnv.js";
 import { getBetaAllowlistStatus } from "./config/betaAllowlist.js";
 
 const root = express();
 root.use("/v1", createApp());
 
+assertProductionDatabaseConfig();
 await prepareDatabase();
 
 const betaAllowlist = getBetaAllowlistStatus();
