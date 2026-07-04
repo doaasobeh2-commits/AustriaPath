@@ -255,8 +255,10 @@ const focusAreas = weaknesses.length
   : sessionAnswers
       .filter((x) => x.result === 'middle')
       .map((x) => x.label || x.title || x.type);
-console.log('SESSION ANSWERS', sessionAnswers);
-console.log('STRONG', strongCount, 'MIDDLE', middleCount, 'WEAK', weakCount);
+    if (import.meta.env.DEV) {
+      console.log('SESSION ANSWERS', sessionAnswers);
+      console.log('STRONG', strongCount, 'MIDDLE', middleCount, 'WEAK', weakCount);
+    }
 const buildSmartSummary = () => {
   if (weakCount === 0 && strongCount >= middleCount) {
     return 'Sehr gute Sitzung. Die meisten Aufgaben wurden sicher gelöst. Der Schüler kann mit schwierigeren Aufgaben weitertrainieren.';

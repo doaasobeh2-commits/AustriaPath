@@ -2,19 +2,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { b2Models } from '../../data/modelsB2';
 import { getSmartPremiumMessage } from '../../data/smartPremiumMessages';
 import { b1LesenModels } from '../../data/b1LesenModels';
+import { isPremiumUser } from '../../data/utils/premiumHint';
 import { B2LesenScreen } from './B2LesenScreen';
 import { B1LesenScreen } from './lesen/B1LesenScreen';
 const PREMIUM_HINT_COOLDOWN_DAYS = 3;
 const PREMIUM_HINT_COOLDOWN_MS =
   PREMIUM_HINT_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
-
-function isPremiumUser() {
-  return (
-    localStorage.getItem('isPremiumUser') === 'true' ||
-    localStorage.getItem('placementPaid') === 'true' ||
-    Boolean(localStorage.getItem('premiumPlan'))
-  );
-}
 
 function shouldShowPremiumHint(storageKey) {
   const lastShown = Number(localStorage.getItem(storageKey) || 0);

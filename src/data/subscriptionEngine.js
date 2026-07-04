@@ -34,6 +34,17 @@ export function getPermissionsByPlan(type = 'free') {
     return { ...free, placementTest: true, reports: true };
   }
 
+  if (type === 'weekly_plan') {
+    return {
+      ...free,
+      weeklyPlan: true,
+      reports: true,
+      writingAI: true,
+      imageAI: true,
+      speakingAI: true,
+    };
+  }
+
   if (type === 'ai_exam') {
     return {
       ...free,
@@ -80,6 +91,7 @@ export function grantPlan(user, type) {
   const examMap = {
     free: 0,
     placement_test: 1,
+    weekly_plan: 0,
     ai_exam: 1,
     intensive_week: 3,
     premium_month: 5,
@@ -88,6 +100,7 @@ export function grantPlan(user, type) {
   const creditMap = {
     free: 0,
     placement_test: 30,
+    weekly_plan: 30,
     ai_exam: 50,
     intensive_week: 150,
     premium_month: 250,

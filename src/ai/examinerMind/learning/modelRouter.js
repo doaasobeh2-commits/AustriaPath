@@ -129,11 +129,13 @@ export async function runModelRouter({
       },
     });
 
-    console.log("AI credit check:", {
-      userId: currentUser?.id,
-      serviceType,
-      aiResponse,
-    });
+    if (import.meta.env.DEV) {
+      console.log("AI credit check:", {
+        userId: currentUser?.id,
+        serviceType,
+        aiResponse,
+      });
+    }
 
     if (!aiResponse?.error && currentUser?.id) {
       const updatedUser = consumeAICredits(currentUser.id, serviceType);

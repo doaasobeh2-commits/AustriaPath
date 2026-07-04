@@ -1,3 +1,5 @@
+import { reportClientError } from "../utils/errorReporting.js";
+
 const MAX_PROMPT_LENGTH = 8000;
 const MAX_ANSWER_LENGTH = 8000;
 const MAX_MESSAGES = 30;
@@ -39,12 +41,16 @@ export async function requestOpenAIProxy(payload = {}) {
   });
 
   if (!response.ok) {
-    throw new Error("AI request failed");
+    const error = new Error("AI request failed");
+    reportClientError(error, { status: response.status, mode: body.mode });
+    throw error;
   }
 
   const data = await response.json();
   if (!data || data.success === false) {
-    throw new Error(data?.error || "AI request failed");
+    const error = new Error(data?.error || "AI request failed");
+    reportClientError(error, { errorCode: data?.errorCode, mode: body.mode });
+    throw error;
   }
 
   return {

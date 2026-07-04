@@ -137,7 +137,9 @@ await runModelRouter({
     examType: "OEIF",
   },
 });
-console.log("Examiner Mind:", aiResult);
+    if (import.meta.env.DEV) {
+      console.log("Examiner Mind:", aiResult);
+    }
   const report = {
     title: `${exam.title} · ${exam.level}`,
     date: new Date().toLocaleDateString('de-DE'),

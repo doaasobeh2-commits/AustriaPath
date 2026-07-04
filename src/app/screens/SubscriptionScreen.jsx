@@ -1,10 +1,9 @@
 import React from 'react';
+import { getUserLanguage } from '../../utils/userPreferences';
+import { applyClientPlanSelection } from '../../utils/clientSubscription';
 
 export default function SubscriptionScreen({ setActiveTab }) {
-  const language =
-    localStorage.getItem('userLanguage') ||
-    localStorage.getItem('austriaPathLanguage') ||
-    'Deutsch';
+  const language = getUserLanguage();
 
   const t = content[language] || content.Deutsch;
   const plans = t.plans;
@@ -30,6 +29,8 @@ export default function SubscriptionScreen({ setActiveTab }) {
     localStorage.setItem('userPlan', plan.type);
     localStorage.setItem('premiumActive', 'true');
     localStorage.setItem('austriaPathSelectedPremiumPlan', JSON.stringify(plan));
+
+    applyClientPlanSelection(plan);
 
     if (plan.type === 'placement') {
       setActiveTab?.('placementTest');

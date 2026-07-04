@@ -21,7 +21,8 @@ export default function ForgotPasswordScreen({ onBack }) {
         {!sent ? (
           <>
             <p style={subtitleStyle}>
-              Geben Sie Ihre E-Mail-Adresse ein. Wir zeigen hier später den Link zum Zurücksetzen des Passworts.
+              Passwort-Zurücksetzen per E-Mail ist in der Beta noch nicht verfügbar.
+              Bitte wenden Sie sich an den Support oder den Administrator.
             </p>
 
             <input
@@ -39,7 +40,7 @@ export default function ForgotPasswordScreen({ onBack }) {
         ) : (
           <>
             <div style={successBoxStyle}>
-              ✅ Wenn diese E-Mail existiert, wurde ein Zurücksetzungslink vorbereitet.
+              In der Beta ist kein E-Mail-Versand aktiv. Bitte kontaktieren Sie den Support, wenn Sie Ihr Passwort zurücksetzen müssen.
             </div>
 
             <button onClick={onBack} style={mainButtonStyle}>

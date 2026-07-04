@@ -1,7 +1,6 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useState } from "react";
 import PremiumScheduleScreen from "./screens/PremiumScheduleScreen";
 import { OnboardingScreen } from "./screens/OnboardingScreen";
-import { AdminScreen } from "./screens/AdminScreen";
 import { AkademieScreen } from "./screens/AkademieScreen";
 import { HomeScreen } from "./screens/HomeScreen";
 import { IntelligentExamScreen } from "./screens/IntelligentExamScreen";
@@ -11,7 +10,6 @@ import { PracticeScreen } from "./screens/PracticeScreen";
 import { ProfileScreen } from "./screens/ProfileScreen";
 import SubscriptionScreen from "./screens/SubscriptionScreen";
 import AccountSettingsScreen from "./screens/AccountSettingsScreen";
-import ExaminerLabScreen from "./screens/ExaminerLabScreen";
 import LoginScreen from "./screens/LoginScreen";
 import RegisterScreen from "./screens/RegisterScreen";
 import AuthWelcomeScreen from "./screens/AuthWelcomeScreen";
@@ -25,11 +23,9 @@ import { PremiumExamScreen } from "./screens/PremiumExamScreen.jsx";
 import { HorenScreen } from "./screens/HorenScreen";
 import { B2ModelScreen } from "./screens/B2ModelsScreen";
 import WeeklyPlanSetupScreen from "./screens/WeeklyPlanSetupScreen.jsx";
-import UserManagementScreen from "./screens/UserManagementScreen";
 import PlacementTestScreen from "./screens/PlacementTestScreen";
 import AISessionScreen from "./screens/AISessionScreen";
 import PremiumExamSessionScreen from "./screens/PremiumExamSessionScreen";
-import AIPrueferScreen from "./screens/AIPrueferScreen";
 import { isAdminAccount } from "../config/authConfig";
 import {
   getSafeTab,
@@ -45,6 +41,23 @@ import {
 import LegalPageScreen from "./components/LegalPageScreen";
 import LegalConsentScreen from "./screens/LegalConsentScreen";
 import { needsLegalConsent, saveLegalConsent } from "../legal/consent";
+
+const AdminScreen = React.lazy(() =>
+  import("./screens/AdminScreen").then((module) => ({ default: module.AdminScreen }))
+);
+const UserManagementScreen = React.lazy(() =>
+  import("./screens/UserManagementScreen")
+);
+const ExaminerLabScreen = React.lazy(() =>
+  import("./screens/ExaminerLabScreen")
+);
+const AIPrueferScreen = React.lazy(() =>
+  import("./screens/AIPrueferScreen")
+);
+
+function AdminRouteFallback() {
+  return null;
+}
 
 const initialSessionUser = validateSessionOnStartup();
 
@@ -257,6 +270,7 @@ export default function App() {
         </div>
 
         <main style={mainStyle}>
+          <Suspense fallback={<AdminRouteFallback />}>
           {guardedTab === "home" && (
             <HomeScreen setActiveTab={setActiveTabGuarded} />
           )}
@@ -464,6 +478,7 @@ export default function App() {
           {guardedTab === "premiumExamSession" && (
             <PremiumExamSessionScreen setActiveTab={setActiveTabGuarded} />
           )}
+          </Suspense>
         </main>
 
         <nav style={navStyle}>

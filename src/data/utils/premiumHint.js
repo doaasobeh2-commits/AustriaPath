@@ -1,15 +1,14 @@
+import { isPremiumActive } from "../../utils/subscriptionAccess";
+
 const PREMIUM_HINT_VISITS_REQUIRED = 3;
 const PREMIUM_HINT_COOLDOWN_DAYS = 3;
 
 const PREMIUM_HINT_COOLDOWN_MS =
   PREMIUM_HINT_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
 
+/** @deprecated Use isPremiumActive from subscriptionAccess — kept for existing imports */
 export function isPremiumUser() {
-  return (
-    localStorage.getItem('isPremiumUser') === 'true' ||
-    localStorage.getItem('placementPaid') === 'true' ||
-    Boolean(localStorage.getItem('premiumPlan'))
-  );
+  return isPremiumActive();
 }
 
 export function shouldShowPremiumHint(section) {

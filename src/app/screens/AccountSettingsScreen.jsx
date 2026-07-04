@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import LegalLinks from '../components/LegalLinks';
+import { clearSession } from '../userAccess';
+import { MAX_PROFILE_IMAGE_BYTES } from '../../security/storageRegistry';
+import { getUserLanguage, getUserLevel, persistUserPreferences } from '../../utils/userPreferences';
 
-export default function AccountSettingsScreen({ setActiveTab, onOpenLegal }) {
+export default function AccountSettingsScreen({ setActiveTab, onLogout, onOpenLegal }) {
   const currentUser =
-  JSON.parse(localStorage.getItem("currentUser")) || {};
-const [name, setName] = useState(
-  localStorage.getItem("userName") ||
-  currentUser.name ||
-  "Fadi Sobeh"
-);
+    JSON.parse(localStorage.getItem("currentUser") || "null") || {};
+  const [name, setName] = useState(
+    localStorage.getItem("userName") ||
+      currentUser.name ||
+      ""
+  );
   const [email, setEmail] = useState('');
   const [level, setLevel] = useState('A2');
   const [language, setLanguage] = useState('Deutsch');
@@ -35,17 +38,8 @@ const [name, setName] = useState(
         ''
     );
 
-    setLevel(
-      localStorage.getItem('userLevel') ||
-        currentUser?.level ||
-        'A2'
-    );
-
-    setLanguage(
-      localStorage.getItem('userLanguage') ||
-        currentUser?.language ||
-        'Deutsch'
-    );
+    setLevel(getUserLevel());
+    setLanguage(getUserLanguage());
 
     setProfileImage(localStorage.getItem('userProfileImage') || '');
   }, []);
@@ -91,7 +85,7 @@ const [name, setName] = useState(
 
       const compressedImage = canvas.toDataURL('image/jpeg', 0.75);
 
-      if (compressedImage.length > 300000) {
+      if (compressedImage.length > MAX_PROFILE_IMAGE_BYTES) {
         alert('Das Bild ist zu groß. Bitte ein kleineres Bild wählen.');
         return;
       }
@@ -111,40 +105,14 @@ const [name, setName] = useState(
     const currentUser = currentUserRaw ? JSON.parse(currentUserRaw) : null;
 
     const updatedUser = {
-  ...(currentUser || {}),
-  name,
-  email,
-  level,
-  language,
-};
+      ...(currentUser || {}),
+      name,
+      email,
+      level,
+      language,
+    };
 
-    localStorage.setItem('userName', name);
-    localStorage.setItem('userEmail', email);
-    localStorage.setItem('userLevel', level);
-    localStorage.setItem('userLanguage', language);
-  const handleImageChange = (event) => {
-  const file = event.target.files?.[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-
-  reader.onloadend = () => {
-    const imageData = reader.result;
-
-    if (imageData.length > 1000000) {
-      alert('Das Bild ist zu groß. Bitte ein kleineres Bild wählen.');
-      return;
-    }
-
-    setProfileImage(imageData);
-    localStorage.setItem('userProfileImage', imageData);
-  };
-
-  reader.readAsDataURL(file);
-};
-    if (profileImage && profileImage.length < 1000000) {
-  localStorage.setItem('userProfileImage', profileImage);
-}
+    persistUserPreferences({ name, email, level, language });
     localStorage.setItem('currentUser', JSON.stringify(updatedUser));
 
     const usersRaw = localStorage.getItem('austriaPathUsers');
@@ -158,14 +126,21 @@ const [name, setName] = useState(
 
     localStorage.setItem('austriaPathUsers', JSON.stringify(updatedUsers));
 
+    if (profileImage && profileImage.length <= MAX_PROFILE_IMAGE_BYTES) {
+      localStorage.setItem('userProfileImage', profileImage);
+    }
+
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('currentUser');
-    setActiveTab('login');
+    clearSession();
+    if (onLogout) {
+      onLogout();
+      return;
+    }
+    setActiveTab('home');
   };
 
   return (

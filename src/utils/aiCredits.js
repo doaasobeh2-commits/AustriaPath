@@ -1,17 +1,10 @@
 import { ACCESS_CONTROL } from "../config/accessControl";
+import { getUsers, saveUsers } from "../app/userAccess";
 
-const USERS_KEY = "austriaPathUsers";
-
-export function getUsers() {
-  try {
-    return JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
-  } catch {
-    return [];
-  }
-}
-
-export function saveUsers(users) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+function getAvailableCredits(user) {
+  const total = typeof user.aiCredits === "number" ? user.aiCredits : 0;
+  const used = typeof user.usedAiCredits === "number" ? user.usedAiCredits : 0;
+  return Math.max(0, total - used);
 }
 
 export function ensureUserAccessDefaults(user) {
@@ -24,6 +17,8 @@ export function ensureUserAccessDefaults(user) {
       typeof user.aiCredits === "number"
         ? user.aiCredits
         : ACCESS_CONTROL.defaultAICredits,
+    usedAiCredits:
+      typeof user.usedAiCredits === "number" ? user.usedAiCredits : 0,
   };
 }
 
@@ -35,8 +30,10 @@ export function canUseAI(user, serviceType = "ai_exam") {
 
   const cost = ACCESS_CONTROL.aiCosts[serviceType] || 1;
 
-  return safeUser.status !== ACCESS_CONTROL.statuses.blocked &&
-    safeUser.aiCredits >= cost;
+  return (
+    safeUser.status !== ACCESS_CONTROL.statuses.blocked &&
+    getAvailableCredits(safeUser) >= cost
+  );
 }
 
 export function consumeAICredits(userId, serviceType = "ai_exam") {
@@ -47,10 +44,15 @@ export function consumeAICredits(userId, serviceType = "ai_exam") {
     if (user.id !== userId) return user;
 
     const safeUser = ensureUserAccessDefaults(user);
+    const available = getAvailableCredits(safeUser);
+
+    if (available < cost) {
+      return safeUser;
+    }
 
     return {
       ...safeUser,
-      aiCredits: Math.max(0, safeUser.aiCredits - cost),
+      usedAiCredits: safeUser.usedAiCredits + cost,
       lastAIUsageAt: new Date().toISOString(),
     };
   });
@@ -95,4 +97,8 @@ export function updateUserStatus(userId, status) {
   saveUsers(updatedUsers);
 
   return updatedUsers.find((user) => user.id === userId) || null;
+}
+
+export function getAvailableAICredits(user) {
+  return getAvailableCredits(ensureUserAccessDefaults(user) || {});
 }

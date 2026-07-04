@@ -23,7 +23,9 @@ this.studentProfileEngine = new StudentProfileEngine();
   }
 
   async think(examContext, mode = ExamModes.FAST) {
+  if (import.meta.env.DEV) {
     console.log(`🧠 Brain started in ${mode} mode`);
+  }
 const examType = examContext.examType || "OEIF";
 const level = examContext.level || "B1";
 

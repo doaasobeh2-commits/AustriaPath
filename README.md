@@ -1,11 +1,88 @@
+# AustriaPath
 
-  # AustriaPath Mobile App Screens
+German / ÖIF exam preparation platform — React SPA with ExaminerMind rule-based evaluation and optional OpenAI assistance.
 
-  This is a code bundle for AustriaPath Mobile App Screens. The original project is available at https://www.figma.com/design/OezfG34rLab3Rj5SBdLetd/AustriaPath-Mobile-App-Screens.
+**Figma source:** [AustriaPath Mobile App Screens](https://www.figma.com/design/OezfG34rLab3Rj5SBdLetd/AustriaPath-Mobile-App-Screens)
 
-  ## Running the code
+---
 
-  Run `npm i` to install the dependencies.
+## Quick start
 
-  Run `npm run dev` to start the development server.
-  
+```bash
+npm install
+cp .env.example .env    # set VITE_ADMIN_EMAIL; leave VITE_ADMIN_INITIAL_PASSWORD empty in prod
+npm run dev
+npm test                # unit tests (Vitest)
+```
+
+Production build:
+
+```bash
+npm run build
+npm run preview
+```
+
+Deploy target: **Vercel** (static SPA + `api/ai/openai.js` serverless).
+
+---
+
+## Environment variables
+
+| Variable | Scope | Required |
+|----------|-------|----------|
+| `VITE_ADMIN_EMAIL` | Client (public) | Recommended |
+| `VITE_ADMIN_INITIAL_PASSWORD` | Client (public) | **Empty in production** |
+| `OPENAI_API_KEY` | Server only | For AI features on Vercel |
+
+See [`.env.example`](./.env.example) and [Backend Security Requirements.md](./Backend%20Security%20Requirements.md).
+
+---
+
+## Documentation index
+
+| Document | Purpose |
+|----------|---------|
+| [AustriaPath_Final_Production_Checklist.md](./AustriaPath_Final_Production_Checklist.md) | **Executive status — done vs remaining** |
+| [AustriaPath_Knowledge_Base.md](./AustriaPath_Knowledge_Base.md) | Single source of truth — architecture & flows |
+| [AustriaPath_Production_Engineering_Package.md](./AustriaPath_Production_Engineering_Package.md) | Backend handoff — auth, API, payments, AI |
+| [AustriaPath_Backend_Implementation_Guide.md](./AustriaPath_Backend_Implementation_Guide.md) | Sprint-by-sprint backend build guide |
+| [AustriaPath_LocalStorage_Migration_Guide.md](./AustriaPath_LocalStorage_Migration_Guide.md) | DB migration from client storage |
+| [AustriaPath_Frontend_Module_Map.md](./AustriaPath_Frontend_Module_Map.md) | Codebase navigation |
+| [AustriaPath_Testing_Strategy.md](./AustriaPath_Testing_Strategy.md) | Unit, manual, and API test plan |
+| [AustriaPath_Remaining_Work_Before_Launch.md](./AustriaPath_Remaining_Work_Before_Launch.md) | Prioritized P0–P3 backlog |
+| [AustriaPath_Closed_Beta_Launch_Plan.md](./AustriaPath_Closed_Beta_Launch_Plan.md) | Closed beta operations |
+| [AustriaPath_Technical_Specification.md](./AustriaPath_Technical_Specification.md) | Master engineering spec |
+| [AustriaPath_Database_Schema.md](./AustriaPath_Database_Schema.md) | PostgreSQL blueprint |
+| [Launch-Checklist.md](./Launch-Checklist.md) | Pre-launch sign-off |
+
+---
+
+## Project structure
+
+```
+src/
+  app/           Screens, App.jsx tab router
+  ai/            ExaminerMind pipeline
+  config/        authConfig, accessControl
+  data/          Exam models, subscription engine
+  legal/         Consent, legal content
+  security/      Client hardening, storage registry
+  utils/         Credits, subscription access, preferences
+api/
+  ai/openai.js   OpenAI proxy (serverless)
+```
+
+---
+
+## Current limitations (pre-backend)
+
+- Auth and users: browser `localStorage` only — not multi-device
+- Subscriptions: client-side flags — not real payments
+- Admin bootstrap: per-browser; see Closed Beta Launch Plan
+- Premium enforcement: client-side — backend required for production
+
+---
+
+## License
+
+Private — see [ATTRIBUTIONS.md](./ATTRIBUTIONS.md).

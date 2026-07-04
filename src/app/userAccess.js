@@ -402,6 +402,7 @@ export function registerStudentUser({ name, email, password, level }) {
     level,
     status: "approved",
     aiCredits: 5,
+    usedAiCredits: 0,
     allowedLevels: getDefaultAllowedLevels(level),
     plan: "free",
     levelSource: "self_selected",
