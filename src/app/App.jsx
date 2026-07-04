@@ -35,10 +35,10 @@ import {
 import { readJsonStorage } from "../security/secureStorage";
 import {
   clearSession,
+  purgeLegacyAuthStorage,
   resolveSessionUser,
   syncSessionUser,
   validateSessionFromBackend,
-  validateSessionOnStartup,
 } from "./userAccess";
 import { useBackend } from "../api/useBackend.js";
 import { verifyEmail } from "../api/repositories/index.js";
@@ -63,18 +63,14 @@ function AdminRouteFallback() {
   return null;
 }
 
-const initialSessionUser = validateSessionOnStartup();
-
 function getInitialTab(user) {
   return isAdminAccount(user) ? "admin" : "home";
 }
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(initialSessionUser);
-  const [isLoggedIn, setIsLoggedIn] = useState(Boolean(initialSessionUser));
-  const [activeTab, setActiveTab] = useState(() =>
-    getInitialTab(initialSessionUser)
-  );
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [activeTab, setActiveTab] = useState("home");
   const [selectedLevel, setSelectedLevel] = useState(null);
   const [levelTarget, setLevelTarget] = useState(null);
   const [selectedWritingModel, setSelectedWritingModel] = useState(null);
@@ -108,17 +104,18 @@ export default function App() {
     [currentUser]
   );
 
-  const completeLogin = () => {
-    localStorage.setItem("isLoggedIn", "true");
-
-    const resolved = resolveSessionUser();
+  const completeLogin = (authenticatedUser) => {
+    const resolved = authenticatedUser || resolveSessionUser();
 
     if (!resolved) {
       handleLogout();
       return;
     }
 
-    syncSessionUser(resolved);
+    if (!resolveSessionUser()) {
+      syncSessionUser(resolved);
+    }
+
     setCurrentUser(resolved);
     setIsLoggedIn(true);
     setActiveTab(isAdminAccount(resolved) ? "admin" : "home");
@@ -141,36 +138,26 @@ export default function App() {
   }, [authTokenAction]);
 
   useEffect(() => {
-    if (useBackend()) {
-      validateSessionFromBackend().then((resolved) => {
-        if (!resolved) {
-          setIsLoggedIn(false);
-          setCurrentUser(null);
-          return;
-        }
-        setCurrentUser(resolved);
-        setIsLoggedIn(true);
-        if (!isAdminAccount(resolved)) {
-          setActiveTab((tab) => getSafeTab(tab, resolved));
-        }
-      });
-      return;
-    }
+    purgeLegacyAuthStorage();
 
-    const resolved = validateSessionOnStartup();
-
-    if (!resolved) {
+    if (!useBackend()) {
       setIsLoggedIn(false);
       setCurrentUser(null);
       return;
     }
 
-    setCurrentUser(resolved);
-    setIsLoggedIn(true);
-
-    if (!isAdminAccount(resolved)) {
-      setActiveTab((tab) => getSafeTab(tab, resolved));
-    }
+    validateSessionFromBackend().then((resolved) => {
+      if (!resolved) {
+        setIsLoggedIn(false);
+        setCurrentUser(null);
+        return;
+      }
+      setCurrentUser(resolved);
+      setIsLoggedIn(true);
+      if (!isAdminAccount(resolved)) {
+        setActiveTab((tab) => getSafeTab(tab, resolved));
+      }
+    });
   }, []);
 
   useEffect(() => {

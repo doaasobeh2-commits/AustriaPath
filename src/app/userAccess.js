@@ -5,8 +5,6 @@ import {
 } from "../config/authConfig";
 import {
   clearSessionIntegrity,
-  detectLegacyRoleMismatch,
-  verifySessionIntegrity,
   writeSessionIntegrity,
 } from "../security/sessionIntegrity";
 import { readJsonStorage, writeJsonStorage } from "../security/secureStorage.js";
@@ -24,7 +22,9 @@ import { clearBackendCache } from "../api/backendCache.js";
 
 export const USERS_KEY = "austriaPathUsers";
 export const CURRENT_USER_KEY = "austriaPathCurrentUser";
-const LEGACY_USER_KEY = "currentUser";
+
+/** In-memory session — never restored from localStorage flags. */
+let activeSessionUser = null;
 
 function stripPassword(user) {
   if (!user || typeof user !== "object") return user;
@@ -67,39 +67,6 @@ function normalizeStoredUser(user) {
     role: "student",
     status: normalizeAccountStatus(user.status),
   };
-}
-
-function readSessionEmail() {
-  let email = null;
-
-  for (const key of [CURRENT_USER_KEY, LEGACY_USER_KEY]) {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) continue;
-
-      const parsed = JSON.parse(raw);
-      const candidate = parsed?.email?.trim().toLowerCase();
-      if (!candidate) continue;
-
-      if (email && email !== candidate) {
-        return null;
-      }
-
-      email = candidate;
-    } catch {
-      return null;
-    }
-  }
-
-  const legacyEmail = localStorage.getItem("userEmail")?.trim().toLowerCase();
-  if (legacyEmail) {
-    if (email && email !== legacyEmail) {
-      return null;
-    }
-    email = email || legacyEmail;
-  }
-
-  return email;
 }
 
 function toSessionUser(storedUser) {
@@ -199,6 +166,7 @@ export function saveCurrentUser(user) {
 }
 
 export function clearSession() {
+  activeSessionUser = null;
   localStorage.removeItem("isLoggedIn");
   localStorage.removeItem("currentUser");
   localStorage.removeItem(CURRENT_USER_KEY);
@@ -210,35 +178,13 @@ export function clearSession() {
   if (useBackend()) clearBackendCache();
 }
 
+/** Remove forged/stale client auth markers; legal consent and UI prefs are kept. */
+export function purgeLegacyAuthStorage() {
+  clearSession();
+}
+
 export function resolveSessionUser() {
-  try {
-    if (localStorage.getItem("isLoggedIn") !== "true") {
-      return null;
-    }
-
-    const cleanEmail = readSessionEmail();
-    if (!cleanEmail) return null;
-
-    const storedUser = getUsers().find(
-      (user) => user.email?.toLowerCase() === cleanEmail
-    );
-
-    if (!storedUser) return null;
-    if (storedUser.status === "blocked") return null;
-
-    const sessionUser = toSessionUser(storedUser);
-
-    if (
-      detectLegacyRoleMismatch(sessionUser) ||
-      !verifySessionIntegrity(sessionUser)
-    ) {
-      return null;
-    }
-
-    return sessionUser;
-  } catch {
-    return null;
-  }
+  return activeSessionUser;
 }
 
 export async function validateSessionFromBackend() {
@@ -256,41 +202,23 @@ export async function validateSessionFromBackend() {
 }
 
 export function validateSessionOnStartup() {
-  if (useBackend()) {
-    return null;
-  }
-
-  const resolved = resolveSessionUser();
-
-  if (!resolved) {
-    if (localStorage.getItem("isLoggedIn") === "true") {
-      clearSession();
-    }
-    return null;
-  }
-
-  syncSessionUser(resolved);
-  writeSessionIntegrity(resolved);
-  return resolved;
+  purgeLegacyAuthStorage();
+  return null;
 }
 
 export function syncSessionUser(resolvedUser) {
-  if (!resolvedUser) return;
+  if (!resolvedUser) {
+    activeSessionUser = null;
+    return;
+  }
 
-  const { password: _password, ...sessionUser } = resolvedUser;
+  const sessionUser = stripPassword(toSessionUser(resolvedUser));
+  activeSessionUser = sessionUser;
 
   saveCurrentUser(sessionUser);
-  localStorage.setItem(LEGACY_USER_KEY, JSON.stringify(sessionUser));
-  localStorage.setItem("isLoggedIn", "true");
-  localStorage.setItem("userEmail", resolvedUser.email);
-  localStorage.setItem("userRole", resolvedUser.role);
-  localStorage.setItem(
-    "userName",
-    resolvedUser.name || resolvedUser.email.split("@")[0]
-  );
-  localStorage.setItem("userLevel", resolvedUser.level || "B1");
+  localStorage.setItem("userLevel", sessionUser.level || "B1");
   localStorage.removeItem("isAdminPreview");
-  writeSessionIntegrity(resolvedUser);
+  writeSessionIntegrity(sessionUser);
 }
 
 function getDefaultAllowedLevels(level) {
@@ -399,9 +327,10 @@ export async function authenticateUser(email, password) {
     );
 
     saveUsers(updatedUsers);
-    saveCurrentUser(stripPassword(adminUser));
+    const safeAdmin = stripPassword(adminUser);
+    syncSessionUser(safeAdmin);
 
-    return { ok: true, user: stripPassword(adminUser) };
+    return { ok: true, user: safeAdmin };
   }
 
   const studentUser = {
@@ -412,9 +341,10 @@ export async function authenticateUser(email, password) {
     lastLogin: new Date().toISOString(),
   };
 
-  saveCurrentUser(stripPassword(studentUser));
+  const safeStudent = stripPassword(studentUser);
+  syncSessionUser(safeStudent);
 
-  return { ok: true, user: stripPassword(studentUser) };
+  return { ok: true, user: safeStudent };
 }
 
 export async function registerStudentUser({ name, email, password, level }) {
@@ -489,7 +419,6 @@ export async function registerStudentUser({ name, email, password, level }) {
   };
 
   saveUsers([...storedUsers, newUser]);
-  saveCurrentUser(stripPassword(newUser));
 
   return { ok: true, user: stripPassword(newUser) };
 }

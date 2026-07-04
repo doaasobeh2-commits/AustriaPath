@@ -27,7 +27,7 @@ export default function LoginScreen({
       return;
     }
 
-    onLogin();
+    onLogin(result.user);
   };
 
   return (
