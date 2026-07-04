@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { b1PlanningModels } from '../../data/modelsb1';
+import { b2DiscussionModels } from '../../data/b2PlanningModels';
 import { getSmartPremiumMessage } from '../../data/smartPremiumMessages';
 import { isPremiumUser, trackSectionVisit } from '../../data/utils/premiumHint';
+import { getUserLanguage } from '../../utils/userPreferences';
+
 const STORAGE_KEY = 'austriaPathAdminData';
 
 
@@ -175,7 +178,8 @@ const b2SpeakingModels = [
     grammar: ['Konjunktiv II', 'trennbares Verb: stattfinden', 'Infinitiv mit zu'],
     mistakes: ['❌ Der Wettbewerb ist in Kulturzentrum.', '✅ Der Wettbewerb findet im Kulturzentrum statt.'],
     tip: 'Zeigen Sie Zusammenarbeit: fragen, reagieren, zustimmen, entscheiden.'
-  }
+  },
+  ...b2DiscussionModels,
 ];
 
 const speakingModels = {
@@ -393,10 +397,7 @@ export function SpeakingScreen({
   const current = models[index];
   const sectionTitle = getTypeByLevel(level);
 
-  const language =
-    localStorage.getItem('austriaPathLanguage') ||
-    localStorage.getItem('userLanguage') ||
-    'Deutsch';
+  const language = getUserLanguage();
 
  const premiumMessage = getSmartPremiumMessage(language, 'speaking');
 

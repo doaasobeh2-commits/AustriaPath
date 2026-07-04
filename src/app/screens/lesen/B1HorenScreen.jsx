@@ -2,15 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { b1HorenModels } from "../../../data/b1HorenModels";
 import { getSmartPremiumMessage } from "../../../data/smartPremiumMessages";
 import { isPremiumUser, trackSectionVisit } from "../../../data/utils/premiumHint";
+import { getUserLanguage } from "../../../utils/userPreferences";
 export function B1HorenScreen({ setActiveTab }) {
   const [index, setIndex] = useState(0);
   const [openTexts, setOpenTexts] = useState({});
 const [showPremiumHint, setShowPremiumHint] = useState(false);
 
-const language =
-  localStorage.getItem('austriaPathLanguage') ||
-  localStorage.getItem('userLanguage') ||
-  'Deutsch';
+const language = getUserLanguage();
 
 const premiumMessage = getSmartPremiumMessage(language, 'hoeren');
 

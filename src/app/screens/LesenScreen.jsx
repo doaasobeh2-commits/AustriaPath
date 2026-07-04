@@ -5,6 +5,8 @@ import { b1LesenModels } from '../../data/b1LesenModels';
 import { isPremiumUser } from '../../data/utils/premiumHint';
 import { B2LesenScreen } from './B2LesenScreen';
 import { B1LesenScreen } from './lesen/B1LesenScreen';
+import { getUserLanguage, getUserLevel } from '../../utils/userPreferences';
+import { getScreenLabels } from '../../i18n/screenLabels';
 const PREMIUM_HINT_COOLDOWN_DAYS = 3;
 const PREMIUM_HINT_COOLDOWN_MS =
   PREMIUM_HINT_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
@@ -170,9 +172,10 @@ const lesenModels = {
 
 export function LesenScreen({
   setActiveTab,
-  userLevel = localStorage.getItem('userLevel') || 'B1'
+  userLevel = getUserLevel()
 }) {
   const level = userLevel;
+  const labels = getScreenLabels(getUserLanguage());
   if (level === 'B2') {
   return <B2LesenScreen setActiveTab={setActiveTab} />;
 }
@@ -196,10 +199,7 @@ if (level === 'B1') {
 
   const model = models[index];
 
-  const language =
-    localStorage.getItem('austriaPathLanguage') ||
-    localStorage.getItem('userLanguage') ||
-    'Deutsch';
+  const language = getUserLanguage();
 
   const premiumMessage = getSmartPremiumMessage(language, 'lesen');
 
@@ -222,7 +222,7 @@ if (level === 'B1') {
   return (
     <div style={pageStyle}>
       <button onClick={() => setActiveTab('home')} style={backButtonStyle}>
-        ← Zurück
+        {labels.back}
       </button>
 
       <h1>📖 Lesen Trainer</h1>

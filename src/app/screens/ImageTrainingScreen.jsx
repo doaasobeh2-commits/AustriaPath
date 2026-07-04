@@ -5,6 +5,8 @@ import { b2Images } from '../../data/b2Images';
 import { getSmartPremiumMessage } from '../../data/smartPremiumMessages';
 import { b2Grafiken } from '../../data/b2Grafiken';
 import { isPremiumUser, trackSectionVisit } from '../../data/utils/premiumHint';
+import { getUserLanguage, getUserLevel } from '../../utils/userPreferences';
+import { getScreenLabels } from '../../i18n/screenLabels';
 
 
 const imageModels = {
@@ -81,9 +83,10 @@ function getAdminImageModels() {
 
 export function ImageTrainingScreen({
   setActiveTab,
-  userLevel = localStorage.getItem('userLevel') || 'A2'
+  userLevel = getUserLevel()
 }) {
   const level = userLevel;
+  const labels = getScreenLabels(getUserLanguage());
   const [selectedImage, setSelectedImage] = useState(null);
   const [showPremiumHint, setShowPremiumHint] = useState(false);
 
@@ -107,10 +110,7 @@ export function ImageTrainingScreen({
 
   const models = modelsByLevel[level] || [];
 
-  const language =
-    localStorage.getItem('austriaPathLanguage') ||
-    localStorage.getItem('userLanguage') ||
-    'Deutsch';
+  const language = getUserLanguage();
 
   const premiumMessage = getSmartPremiumMessage(language, 'bild');
 
@@ -139,7 +139,7 @@ useEffect(() => {
       <div style={pageStyle}>
         <div style={topActionsStyle}>
           <button style={backButton} onClick={() => setSelectedImage(null)}>
-            ← Zurück
+            {labels.back}
           </button>
 
           <button style={homeButton} onClick={() => setActiveTab('home')}>

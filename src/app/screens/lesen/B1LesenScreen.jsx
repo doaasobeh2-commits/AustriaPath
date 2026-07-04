@@ -3,6 +3,7 @@ import { b1LesenModels } from '../../../data/b1LesenModels';
 import BrochureViewer from '../BrochureViewer';
 import { getSmartPremiumMessage } from '../../../data/smartPremiumMessages';
 import { isPremiumUser, trackSectionVisit } from '../../../data/utils/premiumHint';
+import { getUserLanguage } from '../../../utils/userPreferences';
 export function B1LesenScreen({ setActiveTab }) {
   const [index, setIndex] = useState(0);
   const [activeTeil, setActiveTeil] = useState('teil1');
@@ -12,10 +13,7 @@ const [showBrochure, setShowBrochure] = useState(false);
 const [showTeil2Questions, setShowTeil2Questions] = useState(false);
 const [showPremiumHint, setShowPremiumHint] = useState(false);
 
-const language =
-  localStorage.getItem('austriaPathLanguage') ||
-  localStorage.getItem('userLanguage') ||
-  'Deutsch';
+const language = getUserLanguage();
 
 const premiumMessage = getSmartPremiumMessage(language, 'lesen');
 

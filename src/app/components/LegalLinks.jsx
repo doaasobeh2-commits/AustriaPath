@@ -7,6 +7,7 @@ const LINKS = [
   { id: "kontakt", label: "Kontakt" },
   { id: "cookies", label: "Cookies" },
   { id: "aiDisclaimer", label: "AI-Hinweis" },
+  { id: "aiPrivacy", label: "AI-Datenschutz" },
 ];
 
 export default function LegalLinks({ onOpenLegal, compact = false }) {

@@ -670,5 +670,43 @@ Ali Hassan`,
     verbs: [],
     grammar: [],
     tip: "Dieses Modell ist bald vollständig verfügbar."
+  },
+
+  {
+    id: 35,
+    level: "A2",
+    title: "Lärm vom Nachbarn",
+    category: "Beschwerde",
+    task: [
+      "Schreiben Sie, warum Sie sich beschweren.",
+      "Sagen Sie, wann der Lärm passiert.",
+      "Bitten Sie die Hausverwaltung um Hilfe."
+    ],
+    schreiben: `Betreff: Lärm in der Wohnung
+
+Sehr geehrte Damen und Herren,
+
+ich wohne in der Wohnung 12 im dritten Stock. Seit zwei Wochen höre ich abends sehr laute Musik aus der Nachbarwohnung.
+
+Der Lärm ist meistens zwischen 22 und 24 Uhr. Ich kann deshalb nicht schlafen und bin am nächsten Tag müde.
+
+Könnten Sie bitte mit dem Nachbarn sprechen? Ich wäre Ihnen sehr dankbar.
+
+Mit freundlichen Grüßen
+Ali Hassan`,
+    words: ["der Lärm", "die Nachbarwohnung", "die Hausverwaltung", "schlafen", "müde", "abends"],
+    verbs: ["wohnen", "hören", "schlafen", "sprechen", "sich beschweren", "bitten"],
+    grammar: ["weil + Verb am Ende", "Könnten Sie …?", "Zeitangaben: zwischen … und …"],
+    satzbau: [
+      "Seit zwei Wochen höre ich …",
+      "Ich kann deshalb nicht schlafen.",
+      "Könnten Sie bitte …?"
+    ],
+    konnektoren: ["deshalb", "seit", "weil"],
+    mistakes: [
+      "❌ Ich beschwere mich weil der Nachbar ist laut.",
+      "✅ Ich beschwere mich, weil der Nachbar laut ist."
+    ],
+    tip: "Bei Beschwerden: höflich bleiben, Zeit und Ort genau nennen, konkrete Bitte formulieren."
   }
 ];

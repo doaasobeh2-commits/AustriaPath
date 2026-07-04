@@ -2192,4 +2192,95 @@ Vor einem Vertrag sollte man Angebote vergleichen und Fragen stellen. So findet 
   tip:
     'Achte bei Bankanzeigen auf Konto, Sparen, Online-Banking, Versicherungen und Beratung. Mehrere Anzeigen enthalten ähnliche Begriffe.'
 },
+
+{
+  id: 'b1-lesen-06',
+  title: 'Gesund leben & Vorsorge',
+  level: 'B1',
+
+  teil1: {
+    title: 'Teil 1 – Lückentext',
+    text: `Viele Menschen möchten gesünder leben, ___(31)___ sie oft wenig Zeit für Sport haben. Deshalb versuchen sie, im Alltag kleine Veränderungen zu machen. Manche nehmen ___(32)___ den Aufzug die Treppe, wenn es nicht zu weit ist.
+
+Ein ausgewogener Ernährungsplan ist ebenfalls wichtig. Experten empfehlen, mehr Gemüse und Obst zu essen ___(33)___ man sich fitter fühlt. Regelmäßige Vorsorgeuntersuchungen beim Arzt können helfen, ___(34)___ Krankheiten früh zu erkennen.
+
+Wer nachts schlecht schläft, sollte darauf achten, ___(35)___ er abends nicht zu spät Kaffee trinkt. Stress kann ebenfalls ein Problem sein. Deshalb ist es sinnvoll, ___(36)___ man sich bewusst Zeit für Erholung nimmt.`,
+    options: {
+      31: ['obwohl', 'weil', 'damit'],
+      32: ['statt', 'wegen', 'trotz'],
+      33: ['damit', 'obwohl', 'denn'],
+      34: ['dass', 'wenn', 'ob'],
+      35: ['dass', 'wenn', 'weil'],
+      36: ['dass', 'obwohl', 'sondern']
+    },
+    answers: {
+      31: 'obwohl',
+      32: 'statt',
+      33: 'damit',
+      34: 'dass',
+      35: 'dass',
+      36: 'dass'
+    }
+  },
+
+  teil3: {
+    title: 'Teil 3 – Lesetext',
+    text: `Immer mehr Menschen in Österreich achten stärker auf ihre Gesundheit. Das zeigt auch der Besuch von Vorsorgeuntersuchungen. Viele Hausärzte erklären, dass regelmäßige Kontrollen besonders ab einem bestimmten Alter wichtig sind. So lassen sich manche Erkrankungen früh behandeln.
+
+Gleichzeitig wächst das Interesse an gesunder Ernährung. In Supermärkten findet man heute mehr Bio-Produkte und frisches Gemüse. Viele Menschen kochen wieder öfter zu Hause, weil sie wissen wollen, was in ihrem Essen enthalten ist. Andere nutzen Apps, um Schritte oder Schlaf zu dokumentieren.
+
+Experten betonen jedoch, dass Gesundheit nicht nur aus Ernährung und Sport besteht. Ausreichend Schlaf, weniger Stress und soziale Kontakte spielen ebenfalls eine große Rolle. Wer dauerhaft unter Druck steht, fühlt sich oft müde und kann sich schwerer konzentrieren.
+
+Nicht jede Trenddiät ist sinnvoll. Seriöse Ernährungsberater warnen vor extremen Methoden ohne medizinische Beratung. Stattdessen empfehlen sie kleine, realistische Veränderungen im Alltag. Wer zum Beispiel täglich zehn Minuten spazieren geht und mehr Wasser trinkt, kann langfristig viel erreichen.`,
+    questions: [
+      {
+        q: '46. Was zeigen steigende Vorsorgeuntersuchungen?',
+        options: [
+          'Dass mehr Menschen auf ihre Gesundheit achten.',
+          'Dass Ärzte weniger Patienten haben.',
+          'Dass Krankheiten verschwunden sind.'
+        ],
+        a: 'Dass mehr Menschen auf ihre Gesundheit achten.'
+      },
+      {
+        q: '47. Warum kochen manche Menschen wieder öfter zu Hause?',
+        options: [
+          'Weil Restaurants geschlossen sind.',
+          'Weil sie wissen wollen, was im Essen enthalten ist.',
+          'Weil Gemüse im Supermarkt verboten ist.'
+        ],
+        a: 'Weil sie wissen wollen, was im Essen enthalten ist.'
+      },
+      {
+        q: '48. Was gehört laut Experten auch zur Gesundheit?',
+        options: [
+          'Nur Sport und Diät.',
+          'Schlaf, weniger Stress und soziale Kontakte.',
+          'Nur teure Bio-Produkte.'
+        ],
+        a: 'Schlaf, weniger Stress und soziale Kontakte.'
+      },
+      {
+        q: '49. Was warnen Ernährungsberater?',
+        options: [
+          'Vor extremen Diäten ohne medizinische Beratung.',
+          'Vor jedem Spaziergang.',
+          'Vor Vorsorgeuntersuchungen.'
+        ],
+        a: 'Vor extremen Diäten ohne medizinische Beratung.'
+      }
+    ]
+  },
+
+  words: ['die Vorsorge', 'die Ernährung', 'der Stress', 'die Erholung', 'die Untersuchung'],
+  verbs: ['achten auf', 'empfehlen', 'erkennen', 'konzentrieren', 'warnen vor'],
+  grammar: ['obwohl', 'statt + Genitiv/Dativ', 'damit', 'dass-Sätze'],
+  mistakes: [
+    '❌ Ich achte auf gesund leben.',
+    '✅ Ich achte darauf, gesund zu leben.',
+    '❌ Experten warnen vor extreme Diäten.',
+    '✅ Experten warnen vor extremen Diäten.'
+  ],
+  tip: 'Bei Gesundheitstexten: Unterscheide Fakten, Empfehlungen und Warnungen der Experten.'
+}
 ];

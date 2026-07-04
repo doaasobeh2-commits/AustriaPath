@@ -488,5 +488,54 @@ export const a2Images = [
       "Nicht: Sie schneidet Gemüse mit Messer.",
       "Richtig: Sie schneidet Gemüse mit einem Messer."
     ]
+  },
+
+  {
+    id: 11,
+    title: "Wartezimmer beim Arzt",
+    image: "/images/a2/wartezimmer-arzt.jpeg",
+    shortText: "Mehrere Personen warten im Wartezimmer einer Arztpraxis.",
+    description: [
+      "Auf dem Bild sehe ich ein Wartezimmer.",
+      "Es gibt mehrere Stühle.",
+      "Drei Personen sitzen und warten.",
+      "Eine Frau liest eine Zeitschrift.",
+      "Ein Mann schaut auf sein Handy.",
+      "An der Wand hängt ein Poster über Gesundheit.",
+      "Die Atmosphäre ist ruhig."
+    ],
+    words: [
+      "das Wartezimmer",
+      "die Arztpraxis",
+      "der Stuhl",
+      "die Zeitschrift",
+      "das Handy",
+      "die Gesundheit",
+      "das Poster"
+    ],
+    verbs: [
+      "warten",
+      "sitzen",
+      "lesen",
+      "schauen",
+      "hängen"
+    ],
+    sentences: [
+      "Auf dem Bild sehe ich ein Wartezimmer.",
+      "Drei Personen warten auf einen Termin.",
+      "Eine Frau liest eine Zeitschrift.",
+      "Ein Mann schaut auf sein Handy."
+    ],
+    opinion: [
+      "Ich finde das Bild realistisch.",
+      "Ein Termin beim Arzt ist im Alltag wichtig.",
+      "Man sollte pünktlich in der Praxis sein."
+    ],
+    mistakes: [
+      "❌ Die Personen warten auf den Arzt Termin.",
+      "✅ Die Personen warten auf den Termin beim Arzt.",
+      "❌ Sie liest Zeitschrift.",
+      "✅ Sie liest eine Zeitschrift."
+    ]
   }
 ];

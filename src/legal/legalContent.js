@@ -1,94 +1,110 @@
 import { LEGAL_LAST_UPDATED } from "./legalVersions";
+import {
+  LEGAL_OPERATOR,
+  formatAddress,
+  formatContactEmail,
+  formatPrivacyEmail,
+  formatWebsite,
+  legalField,
+} from "./legalConfig";
+
+const DRAFT_NOTE =
+  "Entwurf für die Closed Beta. Vor öffentlichem Launch durch Rechtsberatung prüfen und Operator-Daten in legalConfig.js eintragen.";
 
 export const LEGAL_PAGES = {
   impressum: {
     title: "Impressum",
-    subtitle: `Stand: ${LEGAL_LAST_UPDATED}`,
+    subtitle: `Stand: ${LEGAL_LAST_UPDATED} · ${DRAFT_NOTE}`,
     sections: [
       {
         heading: "Medieninhaber und Herausgeber",
-        body: `AustriaPath
-[Vor- und Nachname / Firma eintragen]
-[Straße und Hausnummer eintragen]
-[PLZ Ort, Österreich eintragen]`,
+        body: formatAddress(LEGAL_OPERATOR),
       },
       {
         heading: "Kontakt",
-        body: `E-Mail: [kontakt@austriaPath.at eintragen]
-Telefon: [optional eintragen]
-Website: https://[Ihre-Domain].at`,
+        body: `E-Mail: ${formatContactEmail(LEGAL_OPERATOR)}
+Telefon: ${legalField(LEGAL_OPERATOR.phone, "Telefon optional")}
+Website: ${formatWebsite(LEGAL_OPERATOR)}`,
       },
       {
         heading: "Unternehmensgegenstand",
-        body: "Betrieb einer digitalen Lernplattform für Deutsch als Zweitsprache und ÖIF-Prüfungsvorbereitung (Web-App).",
+        body: "Betrieb einer digitalen Lernplattform für Deutsch als Zweitsprache und Vorbereitung auf ÖIF-orientierte Prüfungen (Web-App). Keine Behörde, keine offizielle Prüfungsstelle.",
       },
       {
         heading: "UID-Nummer / Firmenbuch",
-        body: "[UID-Nummer eintragen, falls vorhanden]\n[Firmenbuchnummer eintragen, falls eingetragen]",
+        body: `UID: ${legalField(LEGAL_OPERATOR.uid, "UID-Nummer falls vorhanden")}
+Firmenbuch: ${legalField(LEGAL_OPERATOR.firmenbuch, "Firmenbuchnummer falls eingetragen")}`,
       },
       {
         heading: "Mitgliedschaft bei der Wirtschaftskammer",
-        body: "[Wirtschaftskammer / Fachgruppe eintragen, falls zutreffend]",
+        body: legalField(
+          LEGAL_OPERATOR.wko,
+          "Wirtschaftskammer / Fachgruppe falls zutreffend"
+        ),
       },
       {
         heading: "Berufsrechtliche Vorschriften",
-        body: "Es besteht keine behördliche Zulassung als Prüfungsinstitut. AustriaPath ist eine unabhängige Lernplattform und steht in keiner Verbindung zu Behörden, Sprachschulen oder offiziellen Prüfungsinstituten.",
+        body: "Es besteht keine behördliche Zulassung als Prüfungsinstitut. AustriaPath ist eine unabhängige Lernplattform und steht in keiner offiziellen Verbindung zu Behörden, Sprachschulen oder Prüfungsinstituten.",
       },
       {
         heading: "Online-Streitbeilegung",
-        body: "Verbraucher haben die Möglichkeit, Beschwerden an die Online-Streitbeilegungsplattform der EU zu richten: https://ec.europa.eu/consumers/odr\nWir sind nicht verpflichtet und nicht bereit, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen, sofern nicht gesetzlich zwingend.",
+        body: "Verbraucher können Beschwerden an die Online-Streitbeilegungsplattform der EU richten: https://ec.europa.eu/consumers/odr\nTeilnahme an Verbraucherschlichtungsverfahren nur, soweit gesetzlich zwingend oder vom Betreiber ausdrücklich erklärt.",
+      },
+      {
+        heading: "Hinweis zur Beta",
+        body: LEGAL_OPERATOR.launchNote,
       },
     ],
   },
 
   datenschutz: {
     title: "Datenschutzerklärung",
-    subtitle: `Stand: ${LEGAL_LAST_UPDATED} · DSGVO-konform`,
+    subtitle: `Stand: ${LEGAL_LAST_UPDATED} · ${DRAFT_NOTE}`,
     sections: [
       {
         heading: "1. Verantwortlicher",
-        body: "Verantwortlich für die Datenverarbeitung ist der in Impressum genannte Medieninhaber von AustriaPath. Kontakt: siehe Impressum / Kontakt.",
+        body: `Verantwortlich für die Datenverarbeitung ist der in Impressum genannte Medieninhaber von AustriaPath.\nKontakt: ${formatContactEmail(LEGAL_OPERATOR)} · Datenschutz: ${formatPrivacyEmail(LEGAL_OPERATOR)}`,
       },
       {
         heading: "2. Überblick",
-        body: "AustriaPath verarbeitet personenbezogene Daten nur, soweit dies für den Betrieb der Lernplattform erforderlich ist. Wir verkaufen keine personenbezogenen Daten. Details zu AI-Daten finden Sie in der AI-Datenschutzrichtlinie (Dokumentation).",
+        body: "AustriaPath verarbeitet personenbezogene Daten nur, soweit dies für den Betrieb der Lernplattform erforderlich ist. Es werden keine personenbezogenen Daten zu Werbezwecken verkauft. Details zu AI-Verarbeitung siehe AI-Datenschutzhinweise.",
       },
       {
-        heading: "3. Verarbeitete Datenkategorien",
-        body: `• Kontodaten: Name, E-Mail, Passwort (bis Backend-Migration clientseitig), Lernniveau, Sprache
+        heading: "3. Verarbeitete Datenkategorien (Beta)",
+        body: `• Kontodaten: Name, E-Mail, Passwort (derzeit clientseitig in localStorage — bis Backend-Migration)
 • Nutzungsdaten: Trainingsfortschritt, gespeicherte AI-Berichte, Abonnementstatus (lokal)
-• Technische Daten: Geräteinformationen im Browser, lokale Speicherung (localStorage)
-• Profilbild: optional, lokal gespeichert
-• Kommunikation: Kontaktanfragen per E-Mail (wenn genutzt)`,
+• Technische Daten: Browser-Gerät, localStorage
+• Profilbild: optional, lokal
+• Kontaktanfragen: per E-Mail, wenn genutzt`,
       },
       {
-        heading: "4. Rechtsgrundlagen (Art. 6 DSGVO)",
+        heading: "4. Rechtsgrundlagen (Art. 6 DSGVO — Entwurf)",
         body: `• Vertragserfüllung (Art. 6 Abs. 1 lit. b): Bereitstellung der Lernplattform
 • Einwilligung (Art. 6 Abs. 1 lit. a): Registrierung, AI-Funktionen, optionale Cookies
 • Berechtigtes Interesse (Art. 6 Abs. 1 lit. f): Sicherheit, Missbrauchsprävention
-• Rechtliche Verpflichtung (Art. 6 Abs. 1 lit. c): Aufbewahrung wo gesetzlich erforderlich`,
+• Rechtliche Verpflichtung (Art. 6 Abs. 1 lit. c): Aufbewahrung, soweit gesetzlich erforderlich`,
       },
       {
         heading: "5. Speicherdauer",
-        body: "Personenbezogene Daten werden nur so lange gespeichert, wie für den jeweiligen Zweck erforderlich oder gesetzlich vorgeschrieben. Nach Konto-Löschung werden personenbezogene Daten innerhalb von 30 Tagen gelöscht, sofern keine gesetzliche Aufbewahrungspflicht entgegensteht. Details siehe GDPR-Readiness-Review.",
+        body: "Daten werden nur so lange gespeichert, wie für den Zweck nötig oder gesetzlich vorgeschrieben. Konkrete Fristen nach Konto-Löschung werden mit dem serverseitigen Backend festgelegt und hier aktualisiert.",
       },
       {
         heading: "6. Empfänger und Drittländer",
-        body: `• OpenAI (USA): Verarbeitung von Prüfungstexten über gesicherten Server-Proxy (geplant). Standardvertragsklauseln und Datenschutz-Folgenabschätzung erforderlich vor Produktivstart.
-• Hosting-Anbieter: [einsetzen vor Launch]
+        body: `• AI-Anbieter: ${legalField(LEGAL_OPERATOR.aiProvider, "AI-Anbieter eintragen")} — Verarbeitung von Prüfungstexten nur nach Abschluss von Vertrags- und Sicherheitsmaßnahmen (geplant).
+• Hosting: ${legalField(LEGAL_OPERATOR.hostingProvider, "Hosting-Anbieter vor Launch eintragen")}
 Keine Weitergabe zu Werbezwecken.`,
       },
       {
         heading: "7. Ihre Rechte",
-        body: `Sie haben das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit, Widerspruch und Widerruf erteilter Einwilligungen. Beschwerderecht bei der Österreichischen Datenschutzbehörde (https://www.dsb.gv.at). Kontakt: siehe Kontaktseite.`,
+        body: `Sie haben nach der DSGVO u. a. Recht auf Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit, Widerspruch und Widerruf erteilter Einwilligungen. Beschwerderecht bei der Österreichischen Datenschutzbehörde: https://www.dsb.gv.at\nAnfragen: ${formatPrivacyEmail(LEGAL_OPERATOR)}`,
       },
       {
         heading: "8. Datensicherheit",
-        body: "Wir setzen technische und organisatorische Maßnahmen ein (Verschlüsselung in Transit, Zugriffskontrollen, Backend-Härtung). Details siehe Backend Security Requirements und Launch Checklist.",
+        body: "Geplante technische und organisatorische Maßnahmen (Verschlüsselung in Transit, Zugriffskontrollen, serverseitige Authentifizierung) werden vor Produktivstart dokumentiert und umgesetzt.",
       },
       {
         heading: "9. Minderjährige",
-        body: "Die Nutzung durch Personen unter 14 Jahren ist nur mit Zustimmung der Erziehungsberechtigten gestattet.",
+        body: "Die Nutzung durch Personen unter 14 Jahren ist nur mit Zustimmung der Erziehungsberechtigten vorgesehen.",
       },
       {
         heading: "10. Änderungen",
@@ -99,7 +115,7 @@ Keine Weitergabe zu Werbezwecken.`,
 
   agb: {
     title: "Allgemeine Geschäftsbedingungen (AGB)",
-    subtitle: `Stand: ${LEGAL_LAST_UPDATED}`,
+    subtitle: `Stand: ${LEGAL_LAST_UPDATED} · ${DRAFT_NOTE}`,
     sections: [
       {
         heading: "1. Geltungsbereich",
@@ -107,35 +123,35 @@ Keine Weitergabe zu Werbezwecken.`,
       },
       {
         heading: "2. Leistungsbeschreibung",
-        body: "AustriaPath bietet digitale Lerninhalte, Übungen und optionale AI-gestützte Prüfungssimulationen zur Vorbereitung auf Deutsch- und ÖIF-Prüfungen. Es handelt sich nicht um offizielle Prüfungen oder Zertifizierungen.",
+        body: "AustriaPath bietet digitale Lerninhalte, Übungen und optionale AI-gestützte Prüfungssimulationen zur Vorbereitung auf Deutsch- und ÖIF-orientierte Prüfungen. Es handelt sich nicht um offizielle Prüfungen oder Zertifizierungen.",
       },
       {
         heading: "3. Registrierung und Konto",
-        body: "Nutzer müssen wahrheitsgemäße Angaben machen und Zugangsdaten geheim halten. Missbrauch muss unverzüglich gemeldet werden. Der Betreiber kann Konten bei Verstößen sperren oder löschen.",
+        body: "Nutzer müssen wahrheitsgemäße Angaben machen und Zugangsdaten geheim halten. Missbrauch soll unverzüglich gemeldet werden. Der Betreiber kann Konten bei schwerwiegenden Verstößen sperren oder löschen.",
       },
       {
         heading: "4. Nutzungsrechte",
-        body: "Inhalte der Plattform sind urheberrechtlich geschützt. Eine Nutzung ist nur für persönliche Lernzwecke gestattet. Vervielfältigung, Weitergabe oder kommerzielle Nutzung ohne Zustimmung ist untersagt.",
+        body: "Inhalte der Plattform sind urheberrechtlich geschützt. Nutzung nur für persönliche Lernzwecke. Vervielfältigung, Weitergabe oder kommerzielle Nutzung ohne Zustimmung ist untersagt.",
       },
       {
         heading: "5. AI-Funktionen",
-        body: "AI-Bewertungen sind Lernhilfen und ersetzen keine menschliche Prüferentscheidung. Details siehe AI-Disclaimer und AI-Transparency-Dokument. Der Betreiber haftet nicht für AI-Fehler, soweit gesetzlich zulässig.",
+        body: "AI-Bewertungen sind Lernhilfen und ersetzen keine menschliche Prüferentscheidung. Siehe AI-Hinweis und AI-Datenschutzhinweise. Haftung für AI-Fehler ist ausgeschlossen, soweit gesetzlich zulässig.",
       },
       {
         heading: "6. Premium und Zahlungen",
-        body: "Preise, Laufzeiten und Kündigungsbedingungen für Premium-Leistungen werden vor Abschluss angezeigt. Bis zur Backend-Integration können Premium-Funktionen testweise lokal verwaltet werden.",
+        body: "Preise und Kündigungsbedingungen werden vor Abschluss angezeigt. In der Closed Beta können Premium-Funktionen testweise lokal im Browser verwaltet werden — ohne echte Zahlungsabwicklung.",
       },
       {
         heading: "7. Verfügbarkeit",
-        body: "Der Betreiber bemüht sich um hohe Verfügbarkeit, garantiert diese jedoch nicht. Wartungsfenster und technische Störungen können zu Unterbrechungen führen.",
+        body: "Der Betreiber bemüht sich um Verfügbarkeit, garantiert diese jedoch nicht. Wartung und technische Störungen können zu Unterbrechungen führen.",
       },
       {
         heading: "8. Haftung",
-        body: "Haftung für leichte Fahrlässigkeit ist ausgeschlossen, soweit gesetzlich zulässig. Für Vorsatz und grobe Fahrlässigkeit sowie Personenschäden haftet der Betreiber nach gesetzlichen Vorschriften. Prüfungsergebnisse in echten ÖIF-Prüfungen werden nicht garantiert.",
+        body: "Haftung für leichte Fahrlässigkeit ist ausgeschlossen, soweit gesetzlich zulässig. Für Vorsatz, grobe Fahrlässigkeit und Personenschäden gilt gesetzliche Haftung. Erfolg in echten ÖIF-Prüfungen wird nicht garantiert.",
       },
       {
         heading: "9. Kündigung",
-        body: "Nutzer können ihr Konto jederzeit löschen (siehe Datenschutzerklärung). Der Betreiber kann bei schwerwiegenden Verstößen fristlos kündigen.",
+        body: "Nutzer können ihr Konto löschen (siehe Datenschutzerklärung). Der Betreiber kann bei schwerwiegenden Verstößen fristlos kündigen.",
       },
       {
         heading: "10. Anwendbares Recht",
@@ -146,19 +162,23 @@ Keine Weitergabe zu Werbezwecken.`,
 
   kontakt: {
     title: "Kontakt",
-    subtitle: "Wir helfen bei Fragen zu Konto, Datenschutz und Support.",
+    subtitle: "Fragen zu Konto, Datenschutz und Support.",
     sections: [
       {
         heading: "Allgemeine Anfragen",
-        body: "E-Mail: [kontakt@austriaPath.at eintragen]\nAntwortzeit: in der Regel innerhalb von 3 Werktagen.",
+        body: `E-Mail: ${formatContactEmail(LEGAL_OPERATOR)}\nAntwortzeit: angestrebt innerhalb von 3 Werktagen (Beta).`,
       },
       {
         heading: "Datenschutz",
-        body: "Für Auskunfts-, Lösch- oder Exportanfragen gemäß DSGVO:\nE-Mail: [datenschutz@austriaPath.at eintragen]\nBetreff: „DSGVO-Anfrage“",
+        body: `Auskunfts-, Lösch- oder Exportanfragen:\nE-Mail: ${formatPrivacyEmail(LEGAL_OPERATOR)}\nBetreff: „DSGVO-Anfrage“`,
       },
       {
         heading: "Impressum",
         body: "Vollständige Anbieterkennzeichnung finden Sie unter Impressum.",
+      },
+      {
+        heading: "Beta-Hinweis",
+        body: LEGAL_OPERATOR.launchNote,
       },
     ],
   },
@@ -169,7 +189,7 @@ Keine Weitergabe zu Werbezwecken.`,
     sections: [
       {
         heading: "1. Was sind Cookies und lokale Speicher?",
-        body: "AustriaPath verwendet primär localStorage im Browser (keine klassischen Tracking-Cookies). Diese speichern Login-Status, Lernfortschritt und Einstellungen lokal auf Ihrem Gerät.",
+        body: "AustriaPath verwendet primär localStorage im Browser (keine klassischen Tracking-Cookies). Dies speichert Login-Status, Lernfortschritt und Einstellungen lokal auf Ihrem Gerät.",
       },
       {
         heading: "2. Erforderliche Speicherung",
@@ -199,7 +219,7 @@ Diese Speicherung ist für die Funktion der App technisch erforderlich.`,
     sections: [
       {
         heading: "Keine offizielle Prüfung",
-        body: "AI-gestützte Funktionen in AustriaPath simulieren Prüfungssituationen zu Lernzwecken. Sie stellen keine ÖIF-Prüfung, keine Behördenentscheidung und keine Zertifizierung dar.",
+        body: "AI-gestützte Funktionen simulieren Prüfungssituationen zu Lernzwecken. Sie stellen keine ÖIF-Prüfung, keine Behördenentscheidung und keine Zertifizierung dar.",
       },
       {
         heading: "Kein zertifizierter Prüfer",
@@ -211,7 +231,7 @@ Diese Speicherung ist für die Funktion der App technisch erforderlich.`,
       },
       {
         heading: "Examiner Lab",
-        body: "Manuell ausgewählte Beispielprüfungen im Examiner Lab dienen dem internen Regelabgleich mit menschlichen Prüfern und werden nicht als offizielle Bewertung ausgegeben.",
+        body: "Manuell ausgewählte Beispielprüfungen im Examiner Lab dienen dem internen Regelabgleich und werden nicht als offizielle Bewertung ausgegeben.",
       },
       {
         heading: "Haftung",
@@ -219,7 +239,44 @@ Diese Speicherung ist für die Funktion der App technisch erforderlich.`,
       },
       {
         heading: "Weitere Informationen",
-        body: "Siehe AI Transparency und AI Privacy Policy (Projektdokumentation).",
+        body: "Siehe AI-Datenschutzhinweise in dieser App.",
+      },
+    ],
+  },
+
+  aiPrivacy: {
+    title: "AI-Datenschutzhinweise",
+    subtitle: `Stand: ${LEGAL_LAST_UPDATED} · ${DRAFT_NOTE}`,
+    sections: [
+      {
+        heading: "1. Zweck",
+        body: "AI-Funktionen (z. B. mündliche Simulation, Schreibfeedback, Probeprüfung) verarbeiten von Ihnen eingegebene oder gesprochene Texte, um Lernfeedback zu erzeugen.",
+      },
+      {
+        heading: "2. Welche Daten können betroffen sein?",
+        body: `• Texte aus Schreib- und Sprechübungen
+• Metadaten zur Sitzung (Zeitpunkt, Niveau, Modul)
+• Optional gespeicherte AI-Berichte (derzeit lokal im Browser)`,
+      },
+      {
+        heading: "3. Verarbeitung in der Beta",
+        body: "In der Closed Beta werden AI-Anfragen über einen Server-Proxy geleitet. Eine produktive AI-Anbindung mit Vertrags- und Sicherheitsprüfung ist geplant. Bis dahin sollten Sie keine besonders sensiblen personenbezogenen Daten in AI-Felder eingeben.",
+      },
+      {
+        heading: "4. Drittanbieter",
+        body: `Geplanter Anbieter: ${legalField(LEGAL_OPERATOR.aiProvider, "AI-Anbieter")}. Vor Produktivstart: Auftragsverarbeitungsvertrag, Transfer-Mechanismen (z. B. Standardvertragsklauseln) und Dokumentation.`,
+      },
+      {
+        heading: "5. Speicherdauer",
+        body: "AI-Eingaben werden nicht dauerhaft zu Trainingszwecken des Anbieters genutzt, soweit vertraglich so vereinbart. Konkrete Aufbewahrungsfristen werden mit dem Backend dokumentiert.",
+      },
+      {
+        heading: "6. Ihre Wahlmöglichkeiten",
+        body: "Sie können AI-Funktionen unterlassen und weiterhin statische Übungsinhalte nutzen. Gespeicherte Berichte können in den Kontoeinstellungen gelöscht werden (Beta: lokal).",
+      },
+      {
+        heading: "7. Kontakt",
+        body: `Datenschutz-Anfragen: ${formatPrivacyEmail(LEGAL_OPERATOR)}`,
       },
     ],
   },

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { models } from '../../data/models';
 
 import { getSmartPremiumMessage } from '../../data/smartPremiumMessages';
+import { getUserLanguage } from '../../utils/userPreferences';
 export function DatabaseScreen({ setActiveTab, onOpenWriting }) {
   const [level, setLevel] = useState('B1');
   const [showPremiumHint, setShowPremiumHint] = useState(false);
@@ -111,8 +112,7 @@ useEffect(() => {
 
     return baseModel;
   });
-const language =
-  localStorage.getItem('userLanguage') || 'Deutsch';
+const language = getUserLanguage();
 
 const premiumMessage =
   getSmartPremiumMessage(language, 'database');

@@ -211,5 +211,60 @@ Sabine: Ich habe kein Auto mehr. Es ist mir zu teuer. Versicherung, Benzin und R
 
   tip:
     'Achte bei Verkehrstexten genau auf Gleisnummern, Uhrzeiten und kleine Änderungen. Gleis 4 und Gleis 14 klingen ähnlich, sind aber nicht gleich.'
+},
+
+{
+  id: 'b1-hoeren-03',
+  title: 'Arztpraxis & Termin',
+  level: 'B1',
+
+  parts: [
+    {
+      title: 'Teil 1 – Anrufbeantworter',
+      text: `Guten Tag, Sie erreichen die Ordination Dr. Berger. Unsere Sprechstunde ist montags bis freitags von 8 bis 12 Uhr und montags sowie donnerstags von 14 bis 18 Uhr. Für akute Fälle wenden Sie sich bitte an die Bereitschaft. Wenn Sie einen Termin verschieben möchten, nennen Sie bitte Ihren Namen und Ihr Geburtsdatum. Vielen Dank.`,
+      questions: [
+        { q: 'Wann ist die Sprechstunde vormittags?', a: 'Montags bis freitags von 8 bis 12 Uhr.' },
+        { q: 'An welchen Tagen gibt es auch Nachmittagssprechstunde?', a: 'Montags und donnerstags von 14 bis 18 Uhr.' },
+        { q: 'Was sollen Patienten nennen, wenn sie einen Termin verschieben?', a: 'Namen und Geburtsdatum.' }
+      ]
+    },
+    {
+      title: 'Teil 2 – Sprachnachricht',
+      text: `Hallo, hier ist Fatima. Ich kann leider nicht zum Termin morgen um 9 Uhr kommen, weil mein Sohn krank ist. Könntest du bitte in der Praxis anrufen und den Termin auf Freitag verschieben? Am Freitag wäre mir Vormittag besser. Danke dir.`,
+      questions: [
+        { q: 'Warum kann Fatima nicht kommen?', a: 'Weil ihr Sohn krank ist.' },
+        { q: 'Wann war der ursprüngliche Termin?', a: 'Morgen um 9 Uhr.' },
+        { q: 'Auf welchen Tag soll verschoben werden?', a: 'Auf Freitag.' },
+        { q: 'Welche Tageszeit passt Fatima am Freitag?', a: 'Der Vormittag.' }
+      ]
+    },
+    {
+      title: 'Teil 3 – Meinungen',
+      text: `Thema: Hausarzt oder Online-Beratung?
+
+Eva: Für kleine Fragen finde ich Online-Beratung praktisch. Man spart Zeit und muss nicht warten.
+
+Dr. Wolf: Bei ernsten Beschwerden braucht man eine Untersuchung. Online kann man nicht alles erkennen.
+
+Jonas: Ich nutze beides. Für Rezepte oder Bescheinigungen reicht oft ein Anruf, aber bei Schmerzen gehe ich persönlich hin.
+
+Leila: Manchmal ist es schwer, schnell einen Termin zu bekommen. Deshalb wäre eine Online-Beratung manchmal hilfreich.`,
+      questions: [
+        { q: 'Wer findet Online-Beratung für kleine Fragen praktisch?', a: 'Eva.' },
+        { q: 'Wer betont die Bedeutung einer Untersuchung?', a: 'Dr. Wolf.' },
+        { q: 'Wer nutzt beide Möglichkeiten?', a: 'Jonas.' },
+        { q: 'Warum wäre Online-Beratung für Leila manchmal hilfreich?', a: 'Weil es schwer ist, schnell einen Termin zu bekommen.' }
+      ]
+    }
+  ],
+
+  words: ['die Ordination', 'die Sprechstunde', 'der Termin', 'das Rezept', 'die Untersuchung'],
+  verbs: ['verschieben', 'anrufen', 'wenden sich an', 'untersuchen', 'warten'],
+  grammar: ['weil + Verb am Ende', 'wenn + Konjunktiv II', 'sich wenden an + Akkusativ'],
+  mistakes: [
+    '❌ Ich habe Termin am Freitag.',
+    '✅ Ich habe einen Termin am Freitag.'
+  ],
+  tip: 'Bei Arzt-Themen: Uhrzeiten, Gründe für Absage und Meinungen der Sprecher genau unterscheiden.'
 }
 ];

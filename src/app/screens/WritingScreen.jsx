@@ -3,17 +3,17 @@ import { a2Models } from '../../data/modelsA2';
 import { b1Models } from '../../data/modelsb1';
 
 import { getSmartPremiumMessage } from '../../data/smartPremiumMessages';
+import { getUserLanguage } from '../../utils/userPreferences';
+import { getScreenLabels } from '../../i18n/screenLabels';
+
 const b2Models = [];
 
 export function WritingScreen({ selectedWritingModel, setActiveTab }) {
   const [level, setLevel] = useState(selectedWritingModel?.level || 'A2');
   const [modelIndex, setModelIndex] = useState(0);
 
-
-const language =
-  localStorage.getItem('austriaPathLanguage') ||
-  localStorage.getItem('userLanguage') ||
-  'Deutsch';
+  const language = getUserLanguage();
+  const labels = getScreenLabels(language);
 
 const premiumMessage = getSmartPremiumMessage(language, 'writing');
 const [showPremiumHint, setShowPremiumHint] = useState(false);
@@ -59,7 +59,7 @@ if (visits >= 4) {
   if (!currentModel) {
     return (
       <div style={pageStyle}>
-        <BackButton setActiveTab={setActiveTab} />
+        <BackButton setActiveTab={setActiveTab} label={labels.back} />
         <h1>✍️ Schreiben Trainer</h1>
         <p>Für dieses Niveau sind noch keine Modelle verfügbar.</p>
       </div>
@@ -71,7 +71,7 @@ if (visits >= 4) {
   <div style={pageStyle}>
    
 
-    <BackButton setActiveTab={setActiveTab} />
+    <BackButton setActiveTab={setActiveTab} label={labels.back} />
 
     <h1>✍️ Schreiben Trainer</h1>
 
@@ -124,7 +124,7 @@ if (visits >= 4) {
 
   return (
     <div style={pageStyle}>
-      <BackButton setActiveTab={setActiveTab} />
+      <BackButton setActiveTab={setActiveTab} label={labels.back} />
 
       <h1>✍️ Schreiben Trainer</h1>
 
@@ -186,13 +186,13 @@ if (visits >= 4) {
   );
 }
 
-function BackButton({ setActiveTab }) {
+function BackButton({ setActiveTab, label = '← Zurück' }) {
   return (
     <button
       onClick={() => (setActiveTab ? setActiveTab('practice') : window.history.back())}
       style={backButtonStyle}
     >
-      ← Zurück
+      {label}
     </button>
   );
 }

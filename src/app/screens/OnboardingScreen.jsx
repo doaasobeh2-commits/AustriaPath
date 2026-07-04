@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getUserLanguage, getUserLevel } from '../../utils/userPreferences';
 
 const translations = {
   Deutsch: {
@@ -195,12 +196,8 @@ const translations = {
 export function OnboardingScreen({ onFinish }) {
   const [step, setStep] = useState(1);
   const [accepted, setAccepted] = useState(false);
-  const [language, setLanguage] = useState(
-    localStorage.getItem('userLanguage') || 'Deutsch'
-  );
-  const [selectedLevel, setSelectedLevel] = useState(
-    localStorage.getItem('userLevel') || 'B1'
-  );
+  const [language, setLanguage] = useState(() => getUserLanguage());
+  const [selectedLevel, setSelectedLevel] = useState(() => getUserLevel());
 
   const t = translations[language] || translations.Deutsch;
 

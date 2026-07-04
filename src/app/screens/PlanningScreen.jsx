@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { b1PlanningModels } from '../../data/modelsb1';
+import { b2PlanningModels } from '../../data/b2PlanningModels';
 
 const planningModels = {
   A2: [
@@ -25,12 +26,35 @@ const planningModels = {
       sentences: ['Wollen wir ...?', 'Gute Idee.', 'Ich bringe ... mit.', 'Das passt gut.'],
       mistakes: ['❌ In Samstag feiern wir.', '✅ Am Samstag feiern wir.'],
       tip: 'Fragen Sie nach Zeit, Ort und Aufgaben.'
+    },
+    {
+      title: 'Arzttermin für die Mutter',
+      situation: 'Ihre Mutter braucht einen Termin beim Hausarzt. Sie planen mit Ihrem Bruder.',
+      task: [
+        'Wann hat die Mutter Zeit?',
+        'Wer ruft in der Praxis an?',
+        'Wer bringt die Mutter hin?',
+        'Was müssen Sie mitnehmen?'
+      ],
+      dialog: [
+        'A: Die Mutter möchte nächste Woche zum Arzt. Passt Dienstag?',
+        'B: Dienstag Vormittag ist gut. Soll ich anrufen?',
+        'A: Ja, bitte. Frag nach 10 Uhr.',
+        'B: Gut. Ich bringe sie mit dem Auto hin.',
+        'A: Ich nehme die Versicherungskarte und die Medikamentenliste mit.',
+        'B: Super, dann machen wir das so.'
+      ],
+      words: ['der Termin', 'die Praxis', 'die Versicherungskarte', 'die Medikamente'],
+      verbs: ['anrufen', 'mitbringen', 'fragen', 'mitnehmen', 'fahren'],
+      sentences: ['Passt Dienstag?', 'Soll ich anrufen?', 'Ich nehme … mit.'],
+      mistakes: ['❌ Ich rufe an die Praxis.', '✅ Ich rufe in der Praxis an.'],
+      tip: 'Teilen Sie Aufgaben klar auf: wer anruft, wer fährt, was mitzubringen ist.'
     }
   ],
 
   B1: b1PlanningModels,
 
-  B2: []
+  B2: b2PlanningModels,
 };
 
 export function PlanningScreen({ setActiveTab }) {
