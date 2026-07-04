@@ -1,12 +1,11 @@
 # Railway — API service only (closed beta).
 # Frontend stays on Vercel. Do NOT run `vite build` on this service.
 #
-# See deploy/RAILWAY-API.md for dashboard settings.
+# Builder: RAILPACK (Railway default). Config: railpack.json
+# See deploy/RAILWAY-API.md
 
 [build]
-builder = "NIXPACKS"
-# Do NOT set buildCommand to npm ci — Nixpacks install already runs npm ci once.
-# Repeating it here locks node_modules/.cache (EBUSY). See nixpacks.toml.
+builder = "RAILPACK"
 
 [deploy]
 startCommand = "npm run server:migrate && npm run server:start"

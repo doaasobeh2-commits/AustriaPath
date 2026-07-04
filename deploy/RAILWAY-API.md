@@ -23,15 +23,17 @@ Only convert the existing service in-place if nobody relies on the Railway URL f
 | Setting | Value |
 |---------|--------|
 | **Root directory** | `/` (repo root — leave empty or `.`) |
-| **Builder** | Nixpacks (default; `railway.toml` + `nixpacks.toml` in repo) |
-| **Build command** | **Leave empty** in Railway dashboard (do not set `npm ci` manually) |
+| **Builder** | **RAILPACK** (`railway.toml`) + `railpack.json` at repo root |
+| **Build command** | **None** — do not set `npm ci` in Railway dashboard or `railway.toml` |
 | **Custom start command** | `npm run server:migrate && npm run server:start` |
 
-Nixpacks installs dependencies once in its **install** phase (`npm ci`). A **build command** of `npm ci` in `railway.toml` or the dashboard runs it again and fails with:
+Railpack installs dependencies once in its **install** step. Do **not** add `npm ci` to a build command — that was the original duplicate and causes `EBUSY`.
+
+Railpack also caches `node_modules/.cache` by default. `npm ci` must delete that directory; when it is a cache mount, the install fails with:
 
 `EBUSY: resource busy or locked, rmdir '/app/node_modules/.cache'`
 
-Repo config: `nixpacks.toml` skips the Vite `npm run build` step (API-only).
+Repo fix: `railpack.json` disables the `node-modules` cache, uses `/tmp/.npm` only, and skips the Vite `build` script (API-only).
 
 ### If a deploy still fails with EBUSY (one-time cache clear)
 
