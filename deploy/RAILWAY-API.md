@@ -141,6 +141,15 @@ Update `deploy/closed-beta-env.local`:
 
 ```env
 RAILWAY_PUBLIC_URL=https://YOUR-RAILWAY-HOST
+ADMIN_BOOTSTRAP_SECRET=<same value as Railway Variables>
+ADMIN_PASSWORD=<strong password, min 8 chars>
+ADMIN_EMAIL=fadisobehau@gmail.com
+```
+
+**Before bootstrap**, confirm PostgreSQL is wired (not PGLite):
+
+```powershell
+curl.exe -s "https://YOUR-RAILWAY-HOST/v1/health/db"
 ```
 
 Then:
@@ -148,6 +157,17 @@ Then:
 ```powershell
 node deploy/bootstrap-admin.mjs
 ```
+
+### Bootstrap errors (root causes)
+
+| Symptom | Cause | Fix |
+|---------|--------|-----|
+| `GET /v1/health` → **502** `Application failed to respond` | API container not listening — usually crash on startup | Set `DATABASE_URL` (Neon pooled URL) on Railway API service; check deploy logs for `DATABASE_URL is required in production`; redeploy until `/v1/health` returns JSON |
+| `/v1/health/db` works but bootstrap script failed earlier with **502** | Timing — you checked DB health after redeploy finished | Retry `node deploy/bootstrap-admin.mjs` once `/v1/health` returns 200 |
+| Bootstrap **403** `FORBIDDEN` | `ADMIN_BOOTSTRAP_SECRET` mismatch between local file and Railway | Set identical secret in both places, redeploy API |
+| Bootstrap **409** `CONFLICT` | Admin already exists in PostgreSQL | Success — remove `ADMIN_BOOTSTRAP_SECRET` from Railway; use forgot-password to change password if needed |
+
+502 is returned by **Railway’s proxy**, not Express — it means the Node process never bound to `PORT`. `/v1/health/db` and `/v1/health` hit the same server; if one works, both should work at the same time.
 
 ## Why `server:start` alone failed
 

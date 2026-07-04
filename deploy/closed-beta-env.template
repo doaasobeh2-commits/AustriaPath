@@ -11,6 +11,12 @@ DATABASE_URL=
 # Example: https://austria-path-api-production.up.railway.app
 RAILWAY_PUBLIC_URL=
 
+# Used by deploy/bootstrap-admin.mjs (must match Railway ADMIN_BOOTSTRAP_SECRET)
+ADMIN_BOOTSTRAP_SECRET=
+ADMIN_PASSWORD=
+ADMIN_NAME=Fadi
+ADMIN_EMAIL=fadisobehau@gmail.com
+
 # Paste ALL of these into: Railway → API service → Variables
 NODE_ENV=production
 PORT=3000
