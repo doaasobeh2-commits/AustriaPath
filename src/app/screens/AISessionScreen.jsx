@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { getUserLanguage } from '../../utils/userPreferences';
 
 export default function AISessionScreen({
   mode = 'exam', // exam | weekly_plan | placement_test
@@ -196,7 +197,7 @@ const saveCurrentStep = () => {
   return savedStep;
 };
 const getAdaptiveMessage = (result) => {
-  const lang = localStorage.getItem('userLanguage') || 'Deutsch';
+  const lang = getUserLanguage();
 
   const messages = {
     Deutsch: {

@@ -5,9 +5,7 @@ import {
   buildPremiumExamPackage,
   savePremiumExamPackage,
 } from '../../data/premiumExamBuilder';
-function getUserLanguage() {
-  return localStorage.getItem('userLanguage') || 'Deutsch';
-}
+import { getUserLanguage } from '../../utils/userPreferences';
 
 const premiumTexts = {
   Deutsch: {

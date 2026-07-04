@@ -1,4 +1,5 @@
 import React from 'react';
+import { getUserLanguage } from '../../utils/userPreferences';
 
 const homeTexts = {
   Deutsch: {
@@ -44,7 +45,7 @@ const homeTexts = {
 };
 
 export function HomeScreen({ setActiveTab }) {
-  const userLanguage = localStorage.getItem('userLanguage') || 'Deutsch';
+  const userLanguage = getUserLanguage();
   const homeT = homeTexts[userLanguage] || homeTexts.Deutsch;
 
   return (

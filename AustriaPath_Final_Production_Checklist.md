@@ -1,119 +1,97 @@
 # AustriaPath — Final Production Checklist
 
-**Date:** 4 July 2026  
-**Purpose:** Executive summary — what is done vs what remains
+**Updated:** 4 July 2026 (v2 — backend handoff complete)  
+**Status:** Frontend essentially production-ready · Backend not started
 
 ---
 
-## ✅ 1. FINISHED (frontend production-ready)
+## ✅ 1. FINISHED
 
-### Security & infrastructure
-- [x] Client security module (`src/security/`)
-- [x] CSP + security headers (`vercel.json`, `index.html`, `vite.config.ts`)
-- [x] OpenAI proxy: `messages` support, no raw leak, upstream errors
-- [x] Secure OpenAI client with payload limits
-- [x] Session integrity + route guards
-- [x] Storage registry (40+ keys)
-- [x] Env documentation (`.env.example`)
-- [x] SPA rewrite for deployment
-- [x] CI pipeline (`.github/workflows/ci.yml`)
-- [x] Node 20 pin (`.nvmrc`)
+### Frontend engineering
+- Security module, headers, CSP, OpenAI proxy (`messages`, no `raw` leak)
+- Auth UI, legal consent, route guards, storage registry (40+ keys)
+- Unified premium detection, AI credits ledger, subscription → user sync
+- Placement engine fixed, dead code removed, admin lazy-loaded
+- AccountSettings bug fixed, profile image size cap
+- Vitest: **11 tests** (placement, sanitize, subscription, premium)
+- CI: GitHub Actions build + test
+- API contracts: `openapi.yaml`, `src/api/contracts.js`, `src/api/endpoints.js`
 
-### Architecture & maintainability
-- [x] Dead code removed (9 files)
-- [x] Placement engine wired correctly
-- [x] Premium detection unified (`subscriptionAccess.js`)
-- [x] AI credits ledger unified
-- [x] Subscription → user sync (`clientSubscription.js`)
-- [x] User preferences helper (`userPreferences.js`)
-- [x] Error reporting scaffold (`errorReporting.js`)
-- [x] API endpoint constants (`src/api/endpoints.js`)
-- [x] Admin screens lazy-loaded (smaller main bundle)
-- [x] AccountSettingsScreen corruption fixed
-- [x] Profile image size cap enforced
-- [x] Dev-only console logging in AI paths
-- [x] Honest forgot-password beta messaging
-
-### Testing
-- [x] Vitest + 6 unit tests
-- [x] `npm test` in CI
-
-### Documentation (complete engineering package)
-- [x] Knowledge Base
-- [x] Production Engineering Package
-- [x] Backend Implementation Guide
-- [x] LocalStorage Migration Guide
-- [x] Frontend Module Map
-- [x] Testing Strategy
-- [x] Remaining Work Before Launch
-- [x] Closed Beta Launch Plan
-- [x] Database Schema, Technical Spec, Security Requirements
-- [x] GDPR, AI Act, Launch Checklist
-- [x] README developer index
+### Documentation package (backend developer can start immediately)
+| Document |
+|----------|
+| [BACKEND_HANDOFF_INDEX](./AustriaPath_BACKEND_HANDOFF_INDEX.md) ← **start here** |
+| [Backend Implementation Guide](./AustriaPath_Backend_Implementation_Guide.md) |
+| [Frontend Backend Integration](./AustriaPath_Frontend_Backend_Integration.md) |
+| [openapi.yaml](./openapi.yaml) |
+| [Database Schema](./AustriaPath_Database_Schema.md) + [v1.1 Addendum](./AustriaPath_Database_Schema_v1.1_Addendum.md) |
+| [LocalStorage Migration Guide](./AustriaPath_LocalStorage_Migration_Guide.md) |
+| [Security Review](./AustriaPath_Security_Review.md) |
+| [Deployment Runbook](./AustriaPath_DEPLOYMENT_RUNBOOK.md) |
+| [Legal Operator Guide](./AustriaPath_Legal_Operator_Guide.md) |
+| [Testing Strategy](./AustriaPath_Testing_Strategy.md) |
+| [Frontend Module Map](./AustriaPath_Frontend_Module_Map.md) |
+| [Production Engineering Package](./AustriaPath_Production_Engineering_Package.md) |
+| [Knowledge Base](./AustriaPath_Knowledge_Base.md) |
+| GDPR, AI Act, Launch Checklist, Closed Beta Plan |
 
 ---
 
-## 🟡 2. CAN STILL BE COMPLETED WITHOUT BACKEND
+## 🟡 2. CAN STILL BE COMPLETE WITHOUT BACKEND
 
-| Item | Effort | Notes |
-|------|--------|-------|
-| Fill Impressum placeholders | Legal | `legalContent.js` |
-| Legal counsel review | Legal | External |
-| EC-01–EC-22 approval decisions | Product | Checkboxes in Decision Guide |
-| Human content review (EC-13) | Examiner | Spreadsheet audit |
-| More Vitest coverage | Eng | decisionEngine, aiCredits, subscriptionAccess |
-| Remove unused npm dependencies | Eng | ~40 Figma packages — audit first |
-| Replace inline language resolvers with `getUserLanguage()` | Eng | 10+ screens, no UI change |
-| Sentry DSN (frontend only) | DevOps | Wire `errorReporting.js` |
-| OpenAI dashboard spending cap | DevOps | Manual |
-| Admin bootstrap on laptop (DevTools) | Ops | Closed beta plan |
-| Commit & tag release | Git | `production-prep-1.0` |
-| Staging Vercel preview env | DevOps | Separate project |
-| Examiner Council copy labels (EC-06, EC-19) | Product | Text only |
+| Item | Owner |
+|------|-------|
+| Fill Impressum placeholders | Operator — [Legal Operator Guide](./AustriaPath_Legal_Operator_Guide.md) |
+| Legal counsel review | External |
+| EC-01–EC-22 approvals | Product |
+| EC-13 content human review | Examiner |
+| EC-06/EC-19 UI copy labels | Product |
+| Remaining `getUserLanguage()` screen migrations | Engineering (optional) |
+| Prune unused npm packages | Engineering |
+| Sentry wiring to `errorReporting.js` | DevOps |
+| OpenAI spending cap | DevOps |
+| npm audit fixes | Engineering |
+| Commit/tag release | Git |
 
 ---
 
 ## 🔴 3. REQUIRES BACKEND DEVELOPER
 
-| Item | Sprint |
-|------|--------|
-| Hashed passwords + sessions | B1 |
-| PostgreSQL + migrations | B1 |
-| `GET /auth/me`, register, login, logout | B1 |
-| Admin bootstrap API (server secret) | B1 |
-| Authenticated `/ai/completions` | B2 |
-| Server-side credits + permissions | B2 |
-| Reports API | B2–3 |
-| Stripe Checkout + webhooks | B3 |
-| Remove client-side premium trust | B3 |
-| GDPR export + deletion | B4 |
-| Email verify + password reset | B4–5 |
-| Admin audit log | B4 |
-| Examiner Lab persistence | B5+ |
+| Item | Reference |
+|------|-----------|
+| PostgreSQL + migrations | Schema + v1.1 Addendum |
+| Auth (hash, sessions, `/auth/me`) | Implementation Guide Sprint 1 |
+| Authenticated `/ai/completions` | openapi.yaml |
+| Server credits + permissions | Engineering Package §9 |
+| Stripe Checkout + webhooks | Implementation Guide Sprint 4 |
+| Reports, profile, placement APIs | Integration Guide |
+| GDPR export + deletion | Schema + Implementation Guide |
+| Email verify + password reset | Sprint 5 |
+| Remove client premium trust | Integration Guide §3 |
 
-**Handoff doc:** [Backend Implementation Guide](./AustriaPath_Backend_Implementation_Guide.md)
+**Handoff:** [AustriaPath_BACKEND_HANDOFF_INDEX.md](./AustriaPath_BACKEND_HANDOFF_INDEX.md)
 
 ---
 
 ## 🟠 4. REQUIRES PRODUCTION INFRASTRUCTURE
 
-| Item | Provider |
-|------|----------|
-| Production domain + TLS | Vercel / DNS |
-| `OPENAI_API_KEY` in Vercel prod | Vercel env |
-| PostgreSQL hosting | Supabase / RDS |
-| Stripe live mode | Stripe |
-| Email service (Postmark/Resend) | Email provider |
-| Sentry project | Sentry |
-| Uptime monitoring | Better Stack / UptimeRobot |
-| DB backups + restore test | DB host |
-| DPA with OpenAI + host | Legal |
-| WAF / rate limiting at edge | Vercel / Cloudflare |
+| Item |
+|------|
+| Production domain + TLS |
+| Vercel prod env vars |
+| PostgreSQL hosting + backups |
+| Stripe live mode |
+| Transactional email |
+| Sentry + uptime monitoring |
+| DPA / TIA with OpenAI |
+| WAF / rate limiting at edge |
 
 ---
 
 ## Verdict
 
-**Frontend is essentially production-ready** for closed beta and backend handoff. The SPA is documented, tested (core paths), hardened, and debt-reduced. **Commercial launch** remains blocked on backend (P0), Stripe, legal sign-off, and production infra (sections 3–4).
+**Backend developer can implement and connect using documentation only** — no re-architecture required.
 
-**Next action for you:** Commit this batch → closed beta per [Closed Beta Launch Plan](./AustriaPath_Closed_Beta_Launch_Plan.md) → hire backend against [Implementation Guide](./AustriaPath_Backend_Implementation_Guide.md).
+Frontend integration after backend: **~1–2 weeks** via [Frontend Backend Integration Guide](./AustriaPath_Frontend_Backend_Integration.md).
+
+Commercial launch blocked on sections 3 + 4 + legal Impressum completion.

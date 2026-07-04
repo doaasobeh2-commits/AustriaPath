@@ -1,0 +1,444 @@
+openapi: 3.1.0
+info:
+  title: AustriaPath API
+  version: 1.0.0
+  description: |
+    Production API for AustriaPath. Implement per AustriaPath_Backend_Implementation_Guide.md.
+    Frontend contracts: src/api/contracts.js · src/api/endpoints.js
+servers:
+  - url: https://api.austriapath.at/v1
+    description: Production
+  - url: http://localhost:3000/v1
+    description: Local development
+
+tags:
+  - name: Auth
+  - name: Users
+  - name: AI
+  - name: Reports
+  - name: Subscription
+  - name: Admin
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register student
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          description: Email already registered or reserved admin email
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/AuthError'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      security: [{ cookieAuth: [] }, { bearerAuth: [] }]
+      responses:
+        '200':
+          description: Logged out
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      security: [{ cookieAuth: [] }, { bearerAuth: [] }]
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        '200':
+          description: Always OK (no email enumeration)
+
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token: { type: string }
+                password: { type: string, minLength: 8 }
+      responses:
+        '200':
+          description: Password reset
+
+  /users/me/export:
+    get:
+      tags: [Users]
+      security: [{ cookieAuth: [] }, { bearerAuth: [] }]
+      responses:
+        '200':
+          description: GDPR export bundle
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /users/me:
+    delete:
+      tags: [Users]
+      security: [{ cookieAuth: [] }, { bearerAuth: [] }]
+      responses:
+        '202':
+          description: Deletion queued
+
+  /users/me/legal-consent:
+    post:
+      tags: [Users]
+      security: [{ cookieAuth: [] }, { bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [privacyVersion, termsVersion]
+              properties:
+                privacyVersion: { type: string }
+                termsVersion: { type: string }
+      responses:
+        '201':
+          description: Consent recorded
+
+  /ai/completions:
+    post:
+      tags: [AI]
+      security: [{ cookieAuth: [] }, { bearerAuth: [] }]
+      summary: Authenticated OpenAI proxy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiCompletionRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiCompletionResponse'
+        '402':
+          description: Insufficient credits
+        '429':
+          description: Rate limited
+
+  /ai/usage:
+    get:
+      tags: [AI]
+      security: [{ cookieAuth: [] }, { bearerAuth: [] }]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  aiCredits: { type: integer }
+                  usedAiCredits: { type: integer }
+                  available: { type: integer }
+
+  /reports:
+    get:
+      tags: [Reports]
+      security: [{ cookieAuth: [] }, { bearerAuth: [] }]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AiReport'
+    post:
+      tags: [Reports]
+      security: [{ cookieAuth: [] }, { bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiReport'
+      responses:
+        '201':
+          description: Created
+
+  /reports/{id}:
+    get:
+      tags: [Reports]
+      security: [{ cookieAuth: [] }, { bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiReport'
+    delete:
+      tags: [Reports]
+      security: [{ cookieAuth: [] }, { bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204':
+          description: Deleted
+
+  /subscription:
+    get:
+      tags: [Subscription]
+      security: [{ cookieAuth: [] }, { bearerAuth: [] }]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+
+  /subscription/checkout:
+    post:
+      tags: [Subscription]
+      security: [{ cookieAuth: [] }, { bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planType]
+              properties:
+                planType:
+                  type: string
+                  enum: [placement_test, weekly_plan, ai_exam, intensive_week, premium_month]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  checkoutUrl: { type: string, format: uri }
+
+  /subscription/webhook:
+    post:
+      tags: [Subscription]
+      summary: Stripe webhook (server only)
+      responses:
+        '200':
+          description: Processed
+
+  /subscription/consume-exam:
+    post:
+      tags: [Subscription]
+      security: [{ cookieAuth: [] }, { bearerAuth: [] }]
+      responses:
+        '200':
+          description: Exam allowance decremented
+        '403':
+          description: No remaining exams
+
+  /admin/users:
+    get:
+      tags: [Admin]
+      security: [{ cookieAuth: [] }, { bearerAuth: [] }]
+      responses:
+        '200':
+          description: User list
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session
+
+  responses:
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AuthError:
+      description: Authentication failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [name, email, password, level]
+      properties:
+        name: { type: string }
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+        level: { type: string, enum: [A2, B1, B2] }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string }
+        name: { type: string }
+        role: { type: string, enum: [student, admin, examiner] }
+        status: { type: string, enum: [approved, blocked] }
+        level: { type: string }
+        allowedLevels: { type: array, items: { type: string } }
+        subscription:
+          $ref: '#/components/schemas/Subscription'
+        permissions:
+          $ref: '#/components/schemas/Permissions'
+        aiCredits: { type: integer }
+        usedAiCredits: { type: integer }
+
+    Permissions:
+      type: object
+      properties:
+        placementTest: { type: boolean }
+        aiExam: { type: boolean }
+        weeklyPlan: { type: boolean }
+        reports: { type: boolean }
+        writingAI: { type: boolean }
+        imageAI: { type: boolean }
+        speakingAI: { type: boolean }
+        readingAI: { type: boolean }
+        listeningAI: { type: boolean }
+
+    Subscription:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [free, placement_test, weekly_plan, ai_exam, intensive_week, premium_month]
+        status: { type: string, enum: [inactive, active, expired, cancelled] }
+        remainingExams: { type: integer }
+        startDate: { type: string, format: date-time, nullable: true }
+        endDate: { type: string, format: date-time, nullable: true }
+
+    AiCompletionRequest:
+      type: object
+      properties:
+        mode: { type: string }
+        prompt: { type: string, maxLength: 8000 }
+        studentAnswer: { type: string, maxLength: 8000 }
+        messages:
+          type: array
+          maxItems: 30
+          items:
+            type: object
+            properties:
+              role: { type: string, enum: [user, assistant] }
+              content: { type: string }
+        context:
+          type: object
+          properties:
+            serviceType: { type: string }
+            level: { type: string }
+            engineName: { type: string }
+
+    AiCompletionResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        result: { type: string }
+        creditsUsed: { type: integer }
+        creditsRemaining: { type: integer }
+        error: { type: string }
+        errorCode: { type: string }
+
+    AiReport:
+      type: object
+      required: [title, type, level, evaluationMethod]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        type: { type: string }
+        level: { type: string }
+        summary: { type: string }
+        evaluationMethod:
+          type: string
+          enum: [examiner_mind, training_heuristic, llm_conversational, rule_placement]
+        strongCount: { type: integer }
+        middleCount: { type: integer }
+        weakCount: { type: integer }
+        strengths: { type: array, items: { type: string } }
+        weaknesses: { type: array, items: { type: string } }
+        focusAreas: { type: array, items: { type: string } }
+        examinerMind: { type: object }
+
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+        errorCode: { type: string }

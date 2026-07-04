@@ -4,6 +4,7 @@ import { getSmartPremiumMessage } from '../../data/smartPremiumMessages';
 import { B1HorenScreen } from "./lesen/B1HorenScreen";
 import { b2HorenModels } from '../../data/b2HorenModels';
 import { isPremiumUser, trackSectionVisit } from '../../data/utils/premiumHint';
+import { getUserLanguage } from '../../utils/userPreferences';
 
 
 function splitLines(value) {
@@ -140,10 +141,7 @@ export function HorenScreen({
   const models = modelsByLevel[level] || [];
   const model = models[index];
 
-  const language =
-    localStorage.getItem('austriaPathLanguage') ||
-    localStorage.getItem('userLanguage') ||
-    'Deutsch';
+  const language = getUserLanguage();
 
   const premiumMessage = getSmartPremiumMessage(language, 'hoeren');
 
