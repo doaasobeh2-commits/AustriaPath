@@ -1,0 +1,9 @@
+# Railway / Nixpacks — Express API only (no Vite build).
+#
+# Install: Nixpacks runs `npm ci` once in the install phase (do not repeat in railway.toml
+# buildCommand — duplicate npm ci causes EBUSY on node_modules/.cache).
+#
+# Build: skip default `npm run build` (vite) from package.json.
+
+[phases.build]
+cmds = []

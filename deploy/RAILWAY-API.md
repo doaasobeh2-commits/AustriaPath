@@ -23,9 +23,23 @@ Only convert the existing service in-place if nobody relies on the Railway URL f
 | Setting | Value |
 |---------|--------|
 | **Root directory** | `/` (repo root — leave empty or `.`) |
-| **Builder** | Nixpacks (default; `railway.toml` in repo) |
-| **Build command** | `npm ci` |
+| **Builder** | Nixpacks (default; `railway.toml` + `nixpacks.toml` in repo) |
+| **Build command** | **Leave empty** in Railway dashboard (do not set `npm ci` manually) |
 | **Custom start command** | `npm run server:migrate && npm run server:start` |
+
+Nixpacks installs dependencies once in its **install** phase (`npm ci`). A **build command** of `npm ci` in `railway.toml` or the dashboard runs it again and fails with:
+
+`EBUSY: resource busy or locked, rmdir '/app/node_modules/.cache'`
+
+Repo config: `nixpacks.toml` skips the Vite `npm run build` step (API-only).
+
+### If a deploy still fails with EBUSY (one-time cache clear)
+
+1. Railway → your service → **Deployments** → open the failed deploy → **⋯ → Redeploy** (same commit; often enough).
+2. Or **Settings → Redeploy** with **Clear build cache** if shown.
+3. Or add a temporary service variable `NO_CACHE=1`, redeploy once, then remove it.
+
+Do **not** add `npm ci` or `npm install` to the Railway build command field.
 
 **Do not use:** `npm run build`, `vite preview`, or `npm run start` (no `start` script for frontend).
 

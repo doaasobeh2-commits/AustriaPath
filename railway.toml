@@ -5,7 +5,8 @@
 
 [build]
 builder = "NIXPACKS"
-buildCommand = "npm ci"
+# Do NOT set buildCommand to npm ci — Nixpacks install already runs npm ci once.
+# Repeating it here locks node_modules/.cache (EBUSY). See nixpacks.toml.
 
 [deploy]
 startCommand = "npm run server:migrate && npm run server:start"
