@@ -1,5 +1,5 @@
-import { Brain } from "./core/brain";
-import { ExamModes } from "./modes/examModes";
+import { Brain } from "./core/brain.js";
+import { ExamModes } from "./modes/examModes.js";
 
 const brain = new Brain();
 

@@ -1,4 +1,4 @@
-import { MAX_JSON_STORAGE_BYTES } from "./storageRegistry";
+import { MAX_JSON_STORAGE_BYTES } from "./storageRegistry.js";
 import {
   isBackendAuthoritativeKey,
   readBackendKey,

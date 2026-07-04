@@ -10,7 +10,7 @@
  * - Dynamic strengths / weaknesses / focus areas
  * - Conflict detection
  */
-import { saveAIError } from "../learning/errorLearningEngine";
+import { saveAIError } from "../learning/errorLearningEngine.js";
 export class DecisionEngine {
   constructor() {
     this.name = "AustriaPath Decision Engine";

@@ -1,6 +1,6 @@
-import { callOpenAI } from "../providers/openaiProvider";
-import { getCurrentUser, saveCurrentUser } from "../../../app/userAccess";
-import { canUseAI, consumeAICredits } from "../../../utils/aiCredits";
+import { callOpenAI } from "../providers/openaiProvider.js";
+import { getCurrentUser, saveCurrentUser } from "../../../app/userAccess.js";
+import { canUseAI, consumeAICredits } from "../../../utils/aiCredits.js";
 
 const FREE_RULE_SERVICES = ["placement_test", "weekly_plan"];
 

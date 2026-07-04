@@ -1,5 +1,5 @@
-import { readJsonStorage, writeJsonStorage } from "../security/secureStorage";
-import { LEGAL_VERSIONS } from "./legalVersions";
+import { readJsonStorage, writeJsonStorage } from "../security/secureStorage.js";
+import { LEGAL_VERSIONS } from "./legalVersions.js";
 
 export const LEGAL_CONSENT_KEY = "austriaPathLegalConsent";
 

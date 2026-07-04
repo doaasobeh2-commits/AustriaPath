@@ -1,10 +1,10 @@
-import { ExaminerCouncil } from "./examinerCouncil";
-import { DecisionEngine } from "./decisionEngine";
-import { ExamModes } from "../modes/examModes";
-import { AuditEngine } from "../audit/auditEngine";
-import { getExamStructure } from "../knowledge/examStructure";
-import { ExaminerKnowledge } from "../knowledge/examinerKnowledge";
-import { StudentProfileEngine } from "../student/studentProfileEngine";
+import { ExaminerCouncil } from "./examinerCouncil.js";
+import { DecisionEngine } from "./decisionEngine.js";
+import { ExamModes } from "../modes/examModes.js";
+import { AuditEngine } from "../audit/auditEngine.js";
+import { getExamStructure } from "../knowledge/examStructure.js";
+import { ExaminerKnowledge } from "../knowledge/examinerKnowledge.js";
+import { StudentProfileEngine } from "../student/studentProfileEngine.js";
 /**
  * AustriaPath Examiner Brain
  * Version: 1.1

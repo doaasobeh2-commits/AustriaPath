@@ -9,8 +9,8 @@ import {
   verifySessionIntegrity,
   writeSessionIntegrity,
 } from "../security/sessionIntegrity";
-import { readJsonStorage, writeJsonStorage } from "../security/secureStorage";
-import { isValidEmail } from "../security/sanitize";
+import { readJsonStorage, writeJsonStorage } from "../security/secureStorage.js";
+import { isValidEmail } from "../security/sanitize.js";
 import { useBackend } from "../api/useBackend.js";
 import {
   fetchMe,

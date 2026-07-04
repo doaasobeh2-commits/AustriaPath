@@ -1,4 +1,4 @@
-import { LEGAL_LAST_UPDATED } from "./legalVersions";
+import { LEGAL_LAST_UPDATED } from "./legalVersions.js";
 import {
   LEGAL_OPERATOR,
   formatAddress,

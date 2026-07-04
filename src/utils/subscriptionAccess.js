@@ -1,4 +1,4 @@
-import { getCurrentUser } from "../app/userAccess";
+import { getCurrentUser } from "../app/userAccess.js";
 import { useBackend } from "../api/useBackend.js";
 import { backendCache } from "../api/backendCache.js";
 

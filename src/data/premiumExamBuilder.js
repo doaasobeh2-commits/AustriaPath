@@ -1,16 +1,16 @@
-import { a2Models } from './modelsA2';
-import { b1Models, b1PlanningModels } from './modelsb1';
-import { b2Models } from './modelsB2';
-import { b1HorenModels } from './b1HorenModels';
-import { b2HorenModels } from './b2HorenModels';
-import { b2LesenModels } from './b2LesenModels';
-import { b2Grafiken } from './b2Grafiken';
-import { b1LesenModels } from './b1LesenModels';
+import { a2Models } from './modelsA2.js';
+import { b1Models, b1PlanningModels } from './modelsb1.js';
+import { b2Models } from './modelsB2.js';
+import { b1HorenModels } from './b1HorenModels.js';
+import { b2HorenModels } from './b2HorenModels.js';
+import { b2LesenModels } from './b2LesenModels.js';
+import { b2Grafiken } from './b2Grafiken.js';
+import { b1LesenModels } from './b1LesenModels.js';
 
-import { a2Images } from './a2Images';
-import { b1Images } from './b1Images';
+import { a2Images } from './a2Images.js';
+import { b1Images } from './b1Images.js';
 
-import { examBank } from './examBank';
+import { examBank } from './examBank.js';
 import { buildPlatformPremiumPackage } from '../exam-platform/adapters/examEngineBridge.js';
 
 function cleanLevel(level = 'B1') {

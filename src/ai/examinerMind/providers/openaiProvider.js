@@ -1,4 +1,4 @@
-import { requestOpenAIProxy } from "../../../security/secureOpenAI";
+import { requestOpenAIProxy } from "../../../security/secureOpenAI.js";
 
 export async function callOpenAI({ mode, prompt, studentAnswer, context = {} }) {
   try {

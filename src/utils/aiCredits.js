@@ -1,5 +1,5 @@
-import { ACCESS_CONTROL } from "../config/accessControl";
-import { getUsers, saveUsers } from "../app/userAccess";
+import { ACCESS_CONTROL } from "../config/accessControl.js";
+import { getUsers, saveUsers } from "../app/userAccess.js";
 
 function getAvailableCredits(user) {
   const total = typeof user.aiCredits === "number" ? user.aiCredits : 0;

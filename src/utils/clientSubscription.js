@@ -1,5 +1,5 @@
-import { getCurrentUser, getUsers, saveCurrentUser, saveUsers } from "../app/userAccess";
-import { grantPlan } from "../data/subscriptionEngine";
+import { getCurrentUser, getUsers, saveCurrentUser, saveUsers } from "../app/userAccess.js";
+import { grantPlan } from "../data/subscriptionEngine.js";
 
 /** Maps SubscriptionScreen plan.type to subscriptionEngine plan types */
 const PLAN_TYPE_MAP = {

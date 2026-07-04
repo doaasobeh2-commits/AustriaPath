@@ -1,4 +1,4 @@
-import { isPremiumActive } from "../../utils/subscriptionAccess";
+import { isPremiumActive } from "../../utils/subscriptionAccess.js";
 
 const PREMIUM_HINT_VISITS_REQUIRED = 3;
 const PREMIUM_HINT_COOLDOWN_DAYS = 3;

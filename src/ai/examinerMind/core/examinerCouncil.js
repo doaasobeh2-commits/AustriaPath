@@ -1,9 +1,9 @@
-import { TaskJudge } from "../judges/TaskJudge";
-import { GrammarJudge } from "../judges/GrammarJudge";
-import { VocabularyJudge } from "../judges/VocabularyJudge";
-import { StructureJudge } from "../judges/StructureJudge";
-import { CommunicationJudge } from "../judges/CommunicationJudge";
-import { ReasoningJudge } from "../judges/ReasoningJudge";
+import { TaskJudge } from "../judges/TaskJudge.js";
+import { GrammarJudge } from "../judges/GrammarJudge.js";
+import { VocabularyJudge } from "../judges/VocabularyJudge.js";
+import { StructureJudge } from "../judges/StructureJudge.js";
+import { CommunicationJudge } from "../judges/CommunicationJudge.js";
+import { ReasoningJudge } from "../judges/ReasoningJudge.js";
 
 /**
  * AustriaPath Examiner Council

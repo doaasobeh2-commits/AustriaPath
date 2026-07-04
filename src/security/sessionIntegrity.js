@@ -1,4 +1,4 @@
-import { readStringStorage, removeStorageKeys } from "./secureStorage";
+import { readStringStorage, removeStorageKeys } from "./secureStorage.js";
 
 export const SESSION_INTEGRITY_KEY = "austriaPathSessionIntegrity";
 

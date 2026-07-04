@@ -1,4 +1,4 @@
-import { isAdminAccount } from "../config/authConfig";
+import { isAdminAccount } from "../config/authConfig.js";
 
 export const ADMIN_ONLY_TABS = Object.freeze([
   "admin",

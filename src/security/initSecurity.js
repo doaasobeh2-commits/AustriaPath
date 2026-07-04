@@ -1,7 +1,7 @@
-import { validateClientEnvironment } from "./envValidation";
-import { isAdminPreviewAllowed } from "./routeGuard";
-import { removeStorageKeys } from "./secureStorage";
-import { resolveSessionUser } from "../app/userAccess";
+import { validateClientEnvironment } from "./envValidation.js";
+import { isAdminPreviewAllowed } from "./routeGuard.js";
+import { removeStorageKeys } from "./secureStorage.js";
+import { resolveSessionUser } from "../app/userAccess.js";
 
 export function initFrontendSecurity() {
   validateClientEnvironment();
