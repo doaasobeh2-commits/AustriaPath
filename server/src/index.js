@@ -1,15 +1,14 @@
 import express from "express";
 import { createApp } from "./app.js";
-import { initDb, closeDb } from "./db/client.js";
+import { closeDb } from "./db/client.js";
+import { prepareDatabase } from "./db/startup.js";
 import { env } from "./config/env.js";
-import { seedRuleRegistryIfEmpty } from "./db/seed.js";
 import { getBetaAllowlistStatus } from "./config/betaAllowlist.js";
 
 const root = express();
 root.use("/v1", createApp());
 
-await initDb();
-await seedRuleRegistryIfEmpty();
+await prepareDatabase();
 
 const betaAllowlist = getBetaAllowlistStatus();
 console.log(

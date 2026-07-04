@@ -84,12 +84,22 @@ export async function withTransaction(fn) {
   }
 }
 
+function resolveSchemaPath() {
+  const candidates = [
+    path.resolve(__dirname, "schema.sql"),
+    path.resolve(__dirname, "../../../docs/backend-contract-pack/02-database-schema.sql"),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  throw new Error(
+    `Database schema SQL not found. Expected one of: ${candidates.join(", ")}`
+  );
+}
+
 export async function runMigrations() {
   await initDb();
-  const schemaPath = path.resolve(
-    __dirname,
-    "../../../docs/backend-contract-pack/02-database-schema.sql"
-  );
+  const schemaPath = resolveSchemaPath();
   let sql = fs.readFileSync(schemaPath, "utf8");
   const db = getDb();
   if (db.kind === "pglite") {
