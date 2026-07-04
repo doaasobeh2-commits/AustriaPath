@@ -4,6 +4,8 @@ import { env } from "../config/env.js";
 import { query } from "../db/client.js";
 import { hashPassword } from "../utils/password.js";
 import { AppError } from "../middleware/errorHandler.js";
+import { createUserWithProfile } from "../repositories/userRepository.js";
+import { formatPgTextArray } from "../db/arrays.js";
 
 const router = Router();
 
@@ -17,10 +19,10 @@ router.post("/bootstrap-admin", async (req, res, next) => {
     }
 
     const { rows: existing } = await query(
-      `SELECT id FROM users WHERE role = 'admin' AND email = $1 AND deleted_at IS NULL LIMIT 1`,
+      `SELECT id, role FROM users WHERE LOWER(email) = LOWER($1) AND deleted_at IS NULL LIMIT 1`,
       [env.adminEmail]
     );
-    if (existing.length) {
+    if (existing.length && existing[0].role === "admin") {
       throw new AppError("CONFLICT", "Administrator existiert bereits.", 409);
     }
 
@@ -30,19 +32,56 @@ router.post("/bootstrap-admin", async (req, res, next) => {
     }
 
     const passwordHash = await hashPassword(password);
+    const displayName = name?.trim() || "Administrator";
+    let userId;
+
+    if (existing.length) {
+      userId = existing[0].id;
+      await query(
+        `UPDATE users SET
+          password_hash = $2,
+          role = 'admin',
+          status = 'approved',
+          level = 'B1'::cefr_label,
+          allowed_levels = $3::cefr_label[],
+          email_verified = TRUE,
+          email_verification_status = 'verified',
+          ai_credits = 0,
+          updated_at = NOW()
+         WHERE id = $1`,
+        [userId, passwordHash, formatPgTextArray(["A2", "B1", "B2"])]
+      );
+      await query(
+        `UPDATE user_profiles SET display_name = $2, updated_at = NOW() WHERE user_id = $1`,
+        [userId, displayName]
+      );
+    } else {
+      const user = await createUserWithProfile({
+        email: env.adminEmail,
+        passwordHash,
+        name: displayName,
+        level: "B1",
+      });
+      userId = user.id;
+      await query(
+        `UPDATE users SET
+          role = 'admin',
+          email_verified = TRUE,
+          email_verification_status = 'verified',
+          ai_credits = 0,
+          allowed_levels = $2::cefr_label[],
+          updated_at = NOW()
+         WHERE id = $1`,
+        [userId, formatPgTextArray(["A2", "B1", "B2"])]
+      );
+    }
+
     const { rows } = await query(
-      `INSERT INTO users (email, password_hash, role, status, level, allowed_levels, email_verified, email_verification_status, ai_credits)
-       VALUES ($1, $2, 'admin', 'approved', 'B1', '{A2,B1,B2}', TRUE, 'verified', 0)
-       RETURNING id, email, role`,
-      [env.adminEmail, passwordHash]
+      `SELECT id, email, role FROM users WHERE id = $1`,
+      [userId]
     );
 
-    await query(
-      `INSERT INTO user_profiles (user_id, display_name) VALUES ($1, $2)`,
-      [rows[0].id, name?.trim() || "Administrator"]
-    );
-
-    success(res, { user: { id: rows[0].id, email: rows[0].email, role: rows[0].role } }, 201);
+    success(res, { user: rows[0] }, existing.length ? 200 : 201);
   } catch (e) {
     next(e);
   }
