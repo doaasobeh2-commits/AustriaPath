@@ -61,15 +61,46 @@ if (!password || password.length < 8) {
 
 async function request(path, options = {}) {
   const response = await fetch(`${baseUrl}${path}`, options);
+  const contentType = response.headers.get("content-type") || "";
   let body = null;
+  let rawText = null;
   try {
-    body = await response.json();
+    if (contentType.includes("application/json")) {
+      body = await response.json();
+    } else {
+      rawText = await response.text();
+      try {
+        body = JSON.parse(rawText);
+      } catch {
+        body = null;
+      }
+    }
   } catch {
     body = null;
   }
-  return { status: response.status, body, headers: response.headers };
+  return { status: response.status, body, rawText, contentType, headers: response.headers };
 }
 
+console.log(`API base: ${baseUrl}`);
+
+const health = await request("/v1/health");
+if (
+  health.status !== 200 ||
+  !health.body?.success ||
+  health.body?.data?.status !== "ok"
+) {
+  if (health.rawText?.includes("<!DOCTYPE html") || health.rawText?.includes("<html")) {
+    fail(
+      "RAILWAY_PUBLIC_URL points to the frontend (HTML), not the Express API.\n" +
+        "In Railway, open the API service (npm run server:start) → Networking → Public domain.\n" +
+        "Update RAILWAY_PUBLIC_URL, then verify: curl.exe -s https://YOUR-API-HOST/v1/health returns JSON with status ok."
+    );
+  }
+  console.error("Health check failed:", health.status, health.body || health.rawText?.slice(0, 200));
+  fail("GET /v1/health did not return a healthy API response. Fix RAILWAY_PUBLIC_URL first.");
+}
+
+console.log("Health check OK (Express API confirmed)");
 console.log(`Bootstrap target: ${baseUrl}/v1/internal/bootstrap-admin`);
 
 const bootstrap = await request("/v1/internal/bootstrap-admin", {

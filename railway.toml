@@ -1,0 +1,13 @@
+# Railway — API service only (closed beta).
+# Frontend stays on Vercel. Do NOT run `vite build` on this service.
+#
+# See deploy/RAILWAY-API.md for dashboard settings.
+
+[build]
+builder = "NIXPACKS"
+buildCommand = "npm ci"
+
+[deploy]
+startCommand = "npm run server:migrate && npm run server:start"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
