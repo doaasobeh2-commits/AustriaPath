@@ -28,3 +28,9 @@ export async function fetchMe() {
   const data = await apiFetch("/auth/me");
   return data.user;
 }
+
+/** Returns null when no session (401) — does not throw for unauthenticated users. */
+export async function fetchMeOptional() {
+  const data = await apiFetch("/auth/me", { allowStatuses: [401, 403] });
+  return data?.user ?? null;
+}

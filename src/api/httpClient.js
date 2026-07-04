@@ -21,10 +21,11 @@ export class ApiError extends Error {
 
 /**
  * @param {string} path
- * @param {RequestInit & { json?: unknown }} [options]
+ * @param {RequestInit & { json?: unknown; allowStatuses?: number[] }} [options]
  */
 export async function apiFetch(path, options = {}) {
   const url = buildApiUrl(path);
+  const allowStatuses = new Set(options.allowStatuses || []);
   const headers = {
     Accept: "application/json",
     ...(options.headers || {}),
@@ -36,8 +37,10 @@ export async function apiFetch(path, options = {}) {
     body = JSON.stringify(options.json);
   }
 
+  const { allowStatuses: _allow, ...fetchOptions } = options;
+
   const response = await fetch(url, {
-    ...options,
+    ...fetchOptions,
     headers,
     body,
     credentials: "include",
@@ -52,10 +55,15 @@ export async function apiFetch(path, options = {}) {
 
   if (!payload?.success) {
     const err = payload?.error || {};
+    const code = err.code || "INTERNAL_ERROR";
+    const status = response.status;
+    if (allowStatuses.has(status)) {
+      return null;
+    }
     throw new ApiError(
-      err.code || "INTERNAL_ERROR",
+      code,
       err.message || "Ein Fehler ist aufgetreten.",
-      response.status,
+      status,
       err.details
     );
   }

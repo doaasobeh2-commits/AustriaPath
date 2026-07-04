@@ -146,18 +146,23 @@ export default function App() {
       return;
     }
 
-    validateSessionFromBackend().then((resolved) => {
-      if (!resolved) {
+    validateSessionFromBackend()
+      .then((resolved) => {
+        if (!resolved) {
+          setIsLoggedIn(false);
+          setCurrentUser(null);
+          return;
+        }
+        setCurrentUser(resolved);
+        setIsLoggedIn(true);
+        if (!isAdminAccount(resolved)) {
+          setActiveTab((tab) => getSafeTab(tab, resolved));
+        }
+      })
+      .catch(() => {
         setIsLoggedIn(false);
         setCurrentUser(null);
-        return;
-      }
-      setCurrentUser(resolved);
-      setIsLoggedIn(true);
-      if (!isAdminAccount(resolved)) {
-        setActiveTab((tab) => getSafeTab(tab, resolved));
-      }
-    });
+      });
   }, []);
 
   useEffect(() => {

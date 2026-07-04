@@ -71,8 +71,13 @@ export function shouldBlockBackendWrite(key) {
   return useBackend() && BACKEND_WRITE_BLOCK.has(key);
 }
 
-export async function hydrateBackendFromApi() {
+/**
+ * @param {{ includeAdmin?: boolean }} [options]
+ * Admin-only endpoints are skipped unless includeAdmin is true.
+ */
+export async function hydrateBackendFromApi(options = {}) {
   if (!useBackend()) return;
+  const { includeAdmin = false } = options;
 
   const [profileRes, subRes, reportsRes, registryMeta] = await Promise.all([
     fetchStudentProfile().catch(() => ({ profile: null })),
@@ -111,9 +116,13 @@ export async function hydrateBackendFromApi() {
     };
   }
 
-  try {
-    backendCache.labDashboard = await fetchLabDashboard();
-  } catch {
+  if (includeAdmin) {
+    try {
+      backendCache.labDashboard = await fetchLabDashboard();
+    } catch {
+      backendCache.labDashboard = null;
+    }
+  } else {
     backendCache.labDashboard = null;
   }
 }

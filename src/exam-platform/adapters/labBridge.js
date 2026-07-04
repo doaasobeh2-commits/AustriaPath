@@ -9,6 +9,8 @@ import { loadRuleProposals } from "../services/rulePromotionService.js";
 import { loadLabQueue } from "../services/examinerLabService.js";
 import { useBackend } from "../../api/useBackend.js";
 import { backendCache } from "../../api/backendCache.js";
+import { isAdminAccount } from "../../config/authConfig.js";
+import { resolveSessionUser } from "../../app/userAccess.js";
 import {
   fetchLabDashboard,
   resolveLabItem as apiResolveLabItem,
@@ -17,13 +19,30 @@ import { hydrateBackendFromApi } from "../../api/hydrateBackend.js";
 
 export const LAB_BRIDGE_VERSION = "1.0.0-phase-g";
 
+function emptyLabDashboard() {
+  return {
+    policy: EXAMINER_LAB_POLICY,
+    pendingCases: [],
+    pendingCount: 0,
+    totalQueued: 0,
+    resolvedCount: 0,
+    registryVersion: "0.0.0",
+    promotedRulesCount: 0,
+    pendingProposalsCount: 0,
+    recentResolutions: [],
+  };
+}
+
 /**
  * @param {Storage|null|undefined} [storage]
  */
 export async function loadLabDashboard(storage = localStorage) {
   if (useBackend()) {
+    if (!isAdminAccount(resolveSessionUser())) {
+      return emptyLabDashboard();
+    }
     if (!backendCache.labDashboard) {
-      await hydrateBackendFromApi();
+      await hydrateBackendFromApi({ includeAdmin: true });
     }
     const dash = backendCache.labDashboard || {};
     return {

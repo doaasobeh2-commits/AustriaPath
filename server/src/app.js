@@ -1,7 +1,6 @@
 import express from "express";
 import cookieParser from "cookie-parser";
-import cors from "cors";
-import { env } from "./config/env.js";
+import { createCorsMiddleware } from "./config/cors.js";
 import { newRequestId, attachResReq } from "./middleware/request.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
@@ -23,8 +22,9 @@ import migrationRoutes from "./routes/migration.routes.js";
 
 export function createApp() {
   const app = express();
+  app.set("trust proxy", 1);
 
-  app.use(cors({ origin: env.corsOrigin, credentials: true }));
+  app.use(createCorsMiddleware());
   app.use(newRequestId);
   app.use(cookieParser());
   app.use((req, res, next) => {

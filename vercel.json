@@ -10,7 +10,7 @@
       "destination": "https://austriapath-production.up.railway.app/v1/:path*"
     },
     {
-      "source": "/:path((?!assets/).*)",
+      "source": "/:path((?!assets/|v1/).*)",
       "destination": "/index.html"
     }
   ],

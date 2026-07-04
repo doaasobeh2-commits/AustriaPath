@@ -11,7 +11,7 @@ import { readJsonStorage, writeJsonStorage } from "../security/secureStorage.js"
 import { isValidEmail } from "../security/sanitize.js";
 import { useBackend } from "../api/useBackend.js";
 import {
-  fetchMe,
+  fetchMeOptional,
   loginViaApi,
   logoutViaApi,
   registerViaApi,
@@ -190,13 +190,20 @@ export function resolveSessionUser() {
 export async function validateSessionFromBackend() {
   if (!useBackend()) return null;
   try {
-    const user = await fetchMe();
+    const user = await fetchMeOptional();
+    if (!user) {
+      clearSession();
+      return null;
+    }
     const sessionUser = apiUserToSessionUser(user);
     syncSessionUser(sessionUser);
-    await hydrateBackendFromApi();
+    await hydrateBackendFromApi({ includeAdmin: isAdminAccount(sessionUser) });
     return sessionUser;
-  } catch {
-    clearSession();
+  } catch (error) {
+    // Network/upstream errors — show login without clearing a possibly valid cookie.
+    if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+      clearSession();
+    }
     return null;
   }
 }
@@ -279,7 +286,7 @@ export async function authenticateUser(email, password) {
       const user = await loginViaApi(cleanEmail, password);
       const sessionUser = apiUserToSessionUser(user);
       syncSessionUser(sessionUser);
-      await hydrateBackendFromApi();
+      await hydrateBackendFromApi({ includeAdmin: isAdminAccount(sessionUser) });
       return { ok: true, user: stripPassword(sessionUser) };
     } catch (error) {
       return { ok: false, message: backendAuthErrorMessage(error) };

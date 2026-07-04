@@ -54,7 +54,7 @@ Do **not** add `npm ci` or `npm install` to the Railway build command field.
 | `NODE_ENV` | Yes | `production` |
 | `DATABASE_URL` | Yes | Neon pooled URL (`?sslmode=require`) |
 | `SESSION_SECRET` | Yes | 64+ random chars |
-| `CORS_ORIGIN` | Yes | Your **Vercel** production URL (no trailing slash) |
+| `CORS_ORIGIN` | Yes | Your **Vercel** production URL (no trailing slash). Use comma-separated list for dev + prod, e.g. `https://austriapath-exam-ai.vercel.app,http://localhost:5173` |
 | `COOKIE_SECURE` | Yes | `true` |
 | `ADMIN_EMAIL` | Yes | `fadisobehau@gmail.com` |
 | `ADMIN_BOOTSTRAP_SECRET` | Yes (until bootstrap done) | One-time; remove after admin created |
@@ -127,13 +127,20 @@ Set production env:
 - `VITE_USE_BACKEND=true`
 - `VITE_API_BASE=/v1`
 
-Add to `vercel.json` rewrites (before SPA fallback):
+`vercel.json` rewrites `/v1/*` to Railway (before SPA fallback). The SPA rule excludes `/v1/` so API paths never return `index.html`.
 
-```json
-{ "source": "/v1/:path*", "destination": "https://YOUR-RAILWAY-HOST/v1/:path*" }
-```
+Redeploy Vercel after backend URL or CORS changes.
 
-Redeploy Vercel. The SPA stays the same; `/v1` proxies to Railway.
+### Session cookies (Vercel → Railway)
+
+| Layer | Setting |
+|-------|---------|
+| Browser → Vercel | Same-origin `fetch(..., { credentials: "include" })` to `/v1/*` |
+| Vercel proxy | Forwards `Cookie` and `Set-Cookie` unchanged |
+| Railway API | `COOKIE_SECURE=true`, `SameSite=Lax`, `httpOnly`, `path=/` |
+| Railway CORS | `CORS_ORIGIN` must include your Vercel URL (comma-separated with localhost for dev) |
+
+**Required Railway update:** set `CORS_ORIGIN=https://austriapath-exam-ai.vercel.app,http://localhost:5173` then redeploy the API service.
 
 ## Bootstrap
 
