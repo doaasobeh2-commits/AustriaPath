@@ -54,6 +54,22 @@ describe("Phase H API", () => {
       expect(res.body.data.betaAllowlist).toBeDefined();
     });
 
+    it("GET /health/db returns read-only DB fingerprint without secrets", async () => {
+      const res = await request(app).get("/health/db");
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      const data = res.body.data;
+      expect(["pg", "pglite", "not_initialized"]).toContain(data.dbKind);
+      expect(data).toHaveProperty("host");
+      expect(data).toHaveProperty("database");
+      expect(data).toHaveProperty("role");
+      expect(data).toHaveProperty("usersTableExists");
+      expect(data).toHaveProperty("publicTableCount");
+      expect(data.usersTableExists).toBe(true);
+      expect(data.publicTableCount).toBeGreaterThan(0);
+      expect(JSON.stringify(res.body)).not.toMatch(/password/i);
+    });
+
     it("registers and logs in a student", async () => {
       const email = `student_${Date.now()}@test.local`;
       const reg = await request(app).post("/auth/register").send({
