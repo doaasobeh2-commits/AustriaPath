@@ -9,13 +9,7 @@
   },
   "steps": {
     "install": {
-      "caches": ["npm"],
-      "commands": [
-        {
-          "cmd": "npm ci --cache /tmp/.npm --no-audit --fund=false",
-          "customName": "Install dependencies"
-        }
-      ]
+      "caches": ["npm"]
     },
     "build": {
       "caches": [],

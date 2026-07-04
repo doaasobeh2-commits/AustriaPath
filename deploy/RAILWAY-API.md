@@ -33,7 +33,7 @@ Railpack also caches `node_modules/.cache` by default. `npm ci` must delete that
 
 `EBUSY: resource busy or locked, rmdir '/app/node_modules/.cache'`
 
-Repo fix: `railpack.json` uses only the `/tmp/.npm` cache on install (not `node-modules`), skips Vite build, and runs `npm ci` via a proper exec `cmd` object — not inline `VAR=value` shell syntax (Railpack passes string commands to npm directly).
+Repo fix: `railpack.json` keeps Railpack’s default **install** step (do not override `commands` — that breaks the Mise/Node layer chain and fails with `copy /mise/installs: context canceled`). Only override install **caches** to `/tmp/.npm` (not `node_modules/.cache`), skip the Vite **build** step, and set the API start command.
 
 ### If a deploy still fails with EBUSY (one-time cache clear)
 
