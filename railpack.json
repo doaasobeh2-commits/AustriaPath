@@ -11,7 +11,10 @@
     "install": {
       "caches": ["npm"],
       "commands": [
-        "RAILPACK_DISABLE_CACHES=node-modules npm ci --cache /tmp/.npm --no-audit --fund=false"
+        {
+          "cmd": "npm ci --cache /tmp/.npm --no-audit --fund=false",
+          "customName": "Install dependencies"
+        }
       ]
     },
     "build": {
