@@ -1,8 +1,8 @@
-import { A2GrammarKnowledge } from "./a2/grammarKnowledge";
-import { A2WritingKnowledge } from "./a2/writingKnowledge";
-import { A2SpeakingKnowledge } from "./a2/speakingKnowledge";
-import { A2ReadingKnowledge } from "./a2/readingKnowledge";
-import { A2ListeningKnowledge } from "./a2/listeningKnowledge";
+import { A2GrammarKnowledge } from "./a2/grammarKnowledge.js";
+import { A2WritingKnowledge } from "./a2/writingKnowledge.js";
+import { A2SpeakingKnowledge } from "./a2/speakingKnowledge.js";
+import { A2ReadingKnowledge } from "./a2/readingKnowledge.js";
+import { A2ListeningKnowledge } from "./a2/listeningKnowledge.js";
 
 /**
  * AustriaPath Knowledge Loader

@@ -1,20 +1,20 @@
-import { A2GrammarKnowledge } from "./a2/grammarKnowledge";
-import { A2WritingKnowledge } from "./a2/writingKnowledge";
-import { A2SpeakingKnowledge } from "./a2/speakingKnowledge";
-import { A2ReadingKnowledge } from "./a2/readingKnowledge";
-import { A2ListeningKnowledge } from "./a2/listeningKnowledge";
+import { A2GrammarKnowledge } from "./a2/grammarKnowledge.js";
+import { A2WritingKnowledge } from "./a2/writingKnowledge.js";
+import { A2SpeakingKnowledge } from "./a2/speakingKnowledge.js";
+import { A2ReadingKnowledge } from "./a2/readingKnowledge.js";
+import { A2ListeningKnowledge } from "./a2/listeningKnowledge.js";
 
-import { B1GrammarKnowledge } from "./b1/grammarKnowledge";
-import { B1WritingKnowledge } from "./b1/writingKnowledge";
-import { B1SpeakingKnowledge } from "./b1/speakingKnowledge";
-import { B1ReadingKnowledge } from "./b1/readingKnowledge";
-import { B1ListeningKnowledge } from "./b1/listeningKnowledge";
+import { B1GrammarKnowledge } from "./b1/grammarKnowledge.js";
+import { B1WritingKnowledge } from "./b1/writingKnowledge.js";
+import { B1SpeakingKnowledge } from "./b1/speakingKnowledge.js";
+import { B1ReadingKnowledge } from "./b1/readingKnowledge.js";
+import { B1ListeningKnowledge } from "./b1/listeningKnowledge.js";
 
-import { B2GrammarKnowledge } from "./b2/grammarKnowledge";
-import { B2WritingKnowledge } from "./b2/writingKnowledge";
-import { B2SpeakingKnowledge } from "./b2/speakingKnowledge";
-import { B2ReadingKnowledge } from "./b2/readingKnowledge";
-import { B2ListeningKnowledge } from "./b2/listeningKnowledge";
+import { B2GrammarKnowledge } from "./b2/grammarKnowledge.js";
+import { B2WritingKnowledge } from "./b2/writingKnowledge.js";
+import { B2SpeakingKnowledge } from "./b2/speakingKnowledge.js";
+import { B2ReadingKnowledge } from "./b2/readingKnowledge.js";
+import { B2ListeningKnowledge } from "./b2/listeningKnowledge.js";
 
 /**
  * AustriaPath Examiner Knowledge
