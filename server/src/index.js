@@ -6,9 +6,17 @@ import { prepareDatabase } from "./db/startup.js";
 import { env } from "./config/env.js";
 import { assertProductionDatabaseConfig } from "./config/validateEnv.js";
 import { getBetaAllowlistStatus } from "./config/betaAllowlist.js";
+import { attachRequestLogger } from "./middleware/requestLogger.js";
+import { attachProcessHandlers } from "./runtime/processHandlers.js";
+import healthzRoutes from "./routes/healthz.routes.js";
 
 const root = express();
 root.set("trust proxy", 1);
+attachRequestLogger(root);
+
+/** Liveness probe — registered before SPA so Railway can reach it without dist/ or index.html. */
+root.use("/healthz", healthzRoutes);
+
 root.use("/v1", createApp());
 
 assertProductionDatabaseConfig();
@@ -21,21 +29,32 @@ console.log(
   `Beta allowlist: configured=${betaAllowlist.configured} enforced=${betaAllowlist.enforced} count=${betaAllowlist.count} production=${betaAllowlist.production}`
 );
 
-const server = root.listen(env.port, () => {
+const host = "0.0.0.0";
+const port = Number(process.env.PORT || env.port);
+
+const server = root.listen(port, host, () => {
   if (spaEnabled) {
-    console.log(`AustriaPath listening on :${env.port} (SPA / + API /v1)`);
+    console.log(`AustriaPath listening on ${host}:${port} (SPA / + API /v1)`);
   } else {
-    console.log(`AustriaPath API listening on :${env.port}/v1 (no dist/ — API only)`);
+    console.log(`AustriaPath API listening on ${host}:${port}/v1 (no dist/ — API only)`);
   }
+  console.log(`[startup] healthz=http://${host}:${port}/healthz api=http://${host}:${port}/v1/health`);
 });
 
-async function shutdown() {
-  server.close();
+server.on("error", (error) => {
+  console.error("[server] listen error", error);
+});
+
+async function shutdown(signal) {
+  console.log(`[process] shutting down (${signal})`);
+  await new Promise((resolve, reject) => {
+    server.close((error) => (error ? reject(error) : resolve()));
+  });
   await closeDb();
+  console.log("[process] shutdown complete");
   process.exit(0);
 }
 
-process.on("SIGINT", shutdown);
-process.on("SIGTERM", shutdown);
+attachProcessHandlers({ onShutdown: shutdown });
 
 export { root as app };
