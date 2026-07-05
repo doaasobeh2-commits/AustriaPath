@@ -185,19 +185,28 @@ export async function validateSessionFromBackend() {
   try {
     const user = await fetchMeOptional();
     if (!user) {
-      clearSession();
-      return null;
+      // Do not wipe a session established while /auth/me was in flight (login race).
+      if (!resolveSessionUser()) {
+        clearSession();
+      }
+      return resolveSessionUser();
     }
     const sessionUser = apiUserToSessionUser(user);
     syncSessionUser(sessionUser);
-    await hydrateBackendFromApi({ includeAdmin: isAdminAccount(sessionUser) });
-    return sessionUser;
+    try {
+      await hydrateBackendFromApi({ includeAdmin: isAdminAccount(sessionUser) });
+    } catch {
+      /* non-blocking */
+    }
+    return resolveSessionUser();
   } catch (error) {
     // Network/upstream errors — show login without clearing a possibly valid cookie.
     if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
-      clearSession();
+      if (!resolveSessionUser()) {
+        clearSession();
+      }
     }
-    return null;
+    return resolveSessionUser();
   }
 }
 
@@ -206,13 +215,31 @@ export function validateSessionOnStartup() {
   return null;
 }
 
+function normalizeBackendSessionUser(user) {
+  const cleanEmail = user.email?.trim().toLowerCase();
+  const { password: _password, ...safeUser } = user;
+
+  return {
+    ...safeUser,
+    email: cleanEmail,
+    role: user.role || "student",
+    status: user.status || "approved",
+    level: user.level || "B1",
+    allowedLevels: user.allowedLevels || getDefaultAllowedLevels(user.level),
+  };
+}
+
 export function syncSessionUser(resolvedUser) {
   if (!resolvedUser) {
     activeSessionUser = null;
     return;
   }
 
-  const sessionUser = stripPassword(toSessionUser(resolvedUser));
+  const sessionUser = stripPassword(
+    useBackend()
+      ? normalizeBackendSessionUser(resolvedUser)
+      : toSessionUser(resolvedUser)
+  );
   activeSessionUser = sessionUser;
 
   saveCurrentUser(sessionUser);
@@ -279,8 +306,14 @@ export async function authenticateUser(email, password) {
       const user = await loginViaApi(cleanEmail, password);
       const sessionUser = apiUserToSessionUser(user);
       syncSessionUser(sessionUser);
-      await hydrateBackendFromApi({ includeAdmin: isAdminAccount(sessionUser) });
-      return { ok: true, user: stripPassword(sessionUser) };
+      try {
+        await hydrateBackendFromApi({
+          includeAdmin: isAdminAccount(resolveSessionUser()),
+        });
+      } catch {
+        /* login succeeds even if post-login hydration fails */
+      }
+      return { ok: true, user: resolveSessionUser() };
     } catch (error) {
       return { ok: false, message: backendAuthErrorMessage(error) };
     }

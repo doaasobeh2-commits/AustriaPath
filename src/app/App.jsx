@@ -112,13 +112,17 @@ export default function App() {
       return;
     }
 
-    if (!resolveSessionUser()) {
-      syncSessionUser(resolved);
+    syncSessionUser(resolved);
+    const sessionUser = resolveSessionUser();
+
+    if (!sessionUser) {
+      handleLogout();
+      return;
     }
 
-    setCurrentUser(resolved);
+    setCurrentUser(sessionUser);
     setIsLoggedIn(true);
-    setActiveTab(isAdminAccount(resolved) ? "admin" : "home");
+    setActiveTab(isAdminAccount(sessionUser) ? "admin" : "home");
   };
 
   useEffect(() => {
@@ -138,31 +142,50 @@ export default function App() {
   }, [authTokenAction]);
 
   useEffect(() => {
+    let cancelled = false;
+
     purgeLegacyAuthStorage();
 
     if (!useBackend()) {
       setIsLoggedIn(false);
       setCurrentUser(null);
-      return;
+      return () => {
+        cancelled = true;
+      };
     }
 
     validateSessionFromBackend()
       .then((resolved) => {
-        if (!resolved) {
+        if (cancelled) return;
+
+        const sessionUser = resolveSessionUser() || resolved;
+        if (!sessionUser) {
           setIsLoggedIn(false);
           setCurrentUser(null);
           return;
         }
-        setCurrentUser(resolved);
+
+        setCurrentUser(sessionUser);
         setIsLoggedIn(true);
-        if (!isAdminAccount(resolved)) {
-          setActiveTab((tab) => getSafeTab(tab, resolved));
-        }
+        setActiveTab((tab) =>
+          isAdminAccount(sessionUser) ? "admin" : getSafeTab(tab, sessionUser)
+        );
       })
       .catch(() => {
+        if (cancelled) return;
+        const sessionUser = resolveSessionUser();
+        if (sessionUser) {
+          setCurrentUser(sessionUser);
+          setIsLoggedIn(true);
+          return;
+        }
         setIsLoggedIn(false);
         setCurrentUser(null);
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
