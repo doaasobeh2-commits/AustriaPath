@@ -1,6 +1,6 @@
 # AustriaPath
 
-German / ÖIF exam preparation platform — React SPA with ExaminerMind rule-based evaluation and optional OpenAI assistance.
+German language learning platform — daily practice with AI-supported feedback, personalized learning, and exercises for reading, listening, writing, and speaking.
 
 **Figma source:** [AustriaPath Mobile App Screens](https://www.figma.com/design/OezfG34rLab3Rj5SBdLetd/AustriaPath-Mobile-App-Screens)
 

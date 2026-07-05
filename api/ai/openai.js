@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     const systemMessage = {
       role: "system",
       content:
-        "Du bist ein offizieller ÖIF-Prüfer. Antworte ausschließlich auf Deutsch.",
+        "Du bist ein freundlicher Deutsch-Sprachtrainer für Übungssituationen. Antworte ausschließlich auf Deutsch. Du bist kein Prüfer und stellst keine behördliche Bewertung aus.",
     };
 
     let chatMessages = [];

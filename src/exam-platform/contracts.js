@@ -395,4 +395,4 @@ export const STUDENT_PROFILE_VERSION = "2.0.0";
 export const FINAL_REPORT_SCHEMA_VERSION = "2.0.0";
 
 export const REPORT_DISCLAIMER =
-  "Dieses Ergebnis ist Übungsfeedback von AustriaPath und keine offizielle ÖIF-, ÖSD- oder TELC-Zertifizierung.";
+  "Dieses Ergebnis ist AI-gestütztes Übungsfeedback von AustriaPath — keine behördliche Zertifizierung oder Prüfungsentscheidung.";

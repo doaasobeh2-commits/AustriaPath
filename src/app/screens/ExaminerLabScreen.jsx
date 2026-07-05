@@ -5,7 +5,7 @@ import {
   submitLabReview,
 } from "../../exam-platform/adapters/labBridge.js";
 
-export default function ExaminerLabScreen() {
+export default function ExaminerLabScreen({ setActiveTab }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [message, setMessage] = useState("");
   const [dashboard, setDashboard] = useState(null);
@@ -54,6 +54,16 @@ export default function ExaminerLabScreen() {
 
   return (
     <div style={{ padding: 20 }}>
+      {setActiveTab && (
+        <button
+          type="button"
+          onClick={() => setActiveTab("admin")}
+          style={backButtonStyle}
+        >
+          ← Zurück zum Admin
+        </button>
+      )}
+
       <h2>🧠 Examiner Lab</h2>
 
       <p>
@@ -111,3 +121,14 @@ export default function ExaminerLabScreen() {
     </div>
   );
 }
+
+const backButtonStyle = {
+  border: "none",
+  backgroundColor: "#e0f2fe",
+  color: "#0369a1",
+  padding: "10px 16px",
+  borderRadius: "999px",
+  fontWeight: "700",
+  cursor: "pointer",
+  marginBottom: "18px",
+};

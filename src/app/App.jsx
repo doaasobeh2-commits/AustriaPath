@@ -44,7 +44,11 @@ import { useBackend } from "../api/useBackend.js";
 import { verifyEmail } from "../api/repositories/index.js";
 import LegalPageScreen from "./components/LegalPageScreen";
 import LegalConsentScreen from "./screens/LegalConsentScreen";
-import { needsLegalConsent, saveLegalConsent } from "../legal/consent";
+import {
+  AI_SESSION_STORAGE_KEY,
+  LEGACY_AI_SESSION_STORAGE_KEY,
+} from "../constants/storageKeys.js";
+import { isOnboardingComplete, markOnboardingComplete } from "../utils/userPreferences.js";
 
 const AdminScreen = React.lazy(() =>
   import("./screens/AdminScreen").then((module) => ({ default: module.AdminScreen }))
@@ -75,7 +79,7 @@ export default function App() {
   const [levelTarget, setLevelTarget] = useState(null);
   const [selectedWritingModel, setSelectedWritingModel] = useState(null);
   const [authScreen, setAuthScreen] = useState("welcome");
-  const [showOnboarding, setShowOnboarding] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(() => !isOnboardingComplete());
   const [legalView, setLegalView] = useState(null);
   const [, setConsentUpdated] = useState(0);
   const [authTokenAction, setAuthTokenAction] = useState(() => {
@@ -207,6 +211,10 @@ export default function App() {
     setAuthScreen("welcome");
   };
 
+  const handleNotifications = () => {
+    alert("Benachrichtigungen kommen bald.");
+  };
+
   const openWithLevel = (target) => {
     setLevelTarget(target);
     setSelectedLevel(null);
@@ -226,7 +234,14 @@ export default function App() {
   }
 
   if (showOnboarding) {
-    return <OnboardingScreen onFinish={() => setShowOnboarding(false)} />;
+    return (
+      <OnboardingScreen
+        onFinish={() => {
+          markOnboardingComplete();
+          setShowOnboarding(false);
+        }}
+      />
+    );
   }
 
   if (needsLegalConsent()) {
@@ -361,7 +376,14 @@ export default function App() {
           <span style={brandStyle}>AustriaPath</span>
 
           <div style={{ display: "flex", gap: "16px", color: "#64748b" }}>
-            <span>🔔</span>
+            <button
+              type="button"
+              onClick={handleNotifications}
+              style={notificationButtonStyle}
+              aria-label="Benachrichtigungen"
+            >
+              🔔
+            </button>
             <button onClick={handleLogout} style={logoutButtonStyle}>
               🚪
             </button>
@@ -414,7 +436,10 @@ export default function App() {
 
           {guardedTab === "userManagement" &&
             (isAdmin ? (
-              <UserManagementScreen setActiveTab={setActiveTabGuarded} />
+              <UserManagementScreen
+                setActiveTab={setActiveTabGuarded}
+                backTab={isAdmin ? "admin" : "profile"}
+              />
             ) : (
               <HomeScreen setActiveTab={setActiveTabGuarded} />
             ))}
@@ -532,7 +557,9 @@ export default function App() {
 
           {guardedTab === "aiSession" &&
             (() => {
-              const session = readJsonStorage("austriaPathAiSession", null);
+              const session =
+                readJsonStorage(AI_SESSION_STORAGE_KEY, null) ??
+                readJsonStorage(LEGACY_AI_SESSION_STORAGE_KEY, null);
 
               if (!session) {
                 return <ProfileScreen setActiveTab={setActiveTabGuarded} />;
@@ -654,6 +681,15 @@ const logoutButtonStyle = {
   border: "none",
   background: "transparent",
   cursor: "pointer",
+};
+
+const notificationButtonStyle = {
+  border: "none",
+  background: "transparent",
+  cursor: "pointer",
+  fontSize: "18px",
+  lineHeight: 1,
+  padding: 0,
 };
 
 const mainStyle = {

@@ -141,39 +141,16 @@ const saveAiEvaluation = async (aiEvaluation) => {
       <div style={cardStyle}>
         <p>{getStudentPrompt(currentModel)}</p>
 
-        <button style={buttonStyle}>
-          🎙️ Aufnahme starten
+        <button
+          style={buttonStyle}
+          onClick={() => saveAiEvaluation(selectedLevel)}
+        >
+          Weiter
         </button>
 
         <p style={smallTextStyle}>
-          Aufnahmezeit: ca. 1 Minute. Danach analysiert der KI-Prüfer die Antwort.
+          Sprechen Sie die Aufgabe laut. Der AI Sprachcoach wertet Ihre Antwort aus.
         </p>
-      </div>
-
-      <div style={cardStyle}>
-       <h3>KI-Simulation intern</h3>
-
-<p>
-  Nur für Testphase. Diese Bewertung wird später automatisch von OpenAI übernommen.
-</p>
-
-<div style={levelRowStyle}>
-  {[
-    { level: 'A2', label: 'AI bewertet: A2' },
-    { level: 'A2+', label: 'AI bewertet: A2+' },
-    { level: 'B1', label: 'AI bewertet: B1' },
-    { level: 'B1+', label: 'AI bewertet: B1+' },
-    { level: 'B2', label: 'AI bewertet: B2' },
-  ].map((item) => (
-    <button
-      key={item.level}
-      style={levelButtonStyle}
-      onClick={() => saveAiEvaluation(item.level)}
-    >
-      {item.label}
-    </button>
-  ))}
-</div>
       </div>
     </div>
   );
@@ -208,7 +185,7 @@ function getStudentPrompt(model) {
   }
 
   if (skill === 'planung') {
-    return 'Planen Sie bitte gemeinsam mit dem KI-Prüfer.';
+    return 'Planen Sie bitte gemeinsam mit dem AI Sprachcoach.';
   }
 
   if (skill === 'diskussion') {

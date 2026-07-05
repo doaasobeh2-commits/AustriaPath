@@ -28,7 +28,7 @@ Website: ${formatWebsite(LEGAL_OPERATOR)}`,
       },
       {
         heading: "Unternehmensgegenstand",
-        body: "Betrieb einer digitalen Lernplattform für Deutsch als Zweitsprache und Vorbereitung auf ÖIF-orientierte Prüfungen (Web-App). Keine Behörde, keine offizielle Prüfungsstelle.",
+        body: "Betrieb einer digitalen Lernplattform für Deutsch als Zweitsprache — mit Übungen für Lesen, Hören, Schreiben und Sprechen (Web-App). Keine Behörde, keine Prüfungsstelle.",
       },
       {
         heading: "UID-Nummer / Firmenbuch",
@@ -123,7 +123,7 @@ Keine Weitergabe zu Werbezwecken.`,
       },
       {
         heading: "2. Leistungsbeschreibung",
-        body: "AustriaPath bietet digitale Lerninhalte, Übungen und optionale AI-gestützte Prüfungssimulationen zur Vorbereitung auf Deutsch- und ÖIF-orientierte Prüfungen. Es handelt sich nicht um offizielle Prüfungen oder Zertifizierungen.",
+        body: "AustriaPath bietet digitale Lerninhalte, tägliche Übungen und optionale AI-gestützte Trainingssimulationen für Deutsch im Alltag. Es handelt sich nicht um behördliche Prüfungen oder Zertifizierungen.",
       },
       {
         heading: "3. Registrierung und Konto",
@@ -147,7 +147,7 @@ Keine Weitergabe zu Werbezwecken.`,
       },
       {
         heading: "8. Haftung",
-        body: "Haftung für leichte Fahrlässigkeit ist ausgeschlossen, soweit gesetzlich zulässig. Für Vorsatz, grobe Fahrlässigkeit und Personenschäden gilt gesetzliche Haftung. Erfolg in echten ÖIF-Prüfungen wird nicht garantiert.",
+        body: "Haftung für leichte Fahrlässigkeit ist ausgeschlossen, soweit gesetzlich zulässig. Für Vorsatz, grobe Fahrlässigkeit und Personenschäden gilt gesetzliche Haftung. Lern- oder Prüfungserfolg wird nicht garantiert.",
       },
       {
         heading: "9. Kündigung",
@@ -218,8 +218,8 @@ Diese Speicherung ist für die Funktion der App technisch erforderlich.`,
     subtitle: `Stand: ${LEGAL_LAST_UPDATED}`,
     sections: [
       {
-        heading: "Keine offizielle Prüfung",
-        body: "AI-gestützte Funktionen simulieren Prüfungssituationen zu Lernzwecken. Sie stellen keine ÖIF-Prüfung, keine Behördenentscheidung und keine Zertifizierung dar.",
+        heading: "Kein behördliches Prüfungsergebnis",
+        body: "AI-gestützte Funktionen simulieren Übungssituationen zu Lernzwecken. Sie stellen keine behördliche Prüfung, keine Behördenentscheidung und keine Zertifizierung dar.",
       },
       {
         heading: "Kein zertifizierter Prüfer",
@@ -227,11 +227,11 @@ Diese Speicherung ist für die Funktion der App technisch erforderlich.`,
       },
       {
         heading: "Lernempfehlung",
-        body: "Nutzen Sie AI-Feedback als Ergänzung zu Unterricht, Selbststudium und offiziellen Materialien — nicht als alleinige Prüfungsvorbereitung.",
+        body: "Nutzen Sie AI-Feedback als Ergänzung zu Unterricht, Selbststudium und weiteren Lernmaterialien — nicht als alleinige Vorbereitung.",
       },
       {
         heading: "Examiner Lab",
-        body: "Manuell ausgewählte Beispielprüfungen im Examiner Lab dienen dem internen Regelabgleich und werden nicht als offizielle Bewertung ausgegeben.",
+        body: "Manuell ausgewählte Beispielübungen im Examiner Lab dienen dem internen Regelabgleich und werden nicht als behördliche Bewertung ausgegeben.",
       },
       {
         heading: "Haftung",

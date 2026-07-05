@@ -1,4 +1,8 @@
 import React, { useMemo, useState } from 'react';
+import {
+  AI_SESSION_STORAGE_KEY,
+  LEGACY_AI_SESSION_STORAGE_KEY,
+} from '../../constants/storageKeys';
 import { buildWeeklySession } from "../../data/weeklyPlanLibrary";
 
 function cleanLevel(level = 'B1') {
@@ -98,7 +102,10 @@ function buildStartMessages(sessionTasks) {
 export default function WeeklyPlanSessionScreen({ setActiveTab }) {
   const session = useMemo(() => {
     try {
-      return JSON.parse(localStorage.getItem('austriaPathCurrentAISession'));
+      const raw =
+        localStorage.getItem(AI_SESSION_STORAGE_KEY) ||
+        localStorage.getItem(LEGACY_AI_SESSION_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
     } catch {
       return null;
     }

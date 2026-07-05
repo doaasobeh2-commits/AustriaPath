@@ -144,7 +144,7 @@ describe("reportBuilder Phase E", () => {
     expect(report.summary).toBeTruthy();
     expect(report.recommendations.length).toBeGreaterThan(0);
     expect(report.councilDecision.decisionId).toBe(decision.decisionId);
-    expect(report.disclaimer).toContain("ÖIF");
+    expect(report.disclaimer).toContain("Übungsfeedback");
   });
 });
 

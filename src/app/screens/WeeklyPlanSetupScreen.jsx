@@ -5,6 +5,7 @@ import {
   buildWeeklySession,
   getDailyTrainingMessages,
 } from '../../data/weeklyPlanLibrary';
+import { AI_SESSION_STORAGE_KEY } from '../../constants/storageKeys';
 
 export default function WeeklyPlanSetupScreen({ setActiveTab }) {
   const placementProfile = useMemo(() => {
@@ -131,7 +132,7 @@ const handleStartAISession = () => {
   });
 
   localStorage.setItem(
-    'austriaPathCurrentAISession',
+    AI_SESSION_STORAGE_KEY,
     JSON.stringify({
       sessionType: 'weekly_plan',
       mode: 'weekly_plan',

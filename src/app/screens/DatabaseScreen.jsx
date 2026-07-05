@@ -138,10 +138,10 @@ const premiumMessage =
       ← Zurück
     </button>
 
-      <h2 style={titleStyle}>Prüfungsdatenbank</h2>
+      <h2 style={titleStyle}>Themenbibliothek</h2>
 
       <p style={subtitleStyle}>
-        Häufige Prüfungsthemen nach Niveau, Bundesland und Stadt. Die Datenbank ist derzeit
+        Häufige Alltagsthemen nach Niveau, Bundesland und Stadt. Die Bibliothek ist derzeit
         kuratiert und wird vom AustriaPath-Team geprüft.
       </p>
 

@@ -10,12 +10,12 @@ import { getUserLanguage } from '../../utils/userPreferences';
 const premiumTexts = {
   Deutsch: {
     heroTitle: 'AustriaPath Premium',
-    heroText: 'Wähle den passenden Plan, um dein Niveau zu erkennen oder eine interaktive Prüfung zu trainieren.',
+    heroText: 'Wähle den passenden Plan für personalisiertes Lernen oder interaktives AI-Training.',
     preparation: 'Vorbereitung',
     level: 'Niveau',
     whatYouGet: 'Was bekommst du?',
     benefits: [
-      'Einstufungstest oder interaktive Prüfung je nach Plan',
+      'Einstufungstest oder interaktives AI-Training je nach Plan',
       'Analyse von Stärken und Schwächen',
       'Hinweise zu Aussprache, Grammatik und Wortschatz',
       'Lernplan oder Empfehlungen für dein Training in AustriaPath',
@@ -25,7 +25,7 @@ const premiumTexts = {
     soon: 'Premium bald verfügbar',
     noteTitle: 'Wichtiger Hinweis',
     noteText:
-      'Diese Dienste sind nur Training und Lernanalyse. Es gibt keine offizielle Note, keine Garantie für ein Prüfungsergebnis und der Bericht wird an keine Schule oder Prüfungsstelle gesendet.',
+      'Diese Dienste sind nur Training und Lernanalyse. Es gibt keine behördliche Bewertung, keine Erfolgsgarantie und der Bericht wird an keine Institution gesendet.',
     duration: 'Dauer',
     valid: 'Gültigkeit',
     report: 'Bericht',
@@ -234,7 +234,7 @@ const localizedPlans = getLocalizedPlans(userLanguage);
         part.type === 'self_intro' ? '👤' :
         part.type === 'image' ? '🖼️' :
         '🗓️',
-      title: part.label || part.title || 'Prüfung',
+      title: part.label || part.title || 'Übung',
       type: part.type,
       time: '03:00',
     }));
@@ -320,7 +320,7 @@ const startExam = () => {
 const firstExam = packageData?.exams?.[0];
 
 if (!firstExam || !Array.isArray(firstExam.parts) || firstExam.parts.length === 0) {
-  alert('Keine Prüfungsinhalte gefunden. Bitte später erneut versuchen.');
+  alert('Keine Übungsinhalte gefunden. Bitte später erneut versuchen.');
   return;
 }
 
@@ -398,7 +398,7 @@ setExam({
 
        {selectedPlan && (
   <button style={startButtonStyle} onClick={startExam}>
-    Prüfung starten
+    Training starten
   </button>
 )}
 
@@ -445,7 +445,7 @@ setExam({
         </div>
 
         <button style={startButtonStyle} onClick={resetExam}>
-          Neue AI Prüfung starten
+          Neues AI-Training starten
         </button>
       </div>
     );
@@ -455,7 +455,7 @@ setExam({
     <div style={containerStyle}>
       <div style={topProgressStyle}>
         <div>
-          <b>AI Probeprüfung</b>
+          <b>AI Sprechtraining</b>
           <p style={{ margin: '4px 0 0', color: '#64748b' }}>
             Schritt {step + 1} von {examFlow.length} · Niveau {exam?.level}
           </p>
@@ -545,7 +545,7 @@ setExam({
       </button>
 
       <button style={secondaryButtonStyle} onClick={resetExam}>
-        Prüfung abbrechen
+        Training abbrechen
       </button>
     </div>
   );
@@ -613,16 +613,16 @@ function getLocalizedPlans(language) {
         ],
       },
       {
-        name: 'AI Probeprüfung',
+        name: 'AI Sprechtraining',
         price: '9,99 €',
-        subtitle: '1 Prüfung · einmalig',
+        subtitle: '1 Trainingseinheit · einmalig',
         tag: 'Zum Testen',
         exams: 1,
         valid: 'Einmalig',
         duration: 'A2: 8–12 Min. · B1: 15–20 Min. · B2: 20–25 Min.',
         reportType: 'Kurzer Bericht',
         features: [
-          'Eine vollständige AI-Prüfung',
+          'Eine vollständige AI-Trainingseinheit',
           'Thema aus AustriaPath-Modellen',
           'Interaktive Fragen',
           'Bildbeschreibung / Planung / Diskussion je nach Niveau',
@@ -633,17 +633,17 @@ function getLocalizedPlans(language) {
       {
         name: 'Intensive Woche',
         price: '24,99 €',
-        subtitle: '3 Prüfungen · 7 Tage gültig',
+        subtitle: '3 Trainingseinheiten · 7 Tage gültig',
         tag: 'Zur Vorbereitung',
         exams: 3,
         valid: '7 Tage',
         duration: 'ca. 45–60 Minuten Training',
         reportType: 'Bericht + 2-Tage-Plan',
         features: [
-          '3 verschiedene AI-Prüfungen',
-          'Keine Wiederholung derselben Prüfung',
+          '3 verschiedene AI-Trainingseinheiten',
+          'Keine Wiederholung derselben Übung',
           'Themen aus AustriaPath-Modellen',
-          'Interaktive Fragen in jeder Prüfung',
+          'Interaktive Fragen in jeder Einheit',
           'Vergleich wiederkehrender Schwächen',
           'Persönlicher Lernplan für zwei Tage',
         ],
@@ -651,15 +651,15 @@ function getLocalizedPlans(language) {
       {
         name: 'Premium Monat',
         price: '39,99 €',
-        subtitle: '5 Prüfungen · 30 Tage gültig',
+        subtitle: '5 Trainingseinheiten · 30 Tage gültig',
         tag: 'Smart Training',
         exams: 5,
         valid: '30 Tage',
         duration: 'ca. 90–120 Minuten Training',
         reportType: 'Smart-Bericht + Lernplan',
         features: [
-          '5 verschiedene AI-Prüfungen',
-          'Keine Wiederholung desselben Prüfungswegs',
+          '5 verschiedene AI-Trainingseinheiten',
+          'Keine Wiederholung desselben Übungswegs',
           'Themen aus bestem AustriaPath-Inhalt',
           'Erkennung wiederkehrender Fehler',
           'Lernplan nach Schwächen',

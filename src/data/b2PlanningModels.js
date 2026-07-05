@@ -1,4 +1,4 @@
-/** B2 – Gemeinsame Planung & Diskussion (ÖIF-orientiert, Originaltexte) */
+/** B2 – Gemeinsame Planung & Diskussion (Alltagsorientiert, Originaltexte) */
 export const b2PlanningModels = [
   {
     id: "b2-plan-01",

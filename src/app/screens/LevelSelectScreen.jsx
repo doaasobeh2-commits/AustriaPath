@@ -12,7 +12,7 @@ export default function LevelSelectScreen({ onSelectLevel }) {
     {
       id: 'B1',
       title: 'B1 Level',
-      description: 'Prüfungstraining mit Sprechen, Schreiben, Lesen und Hören.',
+      description: 'Tägliches Deutschtraining mit Sprechen, Schreiben, Lesen und Hören.',
     },
     {
       id: 'B2',

@@ -211,7 +211,7 @@ export function PracticeScreen({
           <button
             onClick={() => {
               setShowPremiumHint(false);
-              setActiveTab('placement');
+              setActiveTab('placementTest');
             }}
             style={premiumButtonStyle}
           >

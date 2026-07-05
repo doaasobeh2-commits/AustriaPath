@@ -309,7 +309,7 @@ if (level === 'B1') {
           <InfoBox title="⭐ B2 Ausdrücke" items={model.expressions} />
 
           <div style={boxStyle}>
-            <h3>⭐ Prüfungstipp</h3>
+            <h3>⭐ Lerntipp</h3>
             <p>{model.tip}</p>
           </div>
         </>

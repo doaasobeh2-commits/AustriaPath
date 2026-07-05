@@ -210,7 +210,7 @@ export function B2LesenScreen({ setActiveTab }) {
     border: '1px solid #bfdbfe'
   }}
 >
-  <strong>Prüfungshinweis</strong>
+  <strong>Lernhinweis</strong>
 
   <p style={{ marginTop: 8, lineHeight: 1.6 }}>
     Lesen Sie zuerst die Anleitung sorgfältig. Bearbeiten Sie anschließend alle Aufgaben.
@@ -243,7 +243,7 @@ export function B2LesenScreen({ setActiveTab }) {
 
       {model.tips && (
         <div style={cardStyle}>
-          <h3>Prüfungstipps</h3>
+          <h3>Lerntipps</h3>
           {model.tips.map((tip, i) => (
             <p key={i}>💡 {tip}</p>
           ))}

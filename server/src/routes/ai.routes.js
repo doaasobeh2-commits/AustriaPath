@@ -41,7 +41,7 @@ router.post("/completions", requireAuth, aiRateLimit, aiDailyRateLimit, async (r
         body: JSON.stringify({
           model: env.openaiModel,
           messages: [
-            { role: "system", content: "Du bist ein offizieller ÖIF-Prüfer. Antworte ausschließlich auf Deutsch." },
+            { role: "system", content: "Du bist ein freundlicher Deutsch-Sprachtrainer für Übungssituationen. Antworte ausschließlich auf Deutsch. Du bist kein Prüfer und stellst keine behördliche Bewertung aus." },
             ...messages.slice(-30),
           ],
           temperature: mode === "conversational" ? 0.7 : 0.3,

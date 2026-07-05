@@ -134,7 +134,7 @@ export function AkademieScreen({ setActiveTab, selectedLevel = 'A2' }) {
     level === 'B2'
       ? 'Grammatik, Argumentation, Redemittel und häufige Prüfungsfehler für Diskussion und gemeinsame Lösung.'
       : level === 'B1'
-        ? 'Grammatik, Planungs-Redemittel, Konnektoren und typische ÖIF-Fehler auf B1.'
+        ? 'Grammatik, Planungs-Redemittel, Konnektoren und typische Fehler auf B1.'
         : `Grammatik, Satzbau, Konnektoren, Wortschatz und wichtige Verben für ${level}.`;
 
   return (
@@ -206,7 +206,7 @@ export function AkademieScreen({ setActiveTab, selectedLevel = 'A2' }) {
 
           {section === 'fehler' && (
             <ContentList
-              title={`Häufige Prüfungsfehler ${level}`}
+              title={`Häufige Fehler ${level}`}
               items={data.mistakes}
               emptyText={`Für ${level} sind noch keine Fehlerbeispiele hinterlegt.`}
             />
@@ -215,7 +215,7 @@ export function AkademieScreen({ setActiveTab, selectedLevel = 'A2' }) {
 
         {data.expressCards.length > 0 && (
           <div style={{ marginTop: '18px' }}>
-            <h2 style={expressSectionTitleStyle}>Redemittel für die mündliche Prüfung</h2>
+            <h2 style={expressSectionTitleStyle}>Redemittel für Sprechtraining</h2>
             {data.expressCards.map((card, index) => (
               <ExpressCard key={index} card={card} />
             ))}

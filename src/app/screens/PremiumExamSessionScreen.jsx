@@ -89,11 +89,11 @@ const buildExamSummary = (decision = {}) => {
   const confidence = decision.confidence || 0;
 
   if (decision.conflicts?.length) {
-    return "Die Prüfer sind sich noch nicht vollständig einig. Eine erneute Bewertung wird empfohlen.";
+    return "Die AI-Bewertung ist noch nicht eindeutig. Eine erneute Auswertung wird empfohlen.";
   }
 
   if (decision.warnings?.length) {
-    return "Die Hauptaufgabe wurde nicht vollständig erfüllt. Einige wichtige Prüfungspunkte fehlen.";
+    return "Die Hauptaufgabe wurde nicht vollständig erfüllt. Einige wichtige Lernpunkte fehlen.";
   }
 
   if (confidence < 65) {
@@ -101,7 +101,7 @@ const buildExamSummary = (decision = {}) => {
   }
 
   if (score >= 85) {
-    return "Sehr gute Leistung. Die Prüfungsziele wurden sicher erreicht.";
+    return "Sehr gute Leistung. Die Lernziele wurden sicher erreicht.";
   }
 
   if (score >= 70) {
@@ -112,7 +112,7 @@ const buildExamSummary = (decision = {}) => {
     return "Ausreichende Leistung. Einige Bereiche sollten noch verbessert werden.";
   }
 
-  return "Das gewünschte Prüfungsniveau wurde noch nicht erreicht. Weitere Vorbereitung wird empfohlen.";
+  return "Das gewünschte Niveau wurde noch nicht erreicht. Weiteres Üben wird empfohlen.";
 };
 
  
@@ -166,7 +166,7 @@ const buildExamSummary = (decision = {}) => {
       <b>Fragen:</b>
 
       {questions.length === 0 && (
-        <p>Die Fragen werden später vom AI-Prüfer passend erstellt.</p>
+        <p>Die Fragen werden vom AI Sprachcoach passend erstellt.</p>
       )}
 
       {questions.map((q, index) => (
@@ -359,7 +359,7 @@ const buildExamSummary = (decision = {}) => {
       <button style={purpleButtonStyle}>🎤 Antwort aufnehmen</button>
 
       <div style={transcriptBoxStyle}>
-        Demo: Später läuft hier eine echte interaktive Unterhaltung zwischen AI-Prüfer und Student.
+        Sprechen Sie mit dem AI Sprachcoach und antworten Sie auf die Nachfragen.
       </div>
     </>
   );
@@ -374,8 +374,8 @@ const buildExamSummary = (decision = {}) => {
         <button style={backButtonStyle} onClick={() => setActiveTab('profile')}>
           ← Zurück
         </button>
-        <h1>AI-Prüfung</h1>
-        <p>Keine aktive Prüfung gefunden.</p>
+        <h1>AI-Training</h1>
+        <p>Keine aktive Trainingseinheit gefunden.</p>
       </div>
     );
   }
@@ -384,7 +384,7 @@ const buildExamSummary = (decision = {}) => {
     return (
       <div style={pageStyle}>
         <div style={successStyle}>
-          <h2>✅ Prüfung abgeschlossen</h2>
+          <h2>✅ Training abgeschlossen</h2>
           <p>Der Bericht wurde im Profil gespeichert.</p>
           <button style={primaryButtonStyle} onClick={() => setActiveTab('profile')}>
             Zum Profil
@@ -402,14 +402,14 @@ const buildExamSummary = (decision = {}) => {
 
       <div style={heroStyle}>
         <h1>🧪 {exam.title}</h1>
-        <p>{exam.level} · Prüfung {exam.used}/{exam.total}</p>
+        <p>{exam.level} · Einheit {exam.used}/{exam.total}</p>
       </div>
 
       {!started ? (
         <div style={cardStyle}>
-          <h2>Prüfung bereit</h2>
+          <h2>Training bereit</h2>
           <p>
-            Diese Prüfung simuliert einen vollständigen AI-Prüfer. Am Ende bekommst du einen Bericht.
+            Diese Übungssimulation nutzt AI-Feedback für Sprechen, Schreiben, Lesen und Hören. Am Ende bekommst du einen Lernbericht.
           </p>
 
           <button
@@ -436,7 +436,7 @@ const buildExamSummary = (decision = {}) => {
               setStarted(true);
             }}
           >
-            ▶️ Prüfung starten
+            ▶️ Training starten
           </button>
         </div>
       ) : (
@@ -456,7 +456,7 @@ const buildExamSummary = (decision = {}) => {
               ? "Wird ausgewertet..."
               : step < parts.length - 1
                 ? "Weiter"
-                : "Prüfung abschließen"}
+                : "Training abschließen"}
           </button>
         </div>
       )}

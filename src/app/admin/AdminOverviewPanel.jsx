@@ -20,7 +20,7 @@ export default function AdminOverviewPanel({ stats, onExport, onClearAll }) {
           <li>Ein Modell speist automatisch Prüfung, Akademie und Database</li>
         </ol>
         <p style={hintStyle}>
-          Originaltexte only — keine Kopien offizieller Prüfungsmaterialien. Themen: AMS, MA35,
+          Originaltexte only — keine Kopien fremder Prüfungsmaterialien. Themen: AMS, MA35,
           Arzt, Wohnen, ÖBB, Gemeinde, Familie, digitale Services.
         </p>
       </div>

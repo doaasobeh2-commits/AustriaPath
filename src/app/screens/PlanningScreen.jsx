@@ -143,7 +143,7 @@ export function PlanningScreen({ setActiveTab }) {
           <InfoBox title="⚠️ Häufige Fehler" items={model.mistakes} />
 
           <div style={boxStyle}>
-            <h3>⭐ Prüfungstipp</h3>
+            <h3>⭐ Lerntipp</h3>
             <p>{model.tip || 'Machen Sie Vorschläge, stellen Sie Fragen und reagieren Sie auf Ihren Partner.'}</p>
           </div>
         </>

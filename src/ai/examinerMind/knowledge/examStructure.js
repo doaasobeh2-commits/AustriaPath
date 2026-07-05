@@ -1,5 +1,5 @@
 /**
- * AustriaPath ÖIF Exam Structure
+ * AustriaPath speaking task structure (CEFR-oriented practice)
  * Version: 1.1
  *
  * Central exam map for A2, B1 and B2.

@@ -272,7 +272,7 @@ export default function ContentManager({
         <Field label="Exam ID"><input value={form.examId} onChange={(e) => updateForm({ examId: e.target.value })} style={inputStyle} /></Field>
         <Field label="Exam Type">
           <select value={form.examType} onChange={(e) => updateForm({ examType: e.target.value })} style={inputStyle}>
-            <option value="ÖIF-orientiert">ÖIF-orientiert</option>
+            <option value="Alltagsorientiert">Alltagsorientiert</option>
             <option value="ÖSD-orientiert">ÖSD-orientiert</option>
             <option value="Goethe-orientiert">Goethe-orientiert</option>
             <option value="Telc-orientiert">Telc-orientiert</option>

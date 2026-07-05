@@ -251,7 +251,7 @@ const buildSmartRecommendation = (focusAreas, weaknesses) => {
   if (weaknesses.length > 0) {
     return `Wiederhole zuerst: ${[...new Set(weaknesses)].slice(0, 2).join(' und ')}.`;
   }
-  return 'Weiter mit einer schwierigeren Aufgabe oder einer AI Probeprüfung.';
+  return 'Weiter mit einer schwierigeren Aufgabe oder einem AI Sprechtraining.';
 };
 
 const nextStep = async () => {
@@ -515,7 +515,7 @@ function getSessionText(sessionType) {
   if (sessionType === 'placement_test') return 'Kurzer Einstufungstest mit KI';
   if (sessionType === 'intensive_week') return 'Intensive Woche';
   if (sessionType === 'premium_month') return 'Premium Monat';
-  return 'AI Probeprüfung';
+  return 'AI Sprechtraining';
 }
 
 function WritingTask({ answer, setAnswer }) {
@@ -616,7 +616,7 @@ function SpeakingTask({ recording, setRecording, aiText }) {
   return (
     <>
       <div style={aiBoxStyle}>
-        <b>AI Prüfer:</b> {aiText || 'Bitte sprechen Sie frei.'}
+        <b>AI Sprachcoach:</b> {aiText || 'Bitte sprechen Sie frei.'}
       </div>
 
       <VoiceButtons recording={recording} setRecording={setRecording} />
@@ -644,7 +644,7 @@ function PlanningTask({ prepTime, recording, setRecording }) {
         <div style={timerStyle}>⏱️ Vorbereitung: {prepTime} Sekunden</div>
       ) : (
         <div style={aiBoxStyle}>
-          <b>AI Prüfer:</b> Beginnen wir. Was schlagen Sie zuerst vor?
+          <b>AI Sprachcoach:</b> Beginnen wir. Was schlagen Sie zuerst vor?
         </div>
       )}
 

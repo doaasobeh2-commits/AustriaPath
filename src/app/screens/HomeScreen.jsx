@@ -3,44 +3,44 @@ import { getUserLanguage } from '../../utils/userPreferences';
 
 const homeTexts = {
   Deutsch: {
-    aiTitle: 'AI Probeprüfung',
+    aiTitle: 'Intelligentes AI-Training',
     aiText:
-      'Trainiere später mit einer interaktiven AI-Prüfung und erhalte Feedback zu Aussprache, Grammatik, Wortschatz und Satzbau.',
+      'Trainiere mit interaktiven AI-Übungen und erhalte Feedback zu Aussprache, Grammatik, Wortschatz und Satzbau.',
     aiPlan:
-      'Beginne mit einem Einstufungstest und erhalte einen Lernplan, der zu deinem Niveau passt.',
-    aiButton: 'Jetzt AI Prüfung ansehen',
+      'Beginne mit einer Niveau-Einschätzung und erhalte einen personalisierten Lernplan für kontinuierliche Verbesserung.',
+    aiButton: 'AI-Training entdecken',
   },
   العربية: {
-    aiTitle: 'اختبار AI تجريبي',
+    aiTitle: 'تدريب AI ذكي',
     aiText:
-      'تدرّب لاحقاً مع اختبار تفاعلي بالذكاء الاصطناعي واحصل على ملاحظات حول النطق، القواعد، المفردات وبناء الجمل.',
+      'تدرّب مع تمارين تفاعلية بالذكاء الاصطناعي واحصل على ملاحظات حول النطق، القواعد، المفردات وبناء الجمل.',
     aiPlan:
-      'ابدأ باختبار تحديد المستوى واحصل على خطة دراسة تناسب مستواك.',
-    aiButton: 'عرض اختبار AI الآن',
+      'ابدأ بتقييم المستوى واحصل على خطة تعلم شخصية للتحسن المستمر.',
+    aiButton: 'اكتشف تدريب AI',
   },
   Türkçe: {
-    aiTitle: 'AI Deneme Sınavı',
+    aiTitle: 'Akıllı AI Eğitimi',
     aiText:
-      'Daha sonra etkileşimli bir AI sınavıyla pratik yap ve telaffuz, gramer, kelime bilgisi ve cümle yapısı hakkında geri bildirim al.',
+      'Etkileşimli AI alıştırmalarıyla pratik yap ve telaffuz, gramer, kelime bilgisi ve cümle yapısı hakkında geri bildirim al.',
     aiPlan:
-      'Seviye belirleme testiyle başla ve seviyene uygun bir çalışma planı al.',
-    aiButton: 'AI sınavını şimdi gör',
+      'Seviye değerlendirmesiyle başla ve sürekli gelişim için kişisel bir öğrenme planı al.',
+    aiButton: 'AI eğitimini keşfet',
   },
   فارسی: {
-    aiTitle: 'آزمون آزمایشی AI',
+    aiTitle: 'آموزش هوشمند AI',
     aiText:
-      'بعداً با یک آزمون تعاملی هوش مصنوعی تمرین کن و درباره تلفظ، گرامر، واژگان و ساختار جمله بازخورد بگیر.',
+      'با تمرین‌های تعاملی هوش مصنوعی تمرین کن و درباره تلفظ، گرامر، واژگان و ساختار جمله بازخورد بگیر.',
     aiPlan:
-      'با آزمون تعیین سطح شروع کن و برنامه مطالعه مناسب سطح خود را دریافت کن.',
-    aiButton: 'مشاهده آزمون AI',
+      'با ارزیابی سطح شروع کن و برنامه یادگیری شخصی برای پیشرفت مداوم دریافت کن.',
+    aiButton: 'آموزش AI را کشف کن',
   },
   Українська: {
-    aiTitle: 'Пробний AI-іспит',
+    aiTitle: 'Розумне AI-тренування',
     aiText:
-      'Пізніше тренуйся з інтерактивним AI-іспитом і отримуй відгук щодо вимови, граматики, словника та побудови речень.',
+      'Тренуйся з інтерактивними AI-вправами та отримуй відгук щодо вимови, граматики, словника та побудови речень.',
     aiPlan:
-      'Почни з тесту визначення рівня та отримай навчальний план відповідно до свого рівня.',
-    aiButton: 'Переглянути AI-іспит',
+      'Почни з оцінки рівня та отримай персональний навчальний план для постійного прогресу.',
+    aiButton: 'Відкрити AI-тренування',
   },
 };
 
@@ -71,16 +71,16 @@ export function HomeScreen({ setActiveTab }) {
             <Card icon="📖" title="Lesen Trainer" text="Kostenlose Lesemodelle für A2, B1 und B2." color="#e0f2fe" onClick={() => setActiveTab('lesen')} />
             <Card icon="🎧" title="Hören Trainer" text="Kostenlose Hörmodelle mit Text, Audio und Fragen." color="#f3e8ff" onClick={() => setActiveTab('horen')} />
             <Card icon="🖼️" title="Bildbeschreibung" text="Trainiere Bilder mit Beschreibung, Meinung und Beispielen." color="#ecfdf5" onClick={() => setActiveTab('images')} />
-            <Card icon="🗣️" title="Mündliche Prüfung" text="A2: Selbstvorstellung · B1: Etwas planen · B2: Diskussion und Präsentation." color="#eff6ff" onClick={() => setActiveTab('speaking')} />
-            <Card icon="📚" title="Prüfungsdatenbank" text="Häufige Themen nach Niveau, Bundesland und Stadt." color="#fff7ed" onClick={() => setActiveTab('database')} />
-            <Card icon="⭐" title="AI Prüfung" text="Interaktive Probeprüfung mit Analyse und Ergebnisbericht." color="#fef9c3" onClick={() => setActiveTab('premium')} />
+            <Card icon="🗣️" title="Sprechen üben" text="A2: Selbstvorstellung · B1: Etwas planen · B2: Diskussion und Präsentation." color="#eff6ff" onClick={() => setActiveTab('speaking')} />
+            <Card icon="📚" title="Themenbibliothek" text="Häufige Alltagsthemen nach Niveau, Bundesland und Stadt." color="#fff7ed" onClick={() => setActiveTab('database')} />
+            <Card icon="⭐" title="AI-Training" text="Interaktive Übungssimulation mit AI-Feedback und Lernbericht." color="#fef9c3" onClick={() => setActiveTab('premium')} />
           </div>
 
           <div style={popularStyle}>
             
             <h2 style={sectionTitleStyle}>Beliebte Themen</h2>
-            <p style={popularTextStyle}>📍 B1 Wien · Häufige Prüfungsthemen</p>
-            <p style={popularTextStyle}>📖 Lesen · 🎧 Hören · 🖼️ Bildbeschreibung · 🗣️ Mündliche Prüfung</p>
+            <p style={popularTextStyle}>📍 B1 Wien · Beliebte Alltagsthemen</p>
+            <p style={popularTextStyle}>📖 Lesen · 🎧 Hören · 🖼️ Bildbeschreibung · 🗣️ Sprechen üben</p>
           </div>
 
           <div style={aiBoxStyle}>
@@ -97,8 +97,8 @@ export function HomeScreen({ setActiveTab }) {
           </div>
 
           <p style={footerStyle}>
-            AustriaPath ist eine unabhängige Lernplattform für Deutsch, Alltag und
-            Prüfungsvorbereitung in Österreich.
+            AustriaPath ist eine unabhängige Lernplattform für tägliches Deutschlernen,
+            personalisiertes Training und kontinuierliche Sprachverbesserung in Österreich.
           </p>
         </div>
       </div>

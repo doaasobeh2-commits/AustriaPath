@@ -12,10 +12,10 @@ export default function PremiumScheduleScreen({ setActiveTab }) {
       : type === 'intensive_week'
       ? { title: 'Intensive Woche', count: 3, days: 7 }
       : {
-          title: 'AI Probeprüfung',
+          title: 'AI Sprechtraining',
           count: 1,
           days: 0,
-          subtitle: 'Die Prüfung ist ab jetzt 30 Minuten verfügbar.',
+          subtitle: 'Das Training ist ab jetzt 30 Minuten verfügbar.',
         };
 
   const [secondsLeft, setSecondsLeft] = useState(30 * 60);
@@ -66,7 +66,7 @@ export default function PremiumScheduleScreen({ setActiveTab }) {
     const appointment = {
       id: 'ai_exam-1',
       type: 'ai_exam',
-      title: 'AI Probeprüfung',
+      title: 'AI Sprechtraining',
       date: now.toISOString().slice(0, 10),
       time: now.toTimeString().slice(0, 5),
       startAt: now.toISOString(),
@@ -190,14 +190,14 @@ localStorage.setItem(
 
       {type === 'ai_exam' ? (
         <div style={card}>
-          <h2 style={{ marginTop: 0 }}>Prüfung starten</h2>
+          <h2 style={{ marginTop: 0 }}>Training starten</h2>
 
           <div style={timerBox}>
             ⏳ {formatTime(secondsLeft)}
           </div>
 
           <p style={hint}>
-            Sie können die Prüfung sofort starten. Der Zugang bleibt 30 Minuten aktiv.
+            Sie können das Training sofort starten. Der Zugang bleibt 30 Minuten aktiv.
           </p>
 
           <button
@@ -208,7 +208,7 @@ localStorage.setItem(
             onClick={startAIExamNow}
             disabled={secondsLeft <= 0}
           >
-            {secondsLeft > 0 ? 'Prüfung jetzt starten' : 'Zeit abgelaufen'}
+            {secondsLeft > 0 ? 'Training jetzt starten' : 'Zeit abgelaufen'}
           </button>
         </div>
       ) : (

@@ -1,6 +1,20 @@
 /**
  * Resolves duplicated localStorage preference keys without UI changes.
  */
+import { ONBOARDING_COMPLETE_KEY } from "../constants/storageKeys.js";
+
+export function isOnboardingComplete() {
+  return localStorage.getItem(ONBOARDING_COMPLETE_KEY) === "true";
+}
+
+export function markOnboardingComplete() {
+  localStorage.setItem(ONBOARDING_COMPLETE_KEY, "true");
+}
+
+export function resetOnboardingCompletion() {
+  localStorage.removeItem(ONBOARDING_COMPLETE_KEY);
+}
+
 export function getUserLanguage() {
   return (
     localStorage.getItem("austriaPathLanguage") ||

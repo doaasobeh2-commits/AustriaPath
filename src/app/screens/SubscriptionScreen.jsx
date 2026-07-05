@@ -80,6 +80,10 @@ export default function SubscriptionScreen({ setActiveTab }) {
 };
   return (
     <div style={container}>
+      <button type="button" style={backButton} onClick={() => setActiveTab?.('profile')}>
+        ← Zurück
+      </button>
+
       <h1 style={title}>{t.title}</h1>
       <p style={subtitle}>{t.subtitle}</p>
 
@@ -162,7 +166,7 @@ const content = {
     select: 'Auswählen',
     infoTitle: 'Was ist enthalten?',
     infoText:
-      'AustriaPath Premium hilft Ihnen, Ihr Niveau zu bestimmen, Prüfungen zu trainieren, Stärken und Schwächen zu erkennen und einen persönlichen Lernplan zu erhalten.',
+      'AustriaPath Premium hilft Ihnen, Ihr Niveau zu bestimmen, täglich zu üben, Stärken und Schwächen zu erkennen und einen personalisierten Lernplan zu erhalten.',
     plans: [
       {
         ...planMeta.placement,
@@ -199,14 +203,14 @@ const content = {
       },
       {
         ...planMeta.exam,
-        name: 'AI Probeprüfung',
+        name: 'AI Sprechtraining',
         price: '9,99 €',
-        buttonText: 'Prüfung starten',
-        exams: '1 Prüfung',
+        buttonText: 'Training starten',
+        exams: '1 Trainingseinheit',
         duration: 'Einmalig',
         highlight: false,
         features: [
-          'Vollständige AI-Prüfung',
+          'Vollständiges AI-Training',
           'Aussprache-Analyse',
           'Grammatik-Analyse',
           'Wortschatz-Bewertung',
@@ -218,11 +222,11 @@ const content = {
         name: 'Intensive Woche',
         price: '24,99 €',
         buttonText: 'Intensive Woche starten',
-        exams: '3 Prüfungen',
+        exams: '3 Trainingseinheiten',
         duration: '7 Tage gültig',
         highlight: false,
         features: [
-          '3 vollständige AI-Prüfungen',
+          '3 vollständige AI-Trainingseinheiten',
           'Interaktive Nachfragen',
           'Bildbeschreibung',
           'Planung oder Gespräch je nach Niveau',
@@ -234,11 +238,11 @@ const content = {
         name: 'Premium Monat',
         price: '39,99 €',
         buttonText: 'Premium Monat starten',
-        exams: '5 Prüfungen',
+        exams: '5 Trainingseinheiten',
         duration: '30 Tage gültig',
         highlight: false,
         features: [
-          '5 vollständige AI-Prüfungen',
+          '5 vollständige AI-Trainingseinheiten',
           'Fortschrittsvergleich',
           'Analyse wiederholter Fehler',
           'Lernplan für mehrere Wochen',
@@ -625,6 +629,17 @@ const container = {
   background: '#f8fafc',
   minHeight: '100vh',
   paddingBottom: '90px',
+};
+
+const backButton = {
+  border: 'none',
+  backgroundColor: '#e0f2fe',
+  color: '#0369a1',
+  padding: '10px 16px',
+  borderRadius: '999px',
+  fontWeight: '700',
+  cursor: 'pointer',
+  marginBottom: '18px',
 };
 
 const title = {

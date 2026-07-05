@@ -15,7 +15,8 @@ export default function AuthWelcomeScreen({ onLogin, onRegister, onOpenLegal }) 
       <div style={authCardStyle}>
         <h1 style={authTitleStyle}>AustriaPath</h1>
         <p style={authSubtitleStyle}>
-          Lernen Sie Deutsch für ÖIF-Prüfungen. Melden Sie sich an oder
+          Tägliches Deutschlernen mit personalisiertem Training, AI-Feedback
+          und Übungen für Lesen, Hören, Schreiben und Sprechen. Melden Sie sich an oder
           erstellen Sie ein kostenloses Konto.
         </p>
 

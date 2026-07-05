@@ -14,33 +14,33 @@ if (recognition) {
 
 const LEVEL_CONFIG = {
   A2: {
-    title: 'ÖIF A2 Sprechen Prüfung',
+    title: 'A2 Sprechtraining',
     intro:
-      'Willkommen zur A2-Prüfung. Bitte stellen Sie sich einfach vor: Name, Herkunft, Wohnort, Familie und Hobbys.',
+      'Willkommen zum A2 Sprechtraining. Bitte stellen Sie sich einfach vor: Name, Herkunft, Wohnort, Familie und Hobbys.',
     system:
-      'Du bist ein freundlicher ÖIF-Prüfer für A2. Stelle einfache kurze Fragen. Verwende einfache deutsche Sprache. Frage nach Name, Herkunft, Wohnort, Familie, Arbeit, Freizeit und Alltag.',
+      'Du bist ein freundlicher Deutsch-Sprachtrainer für A2. Stelle einfache kurze Fragen. Verwende einfache deutsche Sprache. Frage nach Name, Herkunft, Wohnort, Familie, Arbeit, Freizeit und Alltag. Du bist kein Prüfer.',
     planning:
       'Teil 2: Gemeinsam etwas planen. Sie möchten mit einem Freund Deutsch lernen. Planen Sie: Wann? Wo? Wie lange? Was bringen Sie mit?',
     picture:
       'Teil 3: Bildbeschreibung. Bitte beschreiben Sie einfach: Was sehen Sie? Wo sind die Personen? Was machen sie?'
   },
   B1: {
-    title: 'ÖIF B1 Sprechen Prüfung',
+    title: 'B1 Sprechtraining',
     intro:
-      'Willkommen zur B1-Prüfung. Bitte stellen Sie sich vor und erzählen Sie etwas über Herkunft, Beruf, Wohnen, Familie und Zukunftspläne.',
+      'Willkommen zum B1 Sprechtraining. Bitte stellen Sie sich vor und erzählen Sie etwas über Herkunft, Beruf, Wohnen, Familie und Zukunftspläne.',
     system:
-      'Du bist ein offizieller ÖIF-Prüfer für B1. Stelle realistische Prüfungsfragen. Verwende normales, klares Deutsch. Frage nach Gründen, Erfahrungen und Meinungen.',
+      'Du bist ein Deutsch-Sprachtrainer für B1. Stelle realistische Übungsfragen. Verwende normales, klares Deutsch. Frage nach Gründen, Erfahrungen und Meinungen. Du bist kein Prüfer.',
     planning:
       'Teil 2: Gemeinsam etwas planen. Ein Kollege ist krank und liegt im Krankenhaus. Planen Sie gemeinsam einen Besuch und ein Geschenk.',
     picture:
       'Teil 3: Bildbeschreibung. Beschreiben Sie das Bild genau. Sagen Sie auch Ihre Meinung und erzählen Sie eine passende Erfahrung.'
   },
   B2: {
-    title: 'ÖIF B2 Sprechen Prüfung',
+    title: 'B2 Sprechtraining',
     intro:
-      'Willkommen zur B2-Prüfung. Bitte stellen Sie sich ausführlich vor und sprechen Sie über Ausbildung, Beruf, Integration, Ziele und persönliche Erfahrungen.',
+      'Willkommen zum B2 Sprechtraining. Bitte stellen Sie sich ausführlich vor und sprechen Sie über Ausbildung, Beruf, Integration, Ziele und persönliche Erfahrungen.',
     system:
-      'Du bist ein professioneller ÖIF-Prüfer für B2. Stelle anspruchsvollere Fragen. Fordere Begründungen, Beispiele, Vergleiche und persönliche Meinungen. Verwende gehobenes, aber klares Deutsch.',
+      'Du bist ein Deutsch-Sprachtrainer für B2. Stelle anspruchsvollere Übungsfragen. Fordere Begründungen, Beispiele, Vergleiche und persönliche Meinungen. Verwende gehobenes, aber klares Deutsch. Du bist kein Prüfer.',
     planning:
       'Teil 2: Gemeinsam etwas planen. Ihre Sprachschule organisiert eine Informationsveranstaltung zum Thema Integration und Arbeit in Österreich. Planen Sie gemeinsam Ablauf, Gäste, Aufgaben und Werbung.',
     picture:
@@ -314,7 +314,7 @@ Empfehlung:
           marginBottom: '16px'
         }}
       >
-        <strong>Prüfer:</strong>
+        <strong>AI Sprachcoach:</strong>
         <p>{isLoading ? 'Bitte warten...' : aiResponse}</p>
       </div>
 
@@ -385,7 +385,7 @@ Empfehlung:
               cursor: 'pointer'
             }}
           >
-            Prüfung beenden
+            Training beenden
           </button>
         )}
       </div>

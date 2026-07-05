@@ -4,6 +4,7 @@ import { getCurrentUser } from '../userAccess';
 import { buildWeeklySession } from '../../data/weeklyPlanLibrary';
 import { buildPremiumExamParts } from '../../data/premiumExamBuilder';
 import { readJsonStorage } from '../../security/secureStorage';
+import { AI_SESSION_STORAGE_KEY } from '../../constants/storageKeys';
 export function ProfileScreen({ setActiveTab }) {
   const placementProfile = useMemo(() => {
     return readJsonStorage('austriaPathPlacementProfile', null);
@@ -72,7 +73,7 @@ const parts = sessionTasks.length
     ];
 
   localStorage.setItem(
-    'austriaPathCurrentAISession',
+    AI_SESSION_STORAGE_KEY,
     JSON.stringify({
       sessionType: 'weekly_plan',
       mode: 'weekly_plan',
@@ -194,7 +195,7 @@ const canStartScheduledExam = (exam) => {
   if (now < start) {
     return {
       allowed: false,
-      message: `Diese Prüfung beginnt am ${next.date} um ${next.time}.`,
+      message: `Diese Trainingseinheit beginnt am ${next.date} um ${next.time}.`,
     };
   }
 
@@ -204,7 +205,7 @@ const openPremiumExam = (exam) => {
   const cleanLevel = level?.replace('+', '') || 'B1';
 
   localStorage.setItem(
-    'austriaPathCurrentAISession',
+    AI_SESSION_STORAGE_KEY,
     JSON.stringify({
       sessionType:
         exam.type === 'intensive'
@@ -213,7 +214,7 @@ const openPremiumExam = (exam) => {
           ? 'premium_month'
           : 'ai_exam',
       mode: 'exam',
-      title: exam.title || 'AI Probeprüfung',
+      title: exam.title || 'AI Sprechtraining',
       level: cleanLevel,
     parts: buildPremiumExamParts(cleanLevel),
       examId: exam.id,
@@ -444,7 +445,7 @@ return (
       </div>
 
       <div style={planCardStyle}>
-        <h2 style={{ marginTop: 0 }}>🧪 Meine AI-Prüfungen</h2>
+        <h2 style={{ marginTop: 0 }}>🧪 Mein AI-Training</h2>
 
         <div style={examGridStyle}>
           {exams.map((exam) => (
@@ -578,7 +579,7 @@ return (
     <div style={reportCardStyle}>
       <strong>Noch keine Berichte</strong>
       <p style={mutedStyle}>
-        Nach einer AI-Prüfung oder Wochenplan-Sitzung erscheinen hier deine Ergebnisse.
+        Nach einer AI-Trainingseinheit oder Wochenplan-Sitzung erscheinen hier deine Ergebnisse.
       </p>
     </div>
   )}
@@ -629,8 +630,8 @@ function buildPremiumExamCards(exams, level) {
     {
       id: 'probe-1',
       icon: '🧪',
-      title: 'AI Probeprüfung',
-      text: `${level} · 1 Prüfung mit kurzem Bericht`,
+      title: 'AI Sprechtraining',
+      text: `${level} · 1 Trainingseinheit mit kurzem Bericht`,
       level,
       total: 1,
       used: 0,
@@ -640,7 +641,7 @@ function buildPremiumExamCards(exams, level) {
       id: 'intensive-1',
       icon: '🔥',
       title: 'Intensive Woche',
-      text: `${level} · 3 Prüfungen innerhalb von 7 Tagen`,
+      text: `${level} · 3 Trainingseinheiten innerhalb von 7 Tagen`,
       level,
       total: 3,
       used: 0,
@@ -650,7 +651,7 @@ function buildPremiumExamCards(exams, level) {
       id: 'premium-month-1',
       icon: '👑',
       title: 'Premium Monat',
-      text: `${level} · 5 Prüfungen mit Fortschrittsvergleich`,
+      text: `${level} · 5 Trainingseinheiten mit Fortschrittsvergleich`,
       level,
       total: 5,
       used: 0,
@@ -702,7 +703,7 @@ function buildSkillCards(level, scores, hasAIResult) {
         : ['Noch kein AI-Ergebnis'],
     },
     {
-      title: 'Mündliche Prüfung',
+      title: 'Sprechen üben',
       icon: '💬',
       level: scores.planung || scores.diskussion || level,
       status: hasAIResult ? 'Mittel' : 'Noch leer',
@@ -742,7 +743,7 @@ function buildCalendarPlan(hasAIResult, profile, weeklyPlan) {
     { day: 'Tag 1', icon: '🎧', title: 'Hören trainieren', text: 'Nachrichten und Fragen', color: '#2563eb' },
     { day: 'Tag 3', icon: '💬', title: 'Planung üben', text: 'Gemeinsam planen', color: '#7c3aed' },
     { day: 'Tag 5', icon: '🖼️', title: 'Bildbeschreibung', text: 'Bilder und Meinung', color: '#16a34a' },
-    { day: 'Tag 7', icon: '🏆', title: 'Wiederholung', text: 'Mini-Test und Prüfung', color: '#f97316' },
+    { day: 'Tag 7', icon: '🏆', title: 'Wiederholung', text: 'Mini-Test und Übung', color: '#f97316' },
   ];
 }
 

@@ -341,7 +341,7 @@ if (level === 'B1') {
           <InfoBox title="⚠️ Häufige Fehler" items={model.mistakes} />
 
           <div style={boxStyle}>
-            <h3>⭐ Prüfungstipp</h3>
+            <h3>⭐ Lerntipp</h3>
             <p>{model.tip}</p>
           </div>
         </>

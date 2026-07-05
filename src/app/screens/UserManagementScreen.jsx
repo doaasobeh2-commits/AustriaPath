@@ -40,7 +40,7 @@ function mapApiUser(u) {
   };
 }
 
-export default function UserManagementScreen({ setActiveTab }) {
+export default function UserManagementScreen({ setActiveTab, backTab = "profile" }) {
   const [users, setUsers] = useState(() => (useBackend() ? [] : loadUsers()));
   const [loading, setLoading] = useState(useBackend());
   const [selectedUser, setSelectedUser] = useState(null);
@@ -588,7 +588,7 @@ const addActivity = (user, action, details = '') => {
 
   return (
     <div style={pageStyle}>
-      <button style={backButtonStyle} onClick={() => setActiveTab('profile')}>
+      <button style={backButtonStyle} onClick={() => setActiveTab(backTab)}>
         ← Zurück
       </button>
 

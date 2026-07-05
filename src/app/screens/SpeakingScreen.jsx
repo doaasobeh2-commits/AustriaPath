@@ -325,7 +325,7 @@ function getAdminSpeakingModels() {
         const rawType = normalizeText(item.bereich || item.area || item.type);
 
         return {
-          title: item.title || 'Mündliche Prüfung aus Admin',
+          title: item.title || 'Sprechübung aus Admin',
           type:
             rawType === 'planung'
               ? 'Etwas planen'
@@ -420,7 +420,7 @@ export function SpeakingScreen({
           ← Zurück
         </button>
 
-        <h1>🗣️ Mündliche Prüfung</h1>
+        <h1>🗣️ Sprechen üben</h1>
 
         <select style={inputStyle} value={userLevel} disabled>
           <option value={userLevel}>{userLevel}</option>
@@ -439,11 +439,11 @@ export function SpeakingScreen({
         ← Zurück
       </button>
 
-      <h1>🗣️ Mündliche Prüfung</h1>
+      <h1>🗣️ Sprechen üben</h1>
 
       <p style={subtitleStyle}>
         Wählen Sie ein Niveau und trainieren Sie den passenden mündlichen
-        Prüfungsteil.
+        Sprechteil.
       </p>
 
       {showPremiumHint && (
@@ -526,7 +526,7 @@ export function SpeakingScreen({
       <InfoBox title="⚠️ Häufige Fehler" items={current.mistakes} />
 
       <div style={cardStyle}>
-        <h3>⭐ Prüfungstipp</h3>
+        <h3>⭐ Lerntipp</h3>
         <p>{current.tip}</p>
       </div>
     </div>
