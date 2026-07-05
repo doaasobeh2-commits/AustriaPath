@@ -44,6 +44,7 @@ import { useBackend } from "../api/useBackend.js";
 import { verifyEmail } from "../api/repositories/index.js";
 import LegalPageScreen from "./components/LegalPageScreen";
 import LegalConsentScreen from "./screens/LegalConsentScreen";
+import { needsLegalConsent, saveLegalConsent } from "../legal/consent.js";
 import {
   AI_SESSION_STORAGE_KEY,
   LEGACY_AI_SESSION_STORAGE_KEY,
