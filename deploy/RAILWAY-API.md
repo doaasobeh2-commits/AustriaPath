@@ -1,20 +1,46 @@
-# Railway API service — closed beta
+# Railway — full-stack deploy (recommended for austriapath-production.up.railway.app)
 
-The AustriaPath **frontend** is hosted on **Vercel**. Railway runs the **Express API only**.
+The repo contains **both** the React/Vite frontend (`src/`, `index.html`) and the Express API (`server/`). One Railway **Web Service** can serve both:
 
-If `/v1/health` returns HTML, Railway is still serving the Vite build (`dist/`), not `server/src/index.js`.
+| Path | Served by |
+|------|-----------|
+| `/` | Vite build (`dist/index.html`) + SPA fallback |
+| `/assets/*` | Static files from `dist/assets/` |
+| `/v1/*` | Express API (`server/src/index.js`) |
+
+**Build** (Railpack `railpack.json`): `npm run build` → creates `dist/`  
+**Start** (`railway.toml`): `npm run server:migrate && npm run server:start`
+
+Deploy logs should show:
+
+```
+AustriaPath listening on :PORT (SPA / + API /v1)
+```
+
+If you see `API only (no dist/)`, the Vite build did not run — check build logs and `NPM_CONFIG_PRODUCTION=false` (see below).
+
+### Optional: separate Vercel frontend
+
+You can still host the SPA on **Vercel** (`austriapath-exam-ai.vercel.app`) and keep Railway API-only. Set in Vercel:
+
+- `VITE_USE_BACKEND=true`
+- `VITE_API_BASE=/v1`
+
+Add a rewrite in `vercel.json`:
+
+```json
+{ "source": "/v1/:path*", "destination": "https://austriapath-production.up.railway.app/v1/:path*" }
+```
+
+Do **not** open the Railway root URL for the UI in that layout — use the Vercel URL. Railway `/` will return JSON `api-only` or `Cannot GET /` without `dist/`.
 
 ## Recommended layout
 
 | Host | Role | Start |
 |------|------|--------|
-| **Vercel** | React SPA | `npm run build` (automatic) |
-| **Railway** | Express `/v1` API | `npm run server:start` |
+| **Railway (unified)** | SPA + Express `/v1` API | `npm run build` then `npm run server:migrate && npm run server:start` |
+| **Vercel (optional)** | React SPA only | `npm run build` + `/v1` rewrite to Railway |
 | **Neon** | PostgreSQL | connection string in `DATABASE_URL` |
-
-**Safe path (recommended):** add a **new Railway Web Service** for the API and **leave the current service unchanged** so `austriapath-production.up.railway.app` keeps serving the SPA. Wire the Vercel frontend to the new API host via `/v1` rewrites.
-
-Only convert the existing service in-place if nobody relies on the Railway URL for the frontend (Vercel is the sole user-facing host).
 
 ## Railway dashboard — exact settings
 
@@ -26,14 +52,11 @@ Only convert the existing service in-place if nobody relies on the Railway URL f
 | **Builder** | **RAILPACK** (`railway.toml`) + `railpack.json` at repo root |
 | **Build command** | **None** — do not set `npm ci` in Railway dashboard or `railway.toml` |
 | **Custom start command** | `npm run server:migrate && npm run server:start` |
+| **Build** | Automatic via `railpack.json` → `npm run build` (do not duplicate in dashboard) |
 
-Railpack installs dependencies once in its **install** step. Do **not** add `npm ci` to a build command — that was the original duplicate and causes `EBUSY`.
+If the build step fails with `vite: not found`, add Railway variable **`NPM_CONFIG_PRODUCTION=false`** so devDependencies (Vite) install during the build phase. Remove it only if builds succeed without it.
 
-Railpack also caches `node_modules/.cache` by default. `npm ci` must delete that directory; when it is a cache mount, the install fails with:
-
-`EBUSY: resource busy or locked, rmdir '/app/node_modules/.cache'`
-
-Repo fix: `railpack.json` keeps Railpack’s default **install** step (do not override `commands` — that breaks the Mise/Node layer chain and fails with `copy /mise/installs: context canceled`). Only override install **caches** to `/tmp/.npm` (not `node_modules/.cache`), skip the Vite **build** step, and set the API start command.
+Production Vite env is in `.env.production` (`VITE_USE_BACKEND=true`, `VITE_API_BASE=/v1`) — same-origin API on Railway, no extra URL config needed.
 
 ### If a deploy still fails with EBUSY (one-time cache clear)
 
@@ -43,9 +66,9 @@ Repo fix: `railpack.json` keeps Railpack’s default **install** step (do not ov
 
 Do **not** add `npm ci` or `npm install` to the Railway build command field.
 
-**Do not use:** `npm run build`, `vite preview`, or `npm run start` (no `start` script for frontend).
+**Do not use:** `vite preview` as the start command.
 
-**Disable static site:** If the service was created as a **Static Site**, delete it and create a **Web Service** from the same GitHub repo, or ensure deploy logs show Node starting — not Caddy/nginx serving `dist/`.
+**Disable static site:** If the service was created as a **Static Site**, delete it and create a **Web Service** from the same GitHub repo, or ensure deploy logs show Node starting — not Caddy/nginx serving `dist/` alone without the API.
 
 ## Required environment variables (Railway → Variables)
 
@@ -54,7 +77,7 @@ Do **not** add `npm ci` or `npm install` to the Railway build command field.
 | `NODE_ENV` | Yes | `production` |
 | `DATABASE_URL` | Yes | Neon pooled URL (`?sslmode=require`) |
 | `SESSION_SECRET` | Yes | 64+ random chars |
-| `CORS_ORIGIN` | Yes | Your **Vercel** production URL (no trailing slash). Use comma-separated list for dev + prod, e.g. `https://austriapath-exam-ai.vercel.app,http://localhost:5173` |
+| `CORS_ORIGIN` | Yes | Your public app URL(s), comma-separated, e.g. `https://austriapath-production.up.railway.app,https://austriapath-exam-ai.vercel.app,http://localhost:5173` |
 | `COOKIE_SECURE` | Yes | `true` |
 | `ADMIN_EMAIL` | Yes | `fadisobehau@gmail.com` |
 | `ADMIN_BOOTSTRAP_SECRET` | Yes (until bootstrap done) | One-time; remove after admin created |

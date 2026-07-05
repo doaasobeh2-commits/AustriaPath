@@ -1,5 +1,6 @@
-# Railway — API service only (closed beta).
-# Frontend stays on Vercel. Do NOT run `vite build` on this service.
+# Railway — full-stack (Vite SPA + Express API on one service).
+# Build: npm run build (via railpack.json) → dist/
+# Start: migrations + node server/src/index.js (serves / + /v1)
 #
 # Builder: RAILPACK (Railway default). Config: railpack.json
 # See deploy/RAILWAY-API.md

@@ -13,7 +13,7 @@
     },
     "build": {
       "caches": [],
-      "commands": []
+      "commands": ["npm run build"]
     }
   },
   "deploy": {
