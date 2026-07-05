@@ -18,9 +18,5 @@ export function isAdminEmail(email) {
 }
 
 export function isAdminAccount(user) {
-  return (
-    isAdminEmail(user?.email) &&
-    user?.role === "admin" &&
-    user?.status === "approved"
-  );
+  return user?.role === "admin" && user?.status === "approved";
 }

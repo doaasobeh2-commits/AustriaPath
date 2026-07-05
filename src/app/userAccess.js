@@ -114,13 +114,6 @@ function buildSeedAdminUser() {
   };
 }
 
-export function getAdminUserRecord() {
-  const users = getUsers();
-  return (
-    users.find((user) => user.email?.toLowerCase() === ADMIN_EMAIL) || null
-  );
-}
-
 export function getUsers() {
   if (useBackend()) {
     return [];
