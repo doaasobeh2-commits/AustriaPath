@@ -8,6 +8,7 @@ import {
   rowToApiUser,
   updateLastLogin,
 } from "../repositories/userRepository.js";
+import { startTrialOnFirstLogin } from "../services/accessService.js";
 import { createAuthSession, revokeSession } from "../repositories/authSessionRepository.js";
 import { hashPassword, verifyPassword } from "../utils/password.js";
 import { generateSessionToken, hashToken } from "../middleware/request.js";
@@ -94,7 +95,10 @@ export async function loginUser(body, meta = {}) {
     throw new AppError("AUTH_INVALID", "E-Mail oder Passwort ist falsch.", 401);
   }
 
-  await updateLastLogin(user.id);
+  await startTrialOnFirstLogin(user.id);
+  const refreshedUser = (await findUserByEmail(email)) || user;
+
+  await updateLastLogin(refreshedUser.id);
   const token = generateSessionToken();
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 86400000);
   await createAuthSession({
@@ -108,7 +112,7 @@ export async function loginUser(body, meta = {}) {
   const sub = await getCurrentSubscription(user.id);
   return {
     token,
-    user: rowToApiUser(user, sub),
+    user: rowToApiUser(refreshedUser, sub),
     expiresAt,
   };
 }

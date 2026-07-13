@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { success } from "../utils/response.js";
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth, requireActiveAccess } from "../middleware/auth.js";
 import {
   getLatestReport,
   getReport,
@@ -9,7 +9,7 @@ import {
 
 const router = Router();
 
-router.get("/", requireAuth, async (req, res, next) => {
+router.get("/", requireAuth, requireActiveAccess, async (req, res, next) => {
   try {
     const items = await listReports(req.auth.userId, {
       page: Number(req.query.page || 1),
@@ -22,7 +22,7 @@ router.get("/", requireAuth, async (req, res, next) => {
   }
 });
 
-router.get("/latest", requireAuth, async (req, res, next) => {
+router.get("/latest", requireAuth, requireActiveAccess, async (req, res, next) => {
   try {
     const report = await getLatestReport(req.auth.userId);
     success(res, { report, legacy: report ? toLegacyReport(report) : null });
@@ -31,7 +31,7 @@ router.get("/latest", requireAuth, async (req, res, next) => {
   }
 });
 
-router.get("/:reportId", requireAuth, async (req, res, next) => {
+router.get("/:reportId", requireAuth, requireActiveAccess, async (req, res, next) => {
   try {
     const report = await getReport(req.auth.userId, req.params.reportId);
     if (!report) {

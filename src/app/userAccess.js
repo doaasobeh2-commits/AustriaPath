@@ -17,11 +17,18 @@ import {
   registerViaApi,
 } from "../api/authService.js";
 import { ApiError } from "../api/httpClient.js";
-import { hydrateBackendFromApi } from "../api/hydrateBackend.js";
+import { scheduleBackendHydration } from "../api/hydrateBackend.js";
 import { clearBackendCache } from "../api/backendCache.js";
 
 export const USERS_KEY = "austriaPathUsers";
 export const CURRENT_USER_KEY = "austriaPathCurrentUser";
+export const USER_REGISTERED_EVENT = "austriaPath:userRegistered";
+
+export function notifyUserRegistered() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent(USER_REGISTERED_EVENT));
+  }
+}
 
 /** In-memory session — never restored from localStorage flags. */
 let activeSessionUser = null;
@@ -193,11 +200,7 @@ export async function validateSessionFromBackend() {
     }
     const sessionUser = apiUserToSessionUser(user);
     syncSessionUser(sessionUser);
-    try {
-      await hydrateBackendFromApi({ includeAdmin: isAdminAccount(sessionUser) });
-    } catch {
-      /* non-blocking */
-    }
+    scheduleBackendHydration({ includeAdmin: isAdminAccount(sessionUser) });
     return resolveSessionUser();
   } catch (error) {
     // Network/upstream errors — show login without clearing a possibly valid cookie.
@@ -269,6 +272,12 @@ function apiUserToSessionUser(user) {
     usedAiCredits: user.usedAiCredits ?? 0,
     emailVerified: user.emailVerified ?? false,
     permissions: user.permissions,
+    accessStatus: user.accessStatus,
+    trialStartedAt: user.trialStartedAt,
+    trialExpiresAt: user.trialExpiresAt,
+    isAccessApproved: user.isAccessApproved,
+    lastLoginAt: user.lastLoginAt,
+    hasApplicationAccess: user.hasApplicationAccess,
   };
 }
 
@@ -306,13 +315,6 @@ export async function authenticateUser(email, password) {
       const user = await loginViaApi(cleanEmail, password);
       const sessionUser = apiUserToSessionUser(user);
       syncSessionUser(sessionUser);
-      try {
-        await hydrateBackendFromApi({
-          includeAdmin: isAdminAccount(resolveSessionUser()),
-        });
-      } catch {
-        /* login succeeds even if post-login hydration fails */
-      }
       return { ok: true, user: resolveSessionUser() };
     } catch (error) {
       return { ok: false, message: backendAuthErrorMessage(error) };
@@ -415,6 +417,7 @@ export async function registerStudentUser({ name, email, password, level }) {
   if (useBackend()) {
     try {
       await registerViaApi({ name: name.trim(), email: cleanEmail, password, level });
+      notifyUserRegistered();
       return authenticateUser(cleanEmail, password);
     } catch (error) {
       return { ok: false, message: backendAuthErrorMessage(error) };
@@ -452,6 +455,7 @@ export async function registerStudentUser({ name, email, password, level }) {
   };
 
   saveUsers([...storedUsers, newUser]);
+  notifyUserRegistered();
 
   return { ok: true, user: stripPassword(newUser) };
 }

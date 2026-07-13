@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { success } from "../utils/response.js";
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth, requireActiveAccess } from "../middleware/auth.js";
 import { requireIdempotency } from "../middleware/idempotency.js";
 import {
   cancelExamSession,
@@ -13,7 +13,7 @@ import {
 
 const router = Router();
 
-router.post("/", requireAuth, requireIdempotency("POST /exam-sessions"), async (req, res, next) => {
+router.post("/", requireAuth, requireActiveAccess, requireIdempotency("POST /exam-sessions"), async (req, res, next) => {
   try {
     const data = await startExamSession(req.auth.userId, {
       ...req.body,
@@ -25,7 +25,7 @@ router.post("/", requireAuth, requireIdempotency("POST /exam-sessions"), async (
   }
 });
 
-router.get("/active", requireAuth, async (req, res, next) => {
+router.get("/active", requireAuth, requireActiveAccess, async (req, res, next) => {
   try {
     const session = await getActiveSession(req.auth.userId, req.query.productType);
     success(res, { session });
@@ -34,7 +34,7 @@ router.get("/active", requireAuth, async (req, res, next) => {
   }
 });
 
-router.get("/:sessionId", requireAuth, async (req, res, next) => {
+router.get("/:sessionId", requireAuth, requireActiveAccess, async (req, res, next) => {
   try {
     const session = await getSession(req.auth.userId, req.params.sessionId);
     success(res, { session });
@@ -43,7 +43,7 @@ router.get("/:sessionId", requireAuth, async (req, res, next) => {
   }
 });
 
-router.post("/:sessionId/sections", requireAuth, async (req, res, next) => {
+router.post("/:sessionId/sections", requireAuth, requireActiveAccess, async (req, res, next) => {
   try {
     const data = await submitSection(req.auth.userId, req.params.sessionId, req.body);
     success(res, data);
@@ -54,7 +54,7 @@ router.post("/:sessionId/sections", requireAuth, async (req, res, next) => {
 
 router.post(
   "/:sessionId/complete",
-  requireAuth,
+  requireAuth, requireActiveAccess,
   requireIdempotency("POST /exam-sessions/:sessionId/complete"),
   async (req, res, next) => {
     try {
@@ -66,7 +66,7 @@ router.post(
   }
 );
 
-router.post("/:sessionId/cancel", requireAuth, async (req, res, next) => {
+router.post("/:sessionId/cancel", requireAuth, requireActiveAccess, async (req, res, next) => {
   try {
     const data = await cancelExamSession(req.auth.userId, req.params.sessionId);
     success(res, data);

@@ -9,6 +9,7 @@ import { getUsers, USERS_KEY } from '../userAccess';
 import AdminActionBar from '../components/AdminActionBar';
 import { useBackend } from '../../api/useBackend.js';
 import { listAdminUsers, patchAdminUser } from '../../api/repositories/index.js';
+import { accessStatusLabel } from '../../utils/accessStatus.js';
 function getUserCode(user) {
   if (user.userCode) return user.userCode;
   const raw = String(user.id || user.email || Date.now());
@@ -37,6 +38,11 @@ function mapApiUser(u) {
     subscription: { type: u.plan || 'free', status: 'active' },
     aiCredits: u.aiCredits ?? 0,
     createdAt: u.createdAt,
+    lastLogin: u.lastLogin,
+    trialStartedAt: u.trialStartedAt,
+    trialExpiresAt: u.trialExpiresAt,
+    isAccessApproved: u.isAccessApproved,
+    accessStatus: u.accessStatus,
   };
 }
 
@@ -61,6 +67,11 @@ export default function UserManagementScreen({ setActiveTab, backTab = "profile"
     if (changes.status) apiFields.status = changes.status;
     if (changes.level) apiFields.level = changes.level;
     if (changes.allowedLevels) apiFields.allowedLevels = changes.allowedLevels;
+    if (typeof changes.isAccessApproved === 'boolean') {
+      apiFields.isAccessApproved = changes.isAccessApproved;
+    }
+    if (changes.restartTrial === true) apiFields.restartTrial = true;
+    if (changes.trialExpiresAt) apiFields.trialExpiresAt = changes.trialExpiresAt;
     if (Object.keys(apiFields).length) {
       await patchAdminUser(id, apiFields);
     }
@@ -236,6 +247,33 @@ const addActivity = (user, action, details = '') => {
       runAction("delete", () => deleteUser(selectedUser));
     };
 
+    const handleApproveAccess = () => {
+      runAction("approve-access", () => {
+        updateUser(selectedUser.id, { isAccessApproved: true, accessStatus: "APPROVED" });
+        addActivity(selectedUser, "Zugang freigegeben");
+      });
+    };
+
+    const handleRevokeAccess = () => {
+      runAction("revoke-access", () => {
+        updateUser(selectedUser.id, { isAccessApproved: false });
+        addActivity(selectedUser, "Freigabe entzogen");
+      });
+    };
+
+    const handleRestartTrial = () => {
+      runAction("restart-trial", () => {
+        const expires = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+        updateUser(selectedUser.id, {
+          restartTrial: true,
+          isAccessApproved: false,
+          accessStatus: "TRIAL_ACTIVE",
+          trialExpiresAt: expires,
+        });
+        addActivity(selectedUser, "Trial neu gestartet (48h)");
+      });
+    };
+
     const managementActions = [
       ...(isBlocked
         ? [
@@ -256,6 +294,27 @@ const addActivity = (user, action, details = '') => {
               onClick: handleBlockUser,
             },
           ]),
+      {
+        id: "approve-access",
+        icon: "✅",
+        label: "Zugang freigeben",
+        variant: "green",
+        onClick: handleApproveAccess,
+      },
+      {
+        id: "revoke-access",
+        icon: "↩️",
+        label: "Freigabe entziehen",
+        variant: "neutral",
+        onClick: handleRevokeAccess,
+      },
+      {
+        id: "restart-trial",
+        icon: "⏱",
+        label: "Trial neu (48h)",
+        variant: "blue",
+        onClick: handleRestartTrial,
+      },
       {
         id: "reset-password",
         icon: "🔑",
@@ -404,6 +463,9 @@ const addActivity = (user, action, details = '') => {
 
           <p><b>Registriert:</b> {formatDate(selectedUser.createdAt)}</p>
           <p><b>Letzter Login:</b> {formatDate(selectedUser.lastLogin)}</p>
+          <p><b>Zugang:</b> {accessStatusLabel(selectedUser.accessStatus)}</p>
+          <p><b>Trial bis:</b> {formatDate(selectedUser.trialExpiresAt)}</p>
+          <p><b>Freigegeben:</b> {selectedUser.isAccessApproved ? 'Ja' : 'Nein'}</p>
           <p><b>Quelle:</b> {selectedUser.source || 'E-Mail'}</p>
         </div>
 

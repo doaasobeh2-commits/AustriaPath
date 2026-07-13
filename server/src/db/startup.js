@@ -4,9 +4,11 @@
  */
 import { initDb, runMigrations } from "./client.js";
 import { seedRuleRegistryIfEmpty } from "./seed.js";
+import { runTrialAccessMigration } from "./trialAccessMigration.js";
 
 export async function prepareDatabase() {
   await initDb();
   await runMigrations();
+  await runTrialAccessMigration();
   await seedRuleRegistryIfEmpty();
 }

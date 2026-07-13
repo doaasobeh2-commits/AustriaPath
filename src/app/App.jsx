@@ -41,6 +41,7 @@ import {
   validateSessionFromBackend,
 } from "./userAccess";
 import { useBackend } from "../api/useBackend.js";
+import { scheduleBackendHydration } from "../api/hydrateBackend.js";
 import { verifyEmail } from "../api/repositories/index.js";
 import LegalPageScreen from "./components/LegalPageScreen";
 import LegalConsentScreen from "./screens/LegalConsentScreen";
@@ -49,6 +50,8 @@ import {
   AI_SESSION_STORAGE_KEY,
   LEGACY_AI_SESSION_STORAGE_KEY,
 } from "../constants/storageKeys.js";
+import TrialExpiredScreen from "./screens/TrialExpiredScreen";
+import { isTrialExpiredUser } from "../utils/accessStatus.js";
 import { isOnboardingComplete, markOnboardingComplete } from "../utils/userPreferences.js";
 
 const AdminScreen = React.lazy(() =>
@@ -128,6 +131,7 @@ export default function App() {
     setCurrentUser(sessionUser);
     setIsLoggedIn(true);
     setActiveTab(isAdminAccount(sessionUser) ? "admin" : "home");
+    scheduleBackendHydration({ includeAdmin: isAdminAccount(sessionUser) });
   };
 
   useEffect(() => {
@@ -332,6 +336,10 @@ export default function App() {
         onOpenLegal={setLegalView}
       />
     );
+  }
+
+  if (isLoggedIn && isTrialExpiredUser(currentUser)) {
+    return <TrialExpiredScreen onSignOut={handleLogout} />;
   }
 
   return (

@@ -2,6 +2,7 @@ import { query } from "../db/client.js";
 import { formatPgTextArray } from "../db/arrays.js";
 import { getPermissionsByPlan } from "../utils/permissions.js";
 import { env } from "../config/env.js";
+import { accessFieldsForUser } from "../services/accessService.js";
 
 function defaultAllowedLevels(level) {
   if (level === "B2") return ["A2", "B1", "B2"];
@@ -45,6 +46,7 @@ export function rowToApiUser(row, subscriptionRow) {
         : getPermissionsByPlan(sub.type),
     aiCredits: row.ai_credits ?? 0,
     usedAiCredits: row.used_ai_credits ?? 0,
+    ...accessFieldsForUser(row, env.adminEmail),
   };
 }
 

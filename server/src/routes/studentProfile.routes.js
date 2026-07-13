@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { query } from "../db/client.js";
 import { success } from "../utils/response.js";
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth, requireActiveAccess } from "../middleware/auth.js";
 
 const router = Router();
 
-router.get("/", requireAuth, async (req, res, next) => {
+router.get("/", requireAuth, requireActiveAccess, async (req, res, next) => {
   try {
     const { rows } = await query(
       `SELECT profile_json, updated_at FROM student_learning_profiles WHERE user_id = $1`,

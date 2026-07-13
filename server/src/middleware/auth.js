@@ -1,6 +1,8 @@
 import { query } from "../db/client.js";
 import { hashToken } from "./request.js";
 import { AppError } from "./errorHandler.js";
+import { hasApplicationAccess } from "../services/accessService.js";
+import { env } from "../config/env.js";
 
 /**
  * @param {import('express').Request} req
@@ -45,6 +47,25 @@ export async function requireAuth(req, res, next) {
       sessionId: row.id,
       user: row,
     };
+    next();
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function requireActiveAccess(req, _res, next) {
+  try {
+    const user = req.auth?.user;
+    if (!user) {
+      throw new AppError("AUTH_REQUIRED", "Bitte melden Sie sich an.", 401);
+    }
+    if (!hasApplicationAccess(user, env.adminEmail)) {
+      throw new AppError(
+        "TRIAL_EXPIRED",
+        "Your 48-hour trial has ended. Please contact the administrator if you need continued access.",
+        403
+      );
+    }
     next();
   } catch (e) {
     next(e);

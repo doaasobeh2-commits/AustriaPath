@@ -71,6 +71,8 @@ export function shouldBlockBackendWrite(key) {
   return useBackend() && BACKEND_WRITE_BLOCK.has(key);
 }
 
+let hydrationPromise = null;
+
 /**
  * @param {{ includeAdmin?: boolean }} [options]
  * Admin-only endpoints are skipped unless includeAdmin is true.
@@ -125,6 +127,21 @@ export async function hydrateBackendFromApi(options = {}) {
   } else {
     backendCache.labDashboard = null;
   }
+}
+
+/**
+ * Load dashboard cache after login without blocking navigation.
+ * Deduplicates concurrent hydration calls.
+ * @param {{ includeAdmin?: boolean }} [options]
+ */
+export function scheduleBackendHydration(options = {}) {
+  if (!useBackend()) return Promise.resolve();
+  if (!hydrationPromise) {
+    hydrationPromise = hydrateBackendFromApi(options).finally(() => {
+      hydrationPromise = null;
+    });
+  }
+  return hydrationPromise;
 }
 
 export { RULE_REGISTRY_STORAGE_KEY };

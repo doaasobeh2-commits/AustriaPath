@@ -7,6 +7,7 @@ import request from "supertest";
 import { randomUUID } from "node:crypto";
 import { createApp } from "../../server/src/app.js";
 import { initDb, runMigrations, closeDb } from "../../server/src/db/client.js";
+import { runTrialAccessMigration } from "../../server/src/db/trialAccessMigration.js";
 import { seedRuleRegistryIfEmpty } from "../../server/src/db/seed.js";
 
 process.env.NODE_ENV = "test";
@@ -37,6 +38,7 @@ describe("Phase H API", () => {
   beforeAll(async () => {
     await initDb();
     await runMigrations();
+    await runTrialAccessMigration();
     await seedRuleRegistryIfEmpty();
     app = createApp();
   });

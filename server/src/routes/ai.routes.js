@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { success } from "../utils/response.js";
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth, requireActiveAccess } from "../middleware/auth.js";
 import { query, withTransaction } from "../db/client.js";
 import { AI_COSTS } from "../utils/permissions.js";
 import { AppError } from "../middleware/errorHandler.js";
@@ -10,7 +10,7 @@ import { aiRateLimit, aiDailyRateLimit } from "../middleware/rateLimit.js";
 
 const router = Router();
 
-router.post("/completions", requireAuth, aiRateLimit, aiDailyRateLimit, async (req, res, next) => {
+router.post("/completions", requireAuth, requireActiveAccess, aiRateLimit, aiDailyRateLimit, async (req, res, next) => {
   try {
     const mode = req.body.mode || "conversational";
     const serviceType = req.body.context?.serviceType || mode;
@@ -91,7 +91,7 @@ router.post("/completions", requireAuth, aiRateLimit, aiDailyRateLimit, async (r
   }
 });
 
-router.get("/usage", requireAuth, async (req, res, next) => {
+router.get("/usage", requireAuth, requireActiveAccess, async (req, res, next) => {
   try {
     const { rows: u } = await query(
       `SELECT ai_credits, used_ai_credits FROM users WHERE id = $1`,

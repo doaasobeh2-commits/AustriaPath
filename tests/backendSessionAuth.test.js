@@ -90,7 +90,7 @@ describe("backend session auth", () => {
     expect(resolveSessionUser()?.role).toBe("admin");
   });
 
-  it("authenticateUser returns synced session user after backend login", async () => {
+  it("authenticateUser returns synced session user after backend login without blocking hydration", async () => {
     loginViaApi.mockResolvedValue({
       id: "u-4",
       email: "admin@example.com",
@@ -105,10 +105,10 @@ describe("backend session auth", () => {
     expect(result.ok).toBe(true);
     expect(result.user?.role).toBe("admin");
     expect(resolveSessionUser()?.role).toBe("admin");
-    expect(hydrateBackendFromApi).toHaveBeenCalledWith({ includeAdmin: true });
+    expect(hydrateBackendFromApi).not.toHaveBeenCalled();
   });
 
-  it("authenticateUser succeeds when post-login hydration fails", async () => {
+  it("authenticateUser succeeds without awaiting post-login hydration", async () => {
     loginViaApi.mockResolvedValue({
       id: "u-5",
       email: "student@example.com",
@@ -117,12 +117,11 @@ describe("backend session auth", () => {
       status: "approved",
       level: "B1",
     });
-    hydrateBackendFromApi.mockRejectedValueOnce(new Error("upstream 502"));
 
     const result = await authenticateUser("student@example.com", "secret123");
 
     expect(result.ok).toBe(true);
     expect(result.user?.role).toBe("student");
-    expect(hydrateBackendFromApi).toHaveBeenCalledWith({ includeAdmin: false });
+    expect(hydrateBackendFromApi).not.toHaveBeenCalled();
   });
 });

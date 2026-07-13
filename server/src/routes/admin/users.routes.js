@@ -1,16 +1,20 @@
 import { Router } from "express";
 import { success } from "../../utils/response.js";
-import { requireAdmin } from "../../middleware/auth.js";
+import { requireAuth, requireAdmin } from "../../middleware/auth.js";
 import { query } from "../../db/client.js";
 import { AppError } from "../../middleware/errorHandler.js";
 import { formatPgTextArray } from "../../db/arrays.js";
+import { accessFieldsForUser } from "../../services/accessService.js";
+import { env } from "../../config/env.js";
 
 const router = Router();
 
-router.get("/", requireAdmin, async (_req, res, next) => {
+router.get("/", requireAuth, requireAdmin, async (_req, res, next) => {
   try {
     const { rows } = await query(
-      `SELECT u.id, u.email, u.role, u.status, u.level, u.plan, u.created_at, p.display_name
+      `SELECT u.id, u.email, u.role, u.status, u.level, u.plan, u.allowed_levels,
+              u.created_at, u.last_login_at, u.trial_started_at, u.trial_expires_at,
+              u.is_access_approved, p.display_name
        FROM users u
        LEFT JOIN user_profiles p ON p.user_id = u.id
        WHERE u.deleted_at IS NULL
@@ -26,7 +30,13 @@ router.get("/", requireAdmin, async (_req, res, next) => {
         status: r.status,
         level: r.level,
         plan: r.plan,
+        allowedLevels: r.allowed_levels,
         createdAt: r.created_at,
+        lastLogin: r.last_login_at,
+        trialStartedAt: r.trial_started_at,
+        trialExpiresAt: r.trial_expires_at,
+        isAccessApproved: r.is_access_approved,
+        ...accessFieldsForUser(r, env.adminEmail),
       })),
     });
   } catch (e) {
@@ -34,9 +44,17 @@ router.get("/", requireAdmin, async (_req, res, next) => {
   }
 });
 
-router.patch("/:userId", requireAdmin, async (req, res, next) => {
+router.patch("/:userId", requireAuth, requireAdmin, async (req, res, next) => {
   try {
-    const { status, role, level, allowedLevels } = req.body;
+    const {
+      status,
+      role,
+      level,
+      allowedLevels,
+      isAccessApproved,
+      trialExpiresAt,
+      restartTrial,
+    } = req.body;
     const updates = [];
     const params = [req.params.userId];
     let i = 2;
@@ -57,6 +75,21 @@ router.patch("/:userId", requireAdmin, async (req, res, next) => {
       updates.push(`allowed_levels = $${i++}::cefr_label[]`);
       params.push(formatPgTextArray(allowedLevels));
     }
+    if (typeof isAccessApproved === "boolean") {
+      updates.push(`is_access_approved = $${i++}`);
+      params.push(isAccessApproved);
+    }
+    if (restartTrial === true) {
+      updates.push(`trial_started_at = NOW()`);
+      updates.push(`trial_expires_at = NOW() + INTERVAL '48 hours'`);
+      updates.push(`is_access_approved = FALSE`);
+    } else if (trialExpiresAt) {
+      updates.push(`trial_expires_at = $${i++}`);
+      params.push(new Date(trialExpiresAt));
+      if (!updates.some((u) => u.includes("trial_started_at"))) {
+        updates.push(`trial_started_at = COALESCE(trial_started_at, NOW())`);
+      }
+    }
 
     if (!updates.length) {
       throw new AppError("VALIDATION_ERROR", "Keine Felder zum Aktualisieren.", 400);
@@ -64,11 +97,28 @@ router.patch("/:userId", requireAdmin, async (req, res, next) => {
 
     updates.push("updated_at = NOW()");
     const { rows } = await query(
-      `UPDATE users SET ${updates.join(", ")} WHERE id = $1 AND deleted_at IS NULL RETURNING id, email, role, status, level, allowed_levels`,
+      `UPDATE users SET ${updates.join(", ")} WHERE id = $1 AND deleted_at IS NULL
+       RETURNING id, email, role, status, level, allowed_levels,
+                 trial_started_at, trial_expires_at, is_access_approved, last_login_at`,
       params
     );
     if (!rows.length) throw new AppError("NOT_FOUND", "Benutzer nicht gefunden.", 404);
-    success(res, { user: rows[0] });
+    const user = rows[0];
+    success(res, {
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        level: user.level,
+        allowedLevels: user.allowed_levels,
+        trialStartedAt: user.trial_started_at,
+        trialExpiresAt: user.trial_expires_at,
+        isAccessApproved: user.is_access_approved,
+        lastLoginAt: user.last_login_at,
+        ...accessFieldsForUser(user, env.adminEmail),
+      },
+    });
   } catch (e) {
     next(e);
   }

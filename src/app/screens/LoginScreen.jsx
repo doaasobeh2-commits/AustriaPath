@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { authenticateUser } from "../userAccess";
 import {
   authCardStyle,
@@ -18,16 +18,27 @@ export default function LoginScreen({
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const loginInFlight = useRef(false);
 
   const handleLogin = async () => {
-    const result = await authenticateUser(email, password);
+    if (loginInFlight.current || isLoading) return;
 
-    if (!result.ok) {
-      alert(result.message);
-      return;
+    loginInFlight.current = true;
+    setIsLoading(true);
+    try {
+      const result = await authenticateUser(email, password);
+
+      if (!result.ok) {
+        alert(result.message);
+        return;
+      }
+
+      onLogin(result.user);
+    } finally {
+      loginInFlight.current = false;
+      setIsLoading(false);
     }
-
-    onLogin(result.user);
   };
 
   return (
@@ -45,6 +56,7 @@ export default function LoginScreen({
           placeholder="E-Mail"
           style={authInputStyle}
           autoComplete="email"
+          disabled={isLoading}
         />
 
         <input
@@ -54,10 +66,20 @@ export default function LoginScreen({
           placeholder="Passwort"
           style={authInputStyle}
           autoComplete="current-password"
+          disabled={isLoading}
         />
 
-        <button type="button" onClick={handleLogin} style={authPrimaryButtonStyle}>
-          Anmelden
+        <button
+          type="button"
+          onClick={handleLogin}
+          style={{
+            ...authPrimaryButtonStyle,
+            opacity: isLoading ? 0.7 : 1,
+            cursor: isLoading ? "wait" : "pointer",
+          }}
+          disabled={isLoading}
+        >
+          {isLoading ? "Anmeldung läuft…" : "Anmelden"}
         </button>
 
         {onForgotPassword && (
@@ -65,19 +87,20 @@ export default function LoginScreen({
             type="button"
             onClick={onForgotPassword}
             style={authTextButtonStyle}
+            disabled={isLoading}
           >
             Passwort vergessen?
           </button>
         )}
 
         {onRegister && (
-          <button type="button" onClick={onRegister} style={authTextButtonStyle}>
+          <button type="button" onClick={onRegister} style={authTextButtonStyle} disabled={isLoading}>
             Noch kein Konto? Jetzt registrieren
           </button>
         )}
 
         {onBack && (
-          <button type="button" onClick={onBack} style={authTextButtonStyle}>
+          <button type="button" onClick={onBack} style={authTextButtonStyle} disabled={isLoading}>
             ← Zurück
           </button>
         )}

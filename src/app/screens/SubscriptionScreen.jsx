@@ -1,17 +1,5 @@
 import React from 'react';
 import { getUserLanguage } from '../../utils/userPreferences';
-import { applyClientPlanSelection } from '../../utils/clientSubscription';
-import { useBackend } from '../../api/useBackend.js';
-import { checkoutSubscription } from '../../api/repositories/index.js';
-
-const PLAN_TYPE_MAP = {
-  placement: 'placement_test',
-  placement_test: 'placement_test',
-  weekly_plan: 'weekly_plan',
-  ai_exam: 'ai_exam',
-  intensive_week: 'intensive_week',
-  premium_month: 'premium_month',
-};
 
 export default function SubscriptionScreen({ setActiveTab }) {
   const language = getUserLanguage();
@@ -19,65 +7,9 @@ export default function SubscriptionScreen({ setActiveTab }) {
   const t = content[language] || content.Deutsch;
   const plans = t.plans;
 
-  const handleSelectPlan = async (plan) => {
-    const engineType = PLAN_TYPE_MAP[plan.type] || plan.type;
-
-    if (useBackend()) {
-      try {
-        const result = await checkoutSubscription(engineType);
-        if (result.checkoutUrl) {
-          window.location.href = result.checkoutUrl;
-          return;
-        }
-        alert('Zahlung ist derzeit nicht verfügbar. Bitte kontaktieren Sie den Support.');
-      } catch {
-        alert('Checkout fehlgeschlagen. Bitte später erneut versuchen.');
-      }
-      return;
-    }
-
-    const now = new Date();
-
-    const subscription = {
-      id: plan.id,
-      name: plan.name,
-      price: plan.price,
-      type: plan.type,
-      status: 'active',
-      purchasedAt: now.toISOString(),
-      validUntil: plan.validDays
-        ? new Date(now.getTime() + plan.validDays * 24 * 60 * 60 * 1000).toISOString()
-        : null,
-      totalUses: plan.totalUses,
-      remainingUses: plan.totalUses,
-    };
-
-    localStorage.setItem('austriaPathSubscription', JSON.stringify(subscription));
-    localStorage.setItem('userPlan', plan.type);
-    localStorage.setItem('premiumActive', 'true');
-    localStorage.setItem('austriaPathSelectedPremiumPlan', JSON.stringify(plan));
-
-    applyClientPlanSelection(plan);
-
-    if (plan.type === 'placement') {
-      setActiveTab?.('placementTest');
-      return;
-    }
-
-    if (plan.type === 'weekly_plan') {
-      setActiveTab?.('weeklyPlanSetup');
-      return;
-    }
-
- if (
-  plan.type === 'ai_exam' ||
-  plan.type === 'intensive_week' ||
-  plan.type === 'premium_month'
-) {
-  setActiveTab?.('profile');
-  return;
-}
-};
+  const handleSelectPlan = () => {
+    alert('Coming Soon');
+  };
   return (
     <div style={container}>
       <button type="button" style={backButton} onClick={() => setActiveTab?.('profile')}>
@@ -171,7 +103,7 @@ const content = {
       {
         ...planMeta.placement,
         name: 'Persönlicher Lernplan',
-        price: '2,00 €',
+        price: '5,00 €',
         buttonText: 'Einstufungstest starten',
         exams: 'Einstufungstest',
         duration: 'ca. 8 Minuten',
@@ -264,7 +196,7 @@ const content = {
       {
         ...planMeta.placement,
         name: 'خطة الدراسة الشخصية',
-        price: '2,00 €',
+        price: '5,00 €',
         buttonText: 'بدء اختبار المستوى',
         exams: 'اختبار مستوى',
         duration: 'حوالي 8 دقائق',
@@ -355,7 +287,7 @@ const content = {
       {
         ...planMeta.placement,
         name: 'Kişisel Çalışma Planı',
-        price: '2,00 €',
+        price: '5,00 €',
         buttonText: 'Seviye testini başlat',
         exams: 'Seviye testi',
         duration: 'Yaklaşık 8 dakika',
@@ -448,7 +380,7 @@ const content = {
       {
         ...planMeta.placement,
         name: 'برنامه آموزشی شخصی',
-        price: '2,00 €',
+        price: '5,00 €',
         buttonText: 'شروع آزمون تعیین سطح',
         exams: 'آزمون تعیین سطح',
         duration: 'حدود 8 دقیقه',
@@ -541,7 +473,7 @@ const content = {
       {
         ...planMeta.placement,
         name: 'Персональний навчальний план',
-        price: '2,00 €',
+        price: '5,00 €',
         buttonText: 'Почати тест рівня',
         exams: 'Тест рівня',
         duration: 'близько 8 хвилин',

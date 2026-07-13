@@ -1,13 +1,13 @@
 import { Router } from "express";
 import { success } from "../utils/response.js";
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth, requireActiveAccess } from "../middleware/auth.js";
 import { query } from "../db/client.js";
 import { AppError } from "../middleware/errorHandler.js";
 import { findUserById } from "../repositories/userRepository.js";
 
 const router = Router();
 
-router.post("/me/legal-consent", requireAuth, async (req, res, next) => {
+router.post("/me/legal-consent", requireAuth, requireActiveAccess, async (req, res, next) => {
   try {
     const { privacyVersion, termsVersion } = req.body;
     if (!privacyVersion || !termsVersion) {
@@ -24,7 +24,7 @@ router.post("/me/legal-consent", requireAuth, async (req, res, next) => {
   }
 });
 
-router.get("/me/export", requireAuth, async (req, res, next) => {
+router.get("/me/export", requireAuth, requireActiveAccess, async (req, res, next) => {
   try {
     const user = await findUserById(req.auth.userId);
     const { rows: profileRows } = await query(
@@ -57,7 +57,7 @@ router.get("/me/export", requireAuth, async (req, res, next) => {
   }
 });
 
-router.delete("/me", requireAuth, async (req, res, next) => {
+router.delete("/me", requireAuth, requireActiveAccess, async (req, res, next) => {
   try {
     await query(
       `INSERT INTO account_deletion_requests (user_id, status, requested_at, scheduled_purge_at)

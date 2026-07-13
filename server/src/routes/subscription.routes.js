@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { success } from "../utils/response.js";
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth, requireActiveAccess } from "../middleware/auth.js";
 import {
   createCheckoutSession,
   getSubscriptionForUser,
@@ -12,7 +12,7 @@ import { requireIdempotency } from "../middleware/idempotency.js";
 
 const router = Router();
 
-router.get("/", requireAuth, async (req, res, next) => {
+router.get("/", requireAuth, requireActiveAccess, async (req, res, next) => {
   try {
     const sub = await getSubscriptionForUser(req.auth.userId);
     const user = await findUserById(req.auth.userId);
@@ -22,7 +22,7 @@ router.get("/", requireAuth, async (req, res, next) => {
   }
 });
 
-router.post("/checkout", requireAuth, async (req, res, next) => {
+router.post("/checkout", requireAuth, requireActiveAccess, async (req, res, next) => {
   try {
     const { planType } = req.body;
     if (!planType) throw new AppError("VALIDATION_ERROR", "planType erforderlich.", 400);
@@ -33,7 +33,7 @@ router.post("/checkout", requireAuth, async (req, res, next) => {
   }
 });
 
-router.post("/consume-exam", requireAuth, requireIdempotency("POST /subscription/consume-exam"), async (req, res, next) => {
+router.post("/consume-exam", requireAuth, requireActiveAccess, requireIdempotency("POST /subscription/consume-exam"), async (req, res, next) => {
   try {
     const { productType, examIndex = 1 } = req.body;
     if (!productType) throw new AppError("VALIDATION_ERROR", "productType erforderlich.", 400);

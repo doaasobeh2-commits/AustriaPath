@@ -1,12 +1,12 @@
 import { Router } from "express";
 import { success } from "../utils/response.js";
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth, requireActiveAccess } from "../middleware/auth.js";
 import { query } from "../db/client.js";
 import { importLegacyReports } from "../services/reportPersistenceService.js";
 
 const router = Router();
 
-router.post("/import", requireAuth, async (req, res, next) => {
+router.post("/import", requireAuth, requireActiveAccess, async (req, res, next) => {
   try {
     const payload = req.body.payload || {};
     let imported = { reports: 0, profile: false, subscription: false, skippedKeys: [] };

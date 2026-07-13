@@ -47,7 +47,7 @@ export default function AdminShell({ setActiveTab }) {
         <AdminOverviewPanel stats={admin.stats} onExport={admin.exportJson} onClearAll={admin.clearAll} />
       )}
 
-      {activeSection === "users" && <AdminUsersPanel />}
+      {activeSection === "users" && <AdminUsersPanel isActive={activeSection === "users"} />}
     </div>
   );
 }
