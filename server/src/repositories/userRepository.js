@@ -94,8 +94,8 @@ export async function createUserWithProfile({
   const allowed = defaultAllowedLevels(cefr);
 
   const { rows } = await query(
-    `INSERT INTO users (email, password_hash, level, allowed_levels, ai_credits)
-     VALUES ($1, $2, $3::cefr_label, $4::cefr_label[], 5)
+    `INSERT INTO users (email, password_hash, level, allowed_levels, ai_credits, is_access_approved)
+     VALUES ($1, $2, $3::cefr_label, $4::cefr_label[], 5, TRUE)
      RETURNING *`,
     [email.trim().toLowerCase(), passwordHash, cefr, formatPgTextArray(allowed)]
   );

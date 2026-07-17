@@ -53,7 +53,7 @@ describe("Phase H API", () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data.status).toBe("ok");
-      expect(res.body.data.betaAllowlist).toBeDefined();
+      expect(res.body.data.registration).toBe("open");
     });
 
     it("GET /health/db returns read-only DB fingerprint without secrets", async () => {
@@ -289,61 +289,29 @@ describe("Phase H API", () => {
     });
   });
 
-  describe("Cutover — Beta allowlist", () => {
-    it("returns 403 when email is not on BETA_ALLOWED_EMAILS", async () => {
-      process.env.BETA_ALLOWED_EMAILS = "invited@test.local";
+  describe("Cutover — Open registration", () => {
+    it("allows registration for any valid email", async () => {
+      const email = `public_${Date.now()}@example.com`;
       const res = await request(app).post("/auth/register").send({
-        name: "Stranger",
-        email: `stranger_${Date.now()}@test.local`,
-        password: "password123",
-        level: "B1",
-      });
-      expect(res.status).toBe(403);
-      expect(res.body.error.code).toBe("BETA_REGISTRATION_CLOSED");
-      delete process.env.BETA_ALLOWED_EMAILS;
-    });
-
-    it("middleware rejects before user is created (no duplicate on retry)", async () => {
-      process.env.BETA_ALLOWED_EMAILS = "invited@test.local";
-      const email = `blocked_${Date.now()}@test.local`;
-      const first = await request(app).post("/auth/register").send({
-        name: "Blocked",
-        email,
-        password: "password123",
-        level: "B1",
-      });
-      expect(first.status).toBe(403);
-      const second = await request(app).post("/auth/register").send({
-        name: "Blocked",
-        email,
-        password: "password123",
-        level: "B1",
-      });
-      expect(second.status).toBe(403);
-      delete process.env.BETA_ALLOWED_EMAILS;
-    });
-
-    it("allows registration when email is on BETA_ALLOWED_EMAILS", async () => {
-      const email = `invited_${Date.now()}@test.local`;
-      process.env.BETA_ALLOWED_EMAILS = email;
-      const res = await request(app).post("/auth/register").send({
-        name: "Invited Tester",
+        name: "Public User",
         email,
         password: "password123",
         level: "B1",
       });
       expect(res.status).toBe(201);
-      delete process.env.BETA_ALLOWED_EMAILS;
+      expect(res.body.data.user.email).toBe(email);
     });
 
-    it("existing user can still login when allowlist is active", async () => {
-      const { email } = await registerAndLogin(app, "_allowlist");
+    it("ignores BETA_ALLOWED_EMAILS when set", async () => {
       process.env.BETA_ALLOWED_EMAILS = "someone-else@test.local";
-      const login = await request(app).post("/auth/login").send({
+      const email = `ignored_allowlist_${Date.now()}@example.com`;
+      const res = await request(app).post("/auth/register").send({
+        name: "Open Access",
         email,
         password: "password123",
+        level: "B1",
       });
-      expect(login.status).toBe(200);
+      expect(res.status).toBe(201);
       delete process.env.BETA_ALLOWED_EMAILS;
     });
   });

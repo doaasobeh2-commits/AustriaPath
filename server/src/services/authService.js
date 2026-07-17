@@ -8,7 +8,6 @@ import {
   rowToApiUser,
   updateLastLogin,
 } from "../repositories/userRepository.js";
-import { startTrialOnFirstLogin } from "../services/accessService.js";
 import { createAuthSession, revokeSession } from "../repositories/authSessionRepository.js";
 import { hashPassword, verifyPassword } from "../utils/password.js";
 import { generateSessionToken, hashToken } from "../middleware/request.js";
@@ -16,7 +15,6 @@ import { query } from "../db/client.js";
 import { env } from "../config/env.js";
 import { createOneTimeToken, consumeOneTimeToken } from "../repositories/tokenStoreRepository.js";
 import { sendPasswordResetEmail, sendVerificationEmail } from "../services/emailService.js";
-import { assertBetaRegistrationAllowed } from "../config/betaAllowlist.js";
 
 const SESSION_DAYS = 7;
 const TOKEN_ROUTE_RESET = "auth:password-reset";
@@ -43,8 +41,6 @@ function validateRegister({ name, email, password, level }) {
 export async function registerUser(body) {
   validateRegister(body);
   const email = body.email.trim().toLowerCase();
-
-  assertBetaRegistrationAllowed(email);
 
   if (isReservedAdminEmail(email)) {
     throw new AppError("EMAIL_RESERVED", "Diese E-Mail ist reserviert.", 409);
@@ -95,10 +91,7 @@ export async function loginUser(body, meta = {}) {
     throw new AppError("AUTH_INVALID", "E-Mail oder Passwort ist falsch.", 401);
   }
 
-  await startTrialOnFirstLogin(user.id);
-  const refreshedUser = (await findUserByEmail(email)) || user;
-
-  await updateLastLogin(refreshedUser.id);
+  await updateLastLogin(user.id);
   const token = generateSessionToken();
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 86400000);
   await createAuthSession({
@@ -112,7 +105,7 @@ export async function loginUser(body, meta = {}) {
   const sub = await getCurrentSubscription(user.id);
   return {
     token,
-    user: rowToApiUser(refreshedUser, sub),
+    user: rowToApiUser(user, sub),
     expiresAt,
   };
 }

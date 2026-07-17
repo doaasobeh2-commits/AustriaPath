@@ -1,5 +1,5 @@
 /**
- * 48-hour trial + admin-approved access tests.
+ * Public access — no allowlist or trial window restrictions.
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
@@ -21,9 +21,9 @@ process.env.SESSION_SECRET = "test-secret";
 process.env.ADMIN_BOOTSTRAP_SECRET = "test-bootstrap-secret";
 
 async function registerStudent(app, suffix = "") {
-  const email = `trial_${Date.now()}${suffix}@test.local`;
+  const email = `access_${Date.now()}${suffix}@test.local`;
   await request(app).post("/auth/register").send({
-    name: "Trial Student",
+    name: "Access Student",
     email,
     password: "password123",
     level: "B1",
@@ -39,7 +39,7 @@ async function loginStudent(app, email) {
   return { res, cookie: res.headers["set-cookie"] };
 }
 
-describe("48-hour trial access", () => {
+describe("public application access", () => {
   /** @type {import('express').Express} */
   let app;
 
@@ -55,7 +55,7 @@ describe("48-hour trial access", () => {
     await closeDb();
   });
 
-  it("computeAccessStatus marks grandfathered users as APPROVED", () => {
+  it("computeAccessStatus marks active users as APPROVED", () => {
     const status = computeAccessStatus(
       {
         email: "legacy@test.local",
@@ -69,58 +69,31 @@ describe("48-hour trial access", () => {
     );
     expect(status).toBe(ACCESS_STATUS.APPROVED);
     expect(
-      hasApplicationAccess(
-        {
-          email: "legacy@test.local",
-          role: "student",
-          status: "approved",
-          is_access_approved: true,
-          trial_started_at: null,
-          trial_expires_at: null,
-        },
-        env.adminEmail
-      )
+      hasApplicationAccess({
+        email: "legacy@test.local",
+        role: "student",
+        status: "approved",
+      })
     ).toBe(true);
   });
 
-  it("new user receives a trial on first login", async () => {
+  it("new user is approved on first login", async () => {
     const email = await registerStudent(app, "_firstlogin");
     const { res } = await loginStudent(app, email);
 
     expect(res.status).toBe(200);
-    expect(res.body.data.user.accessStatus).toBe("TRIAL_ACTIVE");
-    expect(res.body.data.user.trialStartedAt).toBeTruthy();
-    expect(res.body.data.user.trialExpiresAt).toBeTruthy();
-    expect(res.body.data.user.isAccessApproved).toBe(false);
+    expect(res.body.data.user.accessStatus).toBe("APPROVED");
+    expect(res.body.data.user.isAccessApproved).toBe(true);
+    expect(res.body.data.user.hasApplicationAccess).toBe(true);
 
     const { rows } = await query(
-      `SELECT trial_started_at, trial_expires_at, is_access_approved FROM users WHERE LOWER(email) = LOWER($1)`,
+      `SELECT is_access_approved FROM users WHERE LOWER(email) = LOWER($1)`,
       [email]
     );
-    expect(rows[0].trial_started_at).toBeTruthy();
-    expect(rows[0].trial_expires_at).toBeTruthy();
-    expect(rows[0].is_access_approved).toBe(false);
+    expect(rows[0].is_access_approved).toBe(true);
   });
 
-  it("trial cannot be reset by logging in again", async () => {
-    const email = await registerStudent(app, "_noreset");
-    await loginStudent(app, email);
-    const { rows: afterFirst } = await query(
-      `SELECT trial_started_at, trial_expires_at FROM users WHERE LOWER(email) = LOWER($1)`,
-      [email]
-    );
-
-    await loginStudent(app, email);
-    const { rows: afterSecond } = await query(
-      `SELECT trial_started_at, trial_expires_at FROM users WHERE LOWER(email) = LOWER($1)`,
-      [email]
-    );
-
-    expect(afterSecond[0].trial_started_at).toEqual(afterFirst[0].trial_started_at);
-    expect(afterSecond[0].trial_expires_at).toEqual(afterFirst[0].trial_expires_at);
-  });
-
-  it("expired trial blocks protected routes but allows /auth/me", async () => {
+  it("expired trial timestamps do not block protected routes", async () => {
     const email = await registerStudent(app, "_expired");
     const { cookie } = await loginStudent(app, email);
 
@@ -134,23 +107,7 @@ describe("48-hour trial access", () => {
 
     const me = await request(app).get("/auth/me").set("Cookie", cookie);
     expect(me.status).toBe(200);
-    expect(me.body.data.user.accessStatus).toBe("TRIAL_EXPIRED");
-
-    const profile = await request(app).get("/student-profile").set("Cookie", cookie);
-    expect(profile.status).toBe(403);
-    expect(profile.body.error.code).toBe("TRIAL_EXPIRED");
-  });
-
-  it("approved users continue working after trial expiry", async () => {
-    const email = await registerStudent(app, "_approved");
-    const { cookie } = await loginStudent(app, email);
-
-    const { rows } = await query(`SELECT id FROM users WHERE LOWER(email) = LOWER($1)`, [email]);
-    await query(
-      `UPDATE users SET trial_expires_at = NOW() - INTERVAL '1 hour',
-       is_access_approved = TRUE WHERE id = $1`,
-      [rows[0].id]
-    );
+    expect(me.body.data.user.accessStatus).toBe("APPROVED");
 
     const profile = await request(app).get("/student-profile").set("Cookie", cookie);
     expect(profile.status).toBe(200);
@@ -167,33 +124,5 @@ describe("48-hour trial access", () => {
     });
     expect(login.status).toBe(403);
     expect(login.body.error.code).toBe("AUTH_BLOCKED");
-  });
-
-  it("migration does not infer existing users as expired", async () => {
-    const email = `legacy_${Date.now()}@test.local`;
-    await query(
-      `INSERT INTO users (email, password_hash, role, status, level, allowed_levels, ai_credits, is_access_approved)
-       VALUES ($1, 'hash', 'student', 'approved', 'B1', '{A2,B1}', 5, FALSE)`,
-      [email]
-    );
-
-    const { rows } = await query(
-      `SELECT is_access_approved, trial_started_at, trial_expires_at FROM users WHERE email = $1`,
-      [email]
-    );
-
-    const status = computeAccessStatus(
-      {
-        email,
-        role: "student",
-        status: "approved",
-        is_access_approved: rows[0].is_access_approved,
-        trial_started_at: rows[0].trial_started_at,
-        trial_expires_at: rows[0].trial_expires_at,
-      },
-      env.adminEmail
-    );
-
-    expect(status).toBe(ACCESS_STATUS.TRIAL_ACTIVE);
   });
 });

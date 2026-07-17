@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { success } from "../utils/response.js";
-import { getBetaAllowlistStatus } from "../config/betaAllowlist.js";
 import { env } from "../config/env.js";
 import { getDb, query } from "../db/client.js";
 import { parseDatabaseUrl } from "../utils/databaseUrl.js";
@@ -12,7 +11,7 @@ router.get("/", (_req, res) => {
     status: "ok",
     service: "austria-path-api",
     version: "2.0.0-gate0",
-    betaAllowlist: getBetaAllowlistStatus(),
+    registration: "open",
   });
 });
 

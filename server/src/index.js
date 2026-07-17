@@ -5,7 +5,6 @@ import { closeDb } from "./db/client.js";
 import { prepareDatabase } from "./db/startup.js";
 import { env } from "./config/env.js";
 import { assertProductionDatabaseConfig } from "./config/validateEnv.js";
-import { getBetaAllowlistStatus } from "./config/betaAllowlist.js";
 import { attachRequestLogger } from "./middleware/requestLogger.js";
 import { attachProcessHandlers } from "./runtime/processHandlers.js";
 import healthzRoutes from "./routes/healthz.routes.js";
@@ -23,11 +22,6 @@ assertProductionDatabaseConfig();
 await prepareDatabase();
 
 const spaEnabled = attachProductionFrontend(root);
-
-const betaAllowlist = getBetaAllowlistStatus();
-console.log(
-  `Beta allowlist: configured=${betaAllowlist.configured} enforced=${betaAllowlist.enforced} count=${betaAllowlist.count} production=${betaAllowlist.production}`
-);
 
 const host = "0.0.0.0";
 const port = Number(process.env.PORT || env.port);

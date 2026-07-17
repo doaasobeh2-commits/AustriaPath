@@ -1,5 +1,3 @@
-import { query } from "../db/client.js";
-
 export const ACCESS_STATUS = {
   TRIAL_ACTIVE: "TRIAL_ACTIVE",
   TRIAL_EXPIRED: "TRIAL_EXPIRED",
@@ -7,8 +5,6 @@ export const ACCESS_STATUS = {
   BLOCKED: "BLOCKED",
   ADMIN: "ADMIN",
 };
-
-const TRIAL_HOURS = 48;
 
 /**
  * Compute effective access status from persisted user fields (server-side only).
@@ -29,54 +25,17 @@ export function computeAccessStatus(user, adminEmail) {
     return ACCESS_STATUS.ADMIN;
   }
 
-  if (user.role === "examiner") {
-    return ACCESS_STATUS.APPROVED;
-  }
-
-  if (user.is_access_approved === true || user.is_access_approved === "t") {
-    return ACCESS_STATUS.APPROVED;
-  }
-
-  if (user.trial_started_at && user.trial_expires_at) {
-    return new Date(user.trial_expires_at).getTime() > Date.now()
-      ? ACCESS_STATUS.TRIAL_ACTIVE
-      : ACCESS_STATUS.TRIAL_EXPIRED;
-  }
-
-  // New student before first login — trial not started yet; allow login to begin trial.
-  return ACCESS_STATUS.TRIAL_ACTIVE;
+  return ACCESS_STATUS.APPROVED;
 }
 
 /**
  * @param {object} user
- * @param {string} adminEmail
  */
-export function hasApplicationAccess(user, adminEmail) {
-  const status = computeAccessStatus(user, adminEmail);
-  return (
-    status === ACCESS_STATUS.TRIAL_ACTIVE ||
-    status === ACCESS_STATUS.APPROVED ||
-    status === ACCESS_STATUS.ADMIN
-  );
-}
-
-/**
- * Start the 48-hour trial on first successful login (idempotent).
- * @param {string} userId
- */
-export async function startTrialOnFirstLogin(userId) {
-  await query(
-    `UPDATE users SET
-       trial_started_at = NOW(),
-       trial_expires_at = NOW() + ($2 || ' hours')::INTERVAL,
-       updated_at = NOW()
-     WHERE id = $1
-       AND trial_started_at IS NULL
-       AND is_access_approved = FALSE
-       AND role = 'student'
-       AND status <> 'blocked'`,
-    [userId, String(TRIAL_HOURS)]
-  );
+export function hasApplicationAccess(user) {
+  if (!user || user.status === "blocked") {
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -91,6 +50,6 @@ export function accessFieldsForUser(row, adminEmail) {
     trialExpiresAt: row.trial_expires_at || null,
     isAccessApproved: Boolean(row.is_access_approved),
     lastLoginAt: row.last_login_at || null,
-    hasApplicationAccess: hasApplicationAccess(row, adminEmail),
+    hasApplicationAccess: hasApplicationAccess(row),
   };
 }
