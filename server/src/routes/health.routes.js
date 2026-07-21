@@ -12,6 +12,10 @@ router.get("/", (_req, res) => {
     service: "austria-path-api",
     version: "2.0.0-gate0",
     registration: "open",
+    placementAi: {
+      configured: Boolean(env.openaiApiKey),
+      modelConfigured: Boolean(env.openaiModel),
+    },
   });
 });
 

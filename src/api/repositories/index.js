@@ -114,10 +114,17 @@ export async function getPlacementEntitlement() {
   return apiFetch("/placement/entitlement");
 }
 
-export async function consumePlacementEntitlement(idempotencyKey) {
-  return apiFetch("/placement/consume-entitlement", {
+export async function beginPlacementAttempt() {
+  return apiFetch("/placement/begin-attempt", {
     method: "POST",
-    json: { idempotencyKey },
+    json: {},
+  });
+}
+
+export async function completePlacementAttempt(attemptId) {
+  return apiFetch("/placement/complete-attempt", {
+    method: "POST",
+    json: { attemptId },
   });
 }
 

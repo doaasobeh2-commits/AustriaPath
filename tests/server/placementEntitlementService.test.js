@@ -10,7 +10,8 @@ import {
   runMigrations,
 } from "../../server/src/db/client.js";
 import {
-  consumePlacementAttempt,
+  beginPlacementAttempt,
+  completePlacementAttempt,
   getPlacementEntitlement,
   grantPlacementAttempt,
 } from "../../server/src/services/placementEntitlementService.js";
@@ -39,7 +40,7 @@ describe("one-shot Placement entitlement", () => {
     await closeDb();
   });
 
-  it("grants exactly one attempt without adding credits and consumes it idempotently", async () => {
+  it("keeps failures in progress, resumes, completes once, and permits a fresh admin grant", async () => {
     const before = await query(`SELECT ai_credits FROM users WHERE id = $1`, [userId]);
     expect(before.rows[0].ai_credits).toBe(5);
 
@@ -49,18 +50,48 @@ describe("one-shot Placement entitlement", () => {
       canTake: true,
       remainingExams: 1,
       planType: "placement_test",
+      attemptStatus: "available",
     });
 
-    const consumed = await consumePlacementAttempt(userId, "placement-entitlement-test-key");
-    expect(consumed).toMatchObject({ consumed: true, replayed: false, remainingExams: 0 });
-    const replay = await consumePlacementAttempt(userId, "placement-entitlement-test-key");
-    expect(replay).toMatchObject({ consumed: false, replayed: true, remainingExams: 0 });
+    const started = await beginPlacementAttempt(userId);
+    expect(started).toMatchObject({ started: true, resumed: false, remainingExams: 1 });
+    expect(started.attemptId).toBeTruthy();
+
+    // Simulated provider/network failure: no completion call, so nothing is consumed.
+    await expect(getPlacementEntitlement(userId)).resolves.toMatchObject({
+      canTake: true,
+      remainingExams: 1,
+      attemptStatus: "in_progress",
+      attemptId: started.attemptId,
+    });
+
+    const resumed = await beginPlacementAttempt(userId);
+    expect(resumed).toMatchObject({
+      started: false,
+      resumed: true,
+      attemptId: started.attemptId,
+      remainingExams: 1,
+    });
+
+    const completed = await completePlacementAttempt(userId, started.attemptId);
+    expect(completed).toMatchObject({ completed: true, replayed: false, remainingExams: 0 });
+    const replay = await completePlacementAttempt(userId, started.attemptId);
+    expect(replay).toMatchObject({ completed: false, replayed: true, remainingExams: 0 });
     await expect(getPlacementEntitlement(userId)).resolves.toMatchObject({
       canTake: false,
       remainingExams: 0,
+      attemptStatus: "completed",
     });
 
     const after = await query(`SELECT ai_credits FROM users WHERE id = $1`, [userId]);
     expect(after.rows[0].ai_credits).toBe(5);
+
+    const freshGrant = await grantPlacementAttempt(userId);
+    expect(freshGrant).toMatchObject({ granted: true, remainingExams: 1 });
+    await expect(getPlacementEntitlement(userId)).resolves.toMatchObject({
+      canTake: true,
+      remainingExams: 1,
+      attemptStatus: "available",
+    });
   });
 });

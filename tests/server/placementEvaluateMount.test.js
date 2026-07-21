@@ -60,15 +60,21 @@ describe("placement routes mount", () => {
     expect(res.body?.error?.code).toMatch(/AUTH/);
   });
 
-  it("protects the one-shot Placement consumption endpoint", async () => {
+  it("protects the Placement begin and completion endpoints", async () => {
     const root = express();
     root.use("/v1", createApp());
 
     const res = await request(root)
-      .post("/v1/placement/consume-entitlement")
-      .send({ idempotencyKey: "placement-test-key" });
+      .post("/v1/placement/begin-attempt")
+      .send({});
 
     expect(res.status).toBe(401);
     expect(res.body?.error?.code).toMatch(/AUTH/);
+
+    const complete = await request(root)
+      .post("/v1/placement/complete-attempt")
+      .send({ attemptId: "placement-test-key" });
+    expect(complete.status).toBe(401);
+    expect(complete.body?.error?.code).toMatch(/AUTH/);
   });
 });

@@ -13,7 +13,8 @@ import { AppError } from "../middleware/errorHandler.js";
 import { evaluatePlacementTurn } from "../services/placementEvaluateService.js";
 import { polishPlacementReport } from "../services/placementReportService.js";
 import {
-  consumePlacementAttempt,
+  beginPlacementAttempt,
+  completePlacementAttempt,
   getPlacementEntitlement,
 } from "../services/placementEntitlementService.js";
 
@@ -29,7 +30,23 @@ router.get("/entitlement", requireAuth, requireActiveAccess, async (req, res, ne
 
 router.post("/consume-entitlement", requireAuth, requireActiveAccess, async (req, res, next) => {
   try {
-    success(res, await consumePlacementAttempt(req.auth.userId, req.body?.idempotencyKey));
+    success(res, await beginPlacementAttempt(req.auth.userId));
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/begin-attempt", requireAuth, requireActiveAccess, async (req, res, next) => {
+  try {
+    success(res, await beginPlacementAttempt(req.auth.userId));
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/complete-attempt", requireAuth, requireActiveAccess, async (req, res, next) => {
+  try {
+    success(res, await completePlacementAttempt(req.auth.userId, req.body?.attemptId));
   } catch (e) {
     next(e);
   }
@@ -81,6 +98,10 @@ router.post(
 
       success(res, data);
     } catch (e) {
+      console.error("[placement] evaluate-turn failed", {
+        code: e?.code || "INTERNAL_ERROR",
+        status: e?.status || 500,
+      });
       next(e);
     }
   }

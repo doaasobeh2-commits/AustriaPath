@@ -18,11 +18,13 @@ import {
 } from '../../data/utils/placementReport';
 import { savePlacementProfile } from '../../data/utils/placementEngine';
 import {
-  consumePlacementEntitlement,
+  beginPlacementAttempt,
+  completePlacementAttempt,
   evaluatePlacementTurn,
+  getPlacementEntitlement,
   polishPlacementReport,
 } from '../../api/repositories/index.js';
-import { newIdempotencyKey } from '../../api/idempotency.js';
+import { getPlacementModel } from '../../data/aiPlacementLibrary.js';
 import { ApiError } from '../../api/httpClient.js';
 import { selectPlacementBildImageSafe } from '../../data/utils/placementImagePool.js';
 import { selectPlacementListeningModel } from '../../data/utils/placementListeningPool.js';
@@ -30,6 +32,11 @@ import {
   ADMIN_QA_NOT_EVALUATED,
   isAdminQaMode,
 } from '../../utils/adminQaMode.js';
+import {
+  clearPlacementSession,
+  loadPlacementSession,
+  savePlacementSession,
+} from '../../utils/placementSession.js';
 
 const SpeechRecognitionCtor =
   typeof window !== 'undefined'
@@ -50,6 +57,8 @@ export default function PlacementTestScreen({ setActiveTab }) {
   const [result, setResult] = useState(null);
   const [isBuildingReport, setIsBuildingReport] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
+  const [attemptId, setAttemptId] = useState(null);
+  const [resumeChecked, setResumeChecked] = useState(false);
 
   /** Performance bands per weighted skill key (selbstvorstellung, bildbeschreibung, lesenHoeren, planung) */
   const [skillBands, setSkillBands] = useState({});
@@ -73,13 +82,14 @@ export default function PlacementTestScreen({ setActiveTab }) {
   /** Session-sticky Bild image — fixed for entire Bildbeschreibung stage */
   const [selectedBildImage, setSelectedBildImage] = useState(null);
   const [bildImageBroken, setBildImageBroken] = useState(false);
+  const [retryAnswer, setRetryAnswer] = useState(null);
   const recognitionRef = useRef(null);
   const transcriptRef = useRef('');
   const finalTranscriptRef = useRef('');
   const submitAfterStopRef = useRef(false);
   /** True while the learner wants the mic session open (until explicit stop). */
   const listenIntentRef = useRef(false);
-  const attemptKeyRef = useRef(newIdempotencyKey());
+  const hydratingRef = useRef(false);
 
   const totalMinutes = 5;
   const skillName = getStudentSkillName(currentModel?.skill);
@@ -107,6 +117,10 @@ export default function PlacementTestScreen({ setActiveTab }) {
   };
 
   useEffect(() => {
+    if (hydratingRef.current) {
+      hydratingRef.current = false;
+      return;
+    }
     setAnswerText('');
     setAnswerSubmitted(false);
     setControlMessage('');
@@ -117,12 +131,82 @@ export default function PlacementTestScreen({ setActiveTab }) {
     setFinalizedTranscript('');
     setTypedFallbackAllowed(!SpeechRecognitionCtor);
     setListeningAnswers({});
+    setRetryAnswer(null);
     transcriptRef.current = '';
     finalTranscriptRef.current = '';
     submitAfterStopRef.current = false;
     stopRecognition();
     stopAudio();
   }, [stageIndex, currentModel?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getPlacementEntitlement()
+      .then((entitlement) => {
+        if (cancelled || entitlement?.attemptStatus !== 'in_progress' || !entitlement.attemptId) {
+          return;
+        }
+        setAttemptId(entitlement.attemptId);
+        const saved = loadPlacementSession(entitlement.attemptId);
+        const savedModel = saved?.currentModelId
+          ? getPlacementModel(saved.currentModelId)
+          : null;
+        if (!saved || !savedModel) return;
+        hydratingRef.current = true;
+        setSelectedLevel(saved.selectedLevel || 'A2');
+        setStageIndex(Number(saved.stageIndex) || STAGE_SELF);
+        setCurrentModel(savedModel);
+        setSkillBands(saved.skillBands || {});
+        setNumericScores(saved.numericScores || {});
+        setModelsUsed(saved.modelsUsed || []);
+        setTurnEvidence(saved.turnEvidence || {});
+        setSelectedBildImage(saved.selectedBildImage || null);
+        setBildImageBroken(false);
+        setFollowUpCount(Number(saved.followUpCount) || 0);
+        setActiveFollowUp(saved.activeFollowUp || null);
+        setListeningAnswers(saved.listeningAnswers || {});
+        setAnswerSubmitted(Boolean(saved.answerSubmitted));
+        setFinalizedTranscript(saved.finalizedTranscript || '');
+        setRetryAnswer(saved.retryAnswer || null);
+        transcriptRef.current = saved.finalizedTranscript || saved.retryAnswer?.text || '';
+        setStarted(true);
+        setControlMessage('Ihr begonnener Einstufungstest wurde wiederhergestellt.');
+      })
+      .catch(() => {
+        // Fail closed: the server entitlement remains the source of truth.
+      })
+      .finally(() => {
+        if (!cancelled) setResumeChecked(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!resumeChecked || !started || !attemptId || !currentModel?.id) return;
+    savePlacementSession(attemptId, {
+      selectedLevel,
+      stageIndex,
+      currentModelId: currentModel.id,
+      skillBands,
+      numericScores,
+      modelsUsed,
+      turnEvidence,
+      selectedBildImage,
+      followUpCount,
+      activeFollowUp,
+      listeningAnswers,
+      answerSubmitted,
+      finalizedTranscript,
+      retryAnswer,
+    });
+  }, [
+    resumeChecked, started, attemptId, selectedLevel, stageIndex, currentModel,
+    skillBands, numericScores, modelsUsed, turnEvidence, selectedBildImage,
+    followUpCount, activeFollowUp, listeningAnswers, answerSubmitted,
+    finalizedTranscript, retryAnswer,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -141,7 +225,8 @@ export default function PlacementTestScreen({ setActiveTab }) {
     setIsStarting(true);
     setControlMessage('Freigabe wird geprüft…');
     try {
-      await consumePlacementEntitlement(attemptKeyRef.current);
+      const attempt = await beginPlacementAttempt();
+      setAttemptId(attempt.attemptId);
     } catch (error) {
       setControlMessage(
         error instanceof ApiError
@@ -209,8 +294,21 @@ export default function PlacementTestScreen({ setActiveTab }) {
         turnEvidence: evidenceSnapshot || turnEvidence,
       });
 
+      try {
+        await completePlacementAttempt(attemptId);
+      } catch (error) {
+        setControlMessage(
+          (error instanceof ApiError
+            ? error.message
+            : 'Abschluss konnte nicht gespeichert werden.') +
+            ' Bitte erneut auf Weiter klicken.'
+        );
+        return;
+      }
+
       // Persist deterministic report immediately — level/bands frozen
       savePlacementProfile(profile);
+      clearPlacementSession(attemptId);
       setResult(profile);
       setIsBuildingReport(true);
 
@@ -577,6 +675,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
       }
 
       const evaluation = await evaluatePlacementTurn(payload);
+      setRetryAnswer(null);
       const turnRecord = {
         ...evaluation,
         question: currentTurnQuestion,
@@ -640,7 +739,10 @@ export default function PlacementTestScreen({ setActiveTab }) {
         setActiveFollowUp(null);
         setControlMessage(`${ADMIN_QA_NOT_EVALUATED}. Sie können mit Weiter fortfahren. (${msg})`);
       } else {
-        setControlMessage(msg);
+        setRetryAnswer({ text, inputMode });
+        setControlMessage(
+          msg + ' Ihre erkannte Antwort bleibt erhalten. Bitte versuchen Sie die Auswertung erneut.'
+        );
         setAnswerSubmitted(false);
       }
     } finally {
@@ -799,8 +901,8 @@ export default function PlacementTestScreen({ setActiveTab }) {
         </div>
 
         {controlMessage ? <p style={smallTextStyle}>{controlMessage}</p> : null}
-        <button style={buttonStyle} onClick={startTest} disabled={isStarting}>
-          {isStarting ? 'Freigabe wird geprüft…' : 'Test starten'}
+        <button style={buttonStyle} onClick={startTest} disabled={isStarting || !resumeChecked}>
+          {!resumeChecked || isStarting ? 'Freigabe wird geprüft…' : 'Test starten'}
         </button>
       </div>
     );
@@ -923,6 +1025,16 @@ export default function PlacementTestScreen({ setActiveTab }) {
                 <strong>Das haben wir verstanden:</strong>
                 <p>{finalizedTranscript}</p>
               </div>
+            ) : null}
+
+            {retryAnswer && !isEvaluating ? (
+              <button
+                type="button"
+                style={secondaryActionStyle}
+                onClick={() => handleSendAnswer(retryAnswer.text, retryAnswer.inputMode)}
+              >
+                Auswertung erneut versuchen
+              </button>
             ) : null}
 
             {(turnEvidence[evidenceKey] || [])
