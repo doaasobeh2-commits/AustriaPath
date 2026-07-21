@@ -7,6 +7,7 @@ import {
   matchAllowedFollowUp,
   sanitizePlacementEvaluation,
   evaluatePlacementTurnOffline,
+  isRedundantImageFollowUp,
   PLACEMENT_MAX_FOLLOWUPS,
   PLACEMENT_EVAL_METHOD,
 } from "../server/src/services/placementEvaluateService.js";
@@ -127,6 +128,69 @@ describe("placementEvaluateService — sanitize", () => {
     ];
     const allowed = buildAllowedFollowUps(model, conversation);
     expect(allowed).not.toContain("Was sind Ihre Hobbys?");
+  });
+
+  it("rejects redundant Bild location and action questions already answered semantically", () => {
+    const bildModel = getPlacementModel("a2_bild_mittel");
+    const conversation = [
+      {
+        question: "Beschreiben Sie bitte das Bild.",
+        transcript:
+          "Die Personen sind in einer Bank und eröffnen wahrscheinlich ein Konto.",
+        inputMode: "voice_transcript",
+      },
+    ];
+
+    expect(isRedundantImageFollowUp("Wo sind die Personen?", conversation)).toBe(
+      true
+    );
+    expect(isRedundantImageFollowUp("Was machen sie?", conversation)).toBe(true);
+
+    const result = sanitizePlacementEvaluation(
+      {
+        band: "medium",
+        needsFollowUp: true,
+        followUpQuestion: "Wo befinden sich die Personen?",
+        followUpCandidates: [
+          "Was machen die Personen?",
+          "Warum ist ein Bankkonto im Alltag wichtig?",
+        ],
+        followUpSource: "missingTopic",
+      },
+      bildModel,
+      0,
+      conversation
+    );
+
+    expect(result.needsFollowUp).toBe(true);
+    expect(result.followUpQuestion).toBe(
+      "Warum ist ein Bankkonto im Alltag wichtig?"
+    );
+  });
+
+  it("asks no Bild follow-up when every proposed candidate is redundant", () => {
+    const bildModel = getPlacementModel("a2_bild_mittel");
+    const conversation = [
+      {
+        question: "Beschreiben Sie bitte das Bild.",
+        transcript: "They are in a bank and are probably opening an account.",
+        inputMode: "voice_transcript",
+      },
+    ];
+    const result = sanitizePlacementEvaluation(
+      {
+        band: "medium",
+        needsFollowUp: true,
+        followUpQuestion: "Where are the people?",
+        followUpCandidates: ["What are the people doing?"],
+      },
+      bildModel,
+      0,
+      conversation
+    );
+
+    expect(result.needsFollowUp).toBe(false);
+    expect(result.followUpQuestion).toBeNull();
   });
 });
 

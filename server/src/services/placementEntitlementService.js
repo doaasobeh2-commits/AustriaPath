@@ -3,6 +3,7 @@ import { AppError } from "../middleware/errorHandler.js";
 import { getSubscriptionForUser } from "../repositories/subscriptionRepository.js";
 import { getPermissionsByPlan } from "../utils/permissions.js";
 import { randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 
 function placementPermissions(subscription) {
   if (subscription?.permissions && typeof subscription.permissions === "object") {
@@ -15,6 +16,143 @@ function placementAttempt(subscription) {
   const attempt = subscription?.metadata?.placementAttempt;
   if (attempt && typeof attempt === "object") return attempt;
   return null;
+}
+
+const PLACEMENT_TURN_LIMIT = 9;
+const PLACEMENT_REPORT_LIMIT = 1;
+
+function canonicalizeForHash(value) {
+  if (Array.isArray(value)) return value.map(canonicalizeForHash);
+  if (!value || typeof value !== "object") return value;
+  return Object.keys(value)
+    .sort()
+    .reduce((result, key) => {
+      result[key] = canonicalizeForHash(value[key]);
+      return result;
+    }, {});
+}
+
+/**
+ * Run one bounded Placement provider operation while holding the current
+ * subscription row lock. A thrown provider/parse/logging error rolls back the
+ * usage counter automatically.
+ */
+export async function withAuthorizedPlacementUsage(
+  { userId, attemptId, operation, idempotencyKey, requestPayload },
+  work
+) {
+  const id = String(attemptId || "").trim();
+  if (!id || id.length > 64) {
+    throw new AppError("VALIDATION_ERROR", "attemptId erforderlich.", 400);
+  }
+  if (operation !== "turn" && operation !== "report") {
+    throw new AppError("VALIDATION_ERROR", "Ungültige Placement-Operation.", 400);
+  }
+  const key = String(idempotencyKey || "").trim();
+  if (!/^[A-Za-z0-9._:-]{1,64}$/.test(key)) {
+    throw new AppError("VALIDATION_ERROR", "Idempotency-Key ist ungültig.", 400);
+  }
+  const requestHash = createHash("sha256")
+    .update(JSON.stringify(canonicalizeForHash(requestPayload || {})))
+    .digest("hex");
+
+  return withTransaction(async (q) => {
+    const { rows } = await q(
+      `SELECT * FROM subscriptions
+       WHERE user_id = $1 AND is_current = TRUE
+       ORDER BY created_at DESC LIMIT 1 FOR UPDATE`,
+      [userId]
+    );
+    const subscription = rows[0];
+    const attempt = placementAttempt(subscription);
+    const validStatus =
+      operation === "turn"
+        ? attempt?.status === "in_progress"
+        : attempt?.status === "in_progress" || attempt?.status === "completed";
+
+    if (
+      !subscription ||
+      subscription.status !== "active" ||
+      attempt?.id !== id ||
+      !validStatus
+    ) {
+      throw new AppError(
+        "PLACEMENT_NOT_ENTITLED",
+        "Kein gültiger Placement-Versuch.",
+        403
+      );
+    }
+
+    const existingUsage = subscription.metadata?.placementUsage;
+    const usage =
+      existingUsage?.attemptId === id
+        ? {
+            attemptId: id,
+            evaluatedTurns: Math.max(0, Number(existingUsage.evaluatedTurns) || 0),
+            reports: Math.max(0, Number(existingUsage.reports) || 0),
+            completedOperations: Array.isArray(existingUsage.completedOperations)
+              ? existingUsage.completedOperations.slice(-10)
+              : [],
+          }
+        : {
+            attemptId: id,
+            evaluatedTurns: 0,
+            reports: 0,
+            completedOperations: [],
+          };
+
+    const completed = usage.completedOperations.find(
+      (item) => item?.operation === operation && item?.idempotencyKey === key
+    );
+    if (completed) {
+      if (completed.requestHash !== requestHash) {
+        throw new AppError(
+          "IDEMPOTENCY_MISMATCH",
+          "Idempotency-Key mit anderer Placement-Anfrage verwendet.",
+          409
+        );
+      }
+      return completed.response;
+    }
+
+    if (operation === "turn" && usage.evaluatedTurns >= PLACEMENT_TURN_LIMIT) {
+      throw new AppError(
+        "PLACEMENT_TURN_LIMIT_REACHED",
+        "Maximale Anzahl der Placement-Auswertungen erreicht.",
+        409
+      );
+    }
+    if (operation === "report" && usage.reports >= PLACEMENT_REPORT_LIMIT) {
+      throw new AppError(
+        "PLACEMENT_REPORT_LIMIT_REACHED",
+        "Placement-Bericht wurde bereits erstellt.",
+        409
+      );
+    }
+
+    const response = await work(q, { subscription, attempt, usage });
+
+    if (operation === "turn") usage.evaluatedTurns += 1;
+    else usage.reports += 1;
+    usage.completedOperations.push({
+      operation,
+      idempotencyKey: key,
+      requestHash,
+      response,
+    });
+
+    const metadata = {
+      ...(subscription.metadata || {}),
+      placementUsage: usage,
+    };
+    await q(
+      `UPDATE subscriptions SET metadata = $2::jsonb, updated_at = NOW()
+       WHERE id = $1`,
+      [subscription.id, JSON.stringify(metadata)]
+    );
+
+    return response;
+  });
 }
 
 export async function getPlacementEntitlement(userId) {

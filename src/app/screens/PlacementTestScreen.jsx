@@ -314,7 +314,11 @@ export default function PlacementTestScreen({ setActiveTab }) {
 
       try {
         const ai = await polishPlacementReport(
-          buildPlacementReportAiInput(profile)
+          {
+            ...buildPlacementReportAiInput(profile),
+            attemptId,
+            idempotencyKey: 'report:final',
+          }
         );
         if (ai?.polished) {
           profile = applyPolishedLearnerReport(profile, ai.polished);
@@ -642,6 +646,8 @@ export default function PlacementTestScreen({ setActiveTab }) {
 
     try {
       const payload = {
+        attemptId,
+        idempotencyKey: `turn:${stageIndex}:${followUpCount}`,
         productType: 'placement_test',
         modelId: currentModel.id,
         answerText: text,

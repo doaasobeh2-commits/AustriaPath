@@ -69,8 +69,18 @@ router.post(
         currentQuestion,
         inputMode,
         selectedImage,
+        attemptId,
         selectedLevel: _ignoredSelectedLevel,
       } = req.body || {};
+
+      if (!attemptId || typeof attemptId !== "string") {
+        throw new AppError("VALIDATION_ERROR", "attemptId ist erforderlich.", 400);
+      }
+      const idempotencyKey =
+        req.headers["idempotency-key"] || req.body?.idempotencyKey;
+      if (!idempotencyKey || typeof idempotencyKey !== "string") {
+        throw new AppError("VALIDATION_ERROR", "Idempotency-Key ist erforderlich.", 400);
+      }
 
       if (!modelId || typeof modelId !== "string") {
         throw new AppError("VALIDATION_ERROR", "modelId ist erforderlich.", 400);
@@ -93,7 +103,8 @@ router.post(
         currentQuestion: currentQuestion ?? null,
         inputMode: inputMode ?? "typed",
         selectedImage: selectedImage ?? null,
-        authUser: req.auth.user,
+        attemptId,
+        idempotencyKey,
       });
 
       success(res, data);
@@ -116,6 +127,14 @@ router.post(
   async (req, res, next) => {
     try {
       const payload = req.body || {};
+      if (!payload.attemptId || typeof payload.attemptId !== "string") {
+        throw new AppError("VALIDATION_ERROR", "attemptId ist erforderlich.", 400);
+      }
+      const idempotencyKey =
+        req.headers["idempotency-key"] || payload.idempotencyKey;
+      if (!idempotencyKey || typeof idempotencyKey !== "string") {
+        throw new AppError("VALIDATION_ERROR", "Idempotency-Key ist erforderlich.", 400);
+      }
       if (!payload.level || !payload.skillBands) {
         throw new AppError(
           "VALIDATION_ERROR",
@@ -127,7 +146,8 @@ router.post(
       const data = await polishPlacementReport({
         userId: req.auth.userId,
         payload,
-        authUser: req.auth.user,
+        attemptId: payload.attemptId,
+        idempotencyKey,
       });
 
       success(res, data);

@@ -99,6 +99,7 @@ export async function evaluatePlacementTurn(body) {
   return apiFetch("/placement/evaluate-turn", {
     method: "POST",
     json: body,
+    headers: idempotencyHeaders(body.idempotencyKey),
   });
 }
 
@@ -107,6 +108,7 @@ export async function polishPlacementReport(body) {
   return apiFetch("/placement/report", {
     method: "POST",
     json: body,
+    headers: idempotencyHeaders(body.idempotencyKey),
   });
 }
 

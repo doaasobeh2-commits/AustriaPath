@@ -7,9 +7,7 @@
 import { getPlacementModel } from "../../../src/data/aiPlacementLibrary.js";
 import { AppError } from "../middleware/errorHandler.js";
 import { env } from "../config/env.js";
-import { AI_COSTS } from "../utils/permissions.js";
-import { query, withTransaction } from "../db/client.js";
-import { isAdminUser } from "../utils/adminAccess.js";
+import { withAuthorizedPlacementUsage } from "./placementEntitlementService.js";
 
 export const PLACEMENT_MAX_FOLLOWUPS = 2;
 export const PLACEMENT_EVAL_METHOD = "placement-ai-turn-v1";
@@ -29,6 +27,122 @@ function normalizeText(value = "") {
     .replace(/ß/g, "ss")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function sectionTranscript(conversation = []) {
+  return normalizeText(
+    (Array.isArray(conversation) ? conversation : [])
+      .map((turn) => turn?.transcript || "")
+      .join(" ")
+  );
+}
+
+function isImageLocationQuestion(question) {
+  const text = normalizeText(question);
+  return /\bwo\b|wo befinden|an welchem ort|where are|where is/.test(text);
+}
+
+function isImageActionQuestion(question) {
+  const text = normalizeText(question);
+  return /was (machen|tun)|womit .*beschaftigt|welche aktivitat|what are .*doing|what .*doing/.test(
+    text
+  );
+}
+
+function imageFollowUpDimension(question) {
+  const text = normalizeText(question);
+  if (isImageLocationQuestion(text)) return "location";
+  if (isImageActionQuestion(text)) return "action";
+  if (/was sehen|wer ist|wer sind|wie viele personen|what do you see|who is|who are/.test(text)) {
+    return "basic_description";
+  }
+  if (/\bwarum\b|\bweshalb\b|grund|folge|why|reason|consequence/.test(text)) {
+    return "reasoning";
+  }
+  if (/heimat|herkunftsland|vergleich|bei uns|home country|compare/.test(text)) {
+    return "comparison";
+  }
+  if (/erfahrung|erlebt|schon einmal|bei ihnen|experience|have you ever/.test(text)) {
+    return "experience";
+  }
+  if (/meinung|wie finden|was halten|wie wirkt|wichtig|think|opinion|how does .*feel/.test(text)) {
+    return "opinion";
+  }
+  return "other";
+}
+
+function sectionHasDimensionEvidence(dimension, conversation = []) {
+  const text = sectionTranscript(conversation);
+  if (dimension === "location") return hasImageLocationEvidence(conversation);
+  if (dimension === "action") return hasImageActionEvidence(conversation);
+  if (dimension === "basic_description") {
+    return text.split(" ").filter(Boolean).length >= 5;
+  }
+  if (dimension === "reasoning") {
+    return /\b(weil|deshalb|daher|denn|der grund|because|therefore|the reason)\b/.test(
+      text
+    );
+  }
+  if (dimension === "comparison") {
+    return /\b(in meiner heimat|in meinem herkunftsland|bei uns|im vergleich|in my home country|compared with)\b/.test(
+      text
+    );
+  }
+  if (dimension === "experience") {
+    return /\b(ich habe .*erlebt|ich war schon|meine erfahrung|bei mir|i have experienced|i have been|my experience)\b/.test(
+      text
+    );
+  }
+  if (dimension === "opinion") {
+    return /\b(ich finde|ich denke|meiner meinung nach|fur mich|i think|in my opinion|for me)\b/.test(
+      text
+    );
+  }
+  return false;
+}
+
+function hasImageLocationEvidence(conversation = []) {
+  const text = sectionTranscript(conversation);
+  return /\b(im|in der|in einer|in einem|auf dem|auf der|an einem|an der|bei der|beim|inside|at the|in a|in the)\s+[a-z]/.test(
+    text
+  );
+}
+
+function hasImageActionEvidence(conversation = []) {
+  const text = sectionTranscript(conversation);
+  return /\b(machen|tun|arbeiten|spielen|kochen|essen|trinken|sprechen|reden|kaufen|verkaufen|bezahlen|warten|lesen|schreiben|lernen|eroffnen|offnen|beantragen|beraten|sitzen|stehen|gehen|fahren|doing|working|playing|cooking|eating|talking|buying|paying|waiting|reading|writing|learning|opening|applying|sitting|standing|walking)\b/.test(
+    text
+  );
+}
+
+export function isRedundantImageFollowUp(question, conversation = []) {
+  const normalized = normalizeText(question);
+  if (!normalized) return true;
+  const dimension = imageFollowUpDimension(question);
+  const alreadyAsked = (Array.isArray(conversation) ? conversation : []).some(
+    (turn) => normalizeText(turn?.question || "") === normalized
+  );
+  if (alreadyAsked) return true;
+  const dimensionAlreadyAsked = (Array.isArray(conversation) ? conversation : []).some(
+    (turn) =>
+      imageFollowUpDimension(turn?.question || "") === dimension &&
+      dimension !== "other"
+  );
+  if (dimensionAlreadyAsked) return true;
+  if (sectionHasDimensionEvidence(dimension, conversation)) {
+    return true;
+  }
+  return false;
+}
+
+function sanitizeDynamicImageQuestion(value) {
+  const text = String(value || "").trim().replace(/\s+/g, " ");
+  if (text.length < 8 || text.length > 240) return null;
+  if ((text.match(/\?/g) || []).length !== 1 || !text.endsWith("?")) return null;
+  if (/https?:\/\/|```|systemprompt|system prompt|entwicklernachricht/i.test(text)) {
+    return null;
+  }
+  return text;
 }
 
 /**
@@ -123,7 +237,21 @@ export function sanitizePlacementEvaluation(
   }
 
   if (needsFollowUp) {
-    const matched = matchAllowedFollowUp(raw?.followUpQuestion, allowed);
+    const proposedCandidates = [
+      raw?.followUpQuestion,
+      ...(Array.isArray(raw?.followUpCandidates) ? raw.followUpCandidates : []),
+    ];
+    const matched =
+      model?.skill === "bildbeschreibung"
+        ? proposedCandidates
+            .map(sanitizeDynamicImageQuestion)
+            .find(
+              (question) =>
+                question && !isRedundantImageFollowUp(question, conversation)
+            ) || null
+        : proposedCandidates
+            .map((question) => matchAllowedFollowUp(question, allowed))
+            .find(Boolean) || null;
     if (matched) {
       followUpQuestion = matched;
       const claimed = String(raw?.followUpSource || "");
@@ -142,6 +270,7 @@ export function sanitizePlacementEvaluation(
   // existing examiner question. Never invent question text.
   const minimumFollowUps = model?.skill === "planung" ? 2 : 1;
   if (
+    model?.skill !== "bildbeschreibung" &&
     !needsFollowUp &&
     !Boolean(raw?.needsFollowUp) &&
     followUpCount < minimumFollowUps &&
@@ -226,17 +355,32 @@ export function buildExaminerSystemPrompt(
     "Du bewertest nur die aktuelle Lernenden-Antwort gegen die bereitgestellten Modellfelder.",
     "Bewerte dabei die GESAMTE bisherige Skill-Unterhaltung, nicht nur die letzte Antwort.",
     "voice_transcript ist automatische Spracherkennung und kann einzelne Erkennungsfehler enthalten. Behandle den Text als Evidenz, aber bestrafe wahrscheinliche Transkriptionsfehler nicht als Sprachfehler.",
-    "Du darfst KEINE neuen Szenarien, Themen oder freien Prüfungsfragen erfinden.",
+    "Du darfst KEINE neuen Szenarien oder nicht belegten Bilddetails erfinden.",
     "selectedLevel / Startniveau darf die Bewertung NICHT beeinflussen — nur die Antwort und die Modellfelder.",
     "Antworte NUR mit einem JSON-Objekt (kein Markdown), Schema:",
-    '{"band":"weak|medium|strong","coveredTopics":[],"missingTopics":[],"needsFollowUp":boolean,"followUpQuestion":string|null,"followUpSource":"examinerQuestions|followUpRules|missingTopic"|null,"notes":[]}',
+    '{"band":"weak|medium|strong","coveredTopics":[],"missingTopics":[],"needsFollowUp":boolean,"followUpQuestion":string|null,"followUpCandidates":[],"followUpSource":"examinerQuestions|followUpRules|missingTopic"|null,"notes":[]}',
     "band: weak/medium/strong nur anhand der Antwort vs requiredTopics und benchmarkMarkers.",
-    "needsFollowUp=true nur wenn eine Nachfrage sinnvoll ist UND followUpQuestion EXAKT einer erlaubten Frage entspricht.",
-    "followUpRules und fehlende requiredTopics dürfen nur helfen, eine erlaubte examinerQuestions-Frage auszuwählen.",
-    "Wenn keine erlaubte Nachfrage passt: needsFollowUp=false und followUpQuestion=null.",
-    "Erlaubte followUpQuestion-Werte (geschlossen — nur diese Texte):",
-    JSON.stringify(allowedFollowUps),
   ];
+
+  if (isBild && selectedImageContext) {
+    lines.push(
+      "BILDFRAGEN dürfen dynamisch formuliert werden, müssen aber ausschließlich zur selectedImage-Szene und zur bisherigen Unterhaltung passen.",
+      "Prüfe die GESAMTE Antwortgeschichte semantisch: Frage niemals erneut nach Informationen, die bereits ausdrücklich oder sinngemäß genannt wurden.",
+      "Wenn Personen, Ort und Tätigkeit bereits beschrieben sind, frage NICHT erneut nach Wer/Wo/Was.",
+      "Bevorzuge dann eine neue sprachliche Dimension: Meinung mit Begründung, persönliche Erfahrung, vermuteter Grund/Folge oder Vergleich mit dem Heimatland.",
+      "Gib bei needsFollowUp=true in followUpQuestion die beste Frage und in followUpCandidates bis zu zwei weitere Fragen aus unterschiedlichen neuen Dimensionen zurück.",
+      "Jede Kandidatenfrage muss genau eine kurze Frage sein. Keine generische Frage, die unabhängig von dieser konkreten Szene gleich wäre."
+    );
+  } else {
+    lines.push(
+      "needsFollowUp=true nur wenn eine Nachfrage sinnvoll ist UND followUpQuestion EXAKT einer erlaubten Frage entspricht.",
+      "Prüfe die GESAMTE Antwortgeschichte semantisch und frage nichts, was bereits ausdrücklich oder sinngemäß beantwortet wurde.",
+      "followUpRules und fehlende requiredTopics dürfen nur helfen, eine erlaubte examinerQuestions-Frage auszuwählen.",
+      "Wenn keine erlaubte Nachfrage passt: needsFollowUp=false und followUpQuestion=null.",
+      "Erlaubte followUpQuestion-Werte (geschlossen — nur diese Texte):",
+      JSON.stringify(allowedFollowUps)
+    );
+  }
 
   if (isBild && selectedImageContext) {
     lines.push(
@@ -315,65 +459,13 @@ async function callOpenAiJson({ system, user }) {
   }
 }
 
-async function assertHasCredits(userId, userRow = null) {
-  if (isAdminUser(userRow)) {
-    return 0;
-  }
-  const cost = AI_COSTS.placement_test || 1;
-  const { rows } = await query(`SELECT ai_credits FROM users WHERE id = $1`, [
-    userId,
-  ]);
-  const balance = rows[0]?.ai_credits ?? 0;
-  if (balance < cost) {
-    throw new AppError(
-      "AI_CREDITS_EXHAUSTED",
-      "Keine AI-Credits mehr verfügbar.",
-      402
-    );
-  }
-  return cost;
-}
-
-async function chargePlacementCredits(userId, cost) {
-  if (!cost || cost <= 0) {
-    return { cost: 0, creditsRemaining: null };
-  }
-  return withTransaction(async (q) => {
-    const locked = await q(`SELECT ai_credits FROM users WHERE id = $1 FOR UPDATE`, [
-      userId,
-    ]);
-    const current = locked.rows[0]?.ai_credits ?? 0;
-    if (current < cost) {
-      throw new AppError(
-        "AI_CREDITS_EXHAUSTED",
-        "Keine AI-Credits mehr verfügbar.",
-        402
-      );
-    }
-    await q(
-      `UPDATE users SET ai_credits = ai_credits - $2, used_ai_credits = used_ai_credits + $2, last_ai_usage_at = NOW() WHERE id = $1`,
-      [userId, cost]
-    );
-    const remaining = current - cost;
-    await q(
-      `INSERT INTO ai_credits (user_id, amount, balance_after, reason, service_type)
-       VALUES ($1, $2, $3, 'placement_test', 'placement_test')`,
-      [userId, -cost, remaining]
-    );
-    await q(
-      `INSERT INTO ai_completion_logs (user_id, mode, service_type, model_name, credits_charged, success)
-       VALUES ($1, 'conversational'::ai_gateway_mode, 'placement_test', $2, $3, TRUE)`,
-      [userId, env.openaiModel, cost]
-    );
-    return { cost, creditsRemaining: remaining };
-  });
-}
-
 /**
- * @param {{ userId: string, productType: string, modelId: string, answerText: string, followUpCount?: number, selectedImage?: object }} input
+ * @param {{ userId: string, attemptId: string, idempotencyKey: string, productType: string, modelId: string, answerText: string, followUpCount?: number, selectedImage?: object }} input
  */
 export async function evaluatePlacementTurn({
   userId,
+  attemptId,
+  idempotencyKey,
   productType,
   modelId,
   answerText,
@@ -382,7 +474,6 @@ export async function evaluatePlacementTurn({
   currentQuestion = null,
   inputMode = "typed",
   selectedImage = null,
-  authUser = null,
 }) {
   if (productType !== "placement_test") {
     throw new AppError(
@@ -433,7 +524,6 @@ export async function evaluatePlacementTurn({
     inputMode: inputMode === "voice_transcript" ? "voice_transcript" : "typed",
   };
   const fullConversation = [...safeConversation, currentTurn];
-  const cost = await assertHasCredits(userId, authUser);
 
   const allowedFollowUps = buildAllowedFollowUps(model, fullConversation);
   const system = buildExaminerSystemPrompt(
@@ -451,20 +541,44 @@ export async function evaluatePlacementTurn({
       : "Nachfrage nur wenn nötig und nur aus der erlaubten Liste.",
   ].join("\n");
 
-  const raw = await callOpenAiJson({ system, user: userMsg });
-  const evaluation = sanitizePlacementEvaluation(
-    raw,
-    model,
-    count,
-    fullConversation
+  return withAuthorizedPlacementUsage(
+    {
+      userId,
+      attemptId,
+      operation: "turn",
+      idempotencyKey,
+      requestPayload: {
+        productType,
+        modelId,
+        answerText: text,
+        followUpCount: count,
+        conversation: safeConversation,
+        currentQuestion: currentTurn.question,
+        inputMode: currentTurn.inputMode,
+        selectedImage: imageContext,
+      },
+    },
+    async (q) => {
+      const raw = await callOpenAiJson({ system, user: userMsg });
+      const evaluation = sanitizePlacementEvaluation(
+        raw,
+        model,
+        count,
+        fullConversation
+      );
+      await q(
+        `INSERT INTO ai_completion_logs
+           (user_id, mode, service_type, model_name, credits_charged, success)
+         VALUES ($1, 'conversational'::ai_gateway_mode, 'placement_test', $2, 0, TRUE)`,
+        [userId, env.openaiModel]
+      );
+      return {
+        ...evaluation,
+        creditsUsed: 0,
+        creditsRemaining: null,
+      };
+    }
   );
-  const billing = await chargePlacementCredits(userId, cost);
-
-  return {
-    ...evaluation,
-    creditsUsed: billing.cost,
-    creditsRemaining: billing.creditsRemaining,
-  };
 }
 
 /** Test helper: dry sanitize without OpenAI */

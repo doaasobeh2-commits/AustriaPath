@@ -5,9 +5,7 @@
 
 import { AppError } from "../middleware/errorHandler.js";
 import { env } from "../config/env.js";
-import { AI_COSTS } from "../utils/permissions.js";
-import { query, withTransaction } from "../db/client.js";
-import { isAdminUser } from "../utils/adminAccess.js";
+import { withAuthorizedPlacementUsage } from "./placementEntitlementService.js";
 
 const AREA_SKILLS = new Set([
   "selbstvorstellung",
@@ -25,7 +23,12 @@ function sanitizeString(value, max = 400) {
 /**
  * @param {object} body — learner-safe placement facts + deterministic draft
  */
-export async function polishPlacementReport({ userId, payload, authUser = null }) {
+export async function polishPlacementReport({
+  userId,
+  attemptId,
+  idempotencyKey,
+  payload,
+}) {
   if (payload?.productType && payload.productType !== "placement_test") {
     throw new AppError(
       "VALIDATION_ERROR",
@@ -40,26 +43,30 @@ export async function polishPlacementReport({ userId, payload, authUser = null }
     throw new AppError("VALIDATION_ERROR", "level ist erforderlich.", 400);
   }
 
-  const adminBypass = isAdminUser(authUser);
-  const cost = adminBypass ? 0 : AI_COSTS.placement_test || 1;
-  const { rows } = await query(`SELECT ai_credits FROM users WHERE id = $1`, [
-    userId,
-  ]);
-  if (!adminBypass && (rows[0]?.ai_credits ?? 0) < cost) {
-    throw new AppError(
-      "AI_CREDITS_EXHAUSTED",
-      "Keine AI-Credits mehr verfügbar.",
-      402
-    );
-  }
-
-  if (!env.openaiApiKey) {
+  return withAuthorizedPlacementUsage(
+    {
+      userId,
+      attemptId,
+      operation: "report",
+      idempotencyKey,
+      requestPayload: {
+        productType: payload?.productType || "placement_test",
+        level,
+        skillBands,
+        strengths: payload.strengths || [],
+        weaknesses: payload.weaknesses || [],
+        evidenceSummary: payload.evidenceSummary || {},
+        deterministicReport: payload.deterministicReport || {},
+      },
+    },
+    async (q) => {
+      if (!env.openaiApiKey) {
     throw new AppError(
       "AI_UNAVAILABLE",
       "KI-Bericht ist derzeit nicht verfügbar.",
       503
     );
-  }
+      }
 
   const system = [
     "Du schreibst einen freundlichen Deutsch-Lernbericht für AustriaPath Einstufungstest.",
@@ -154,47 +161,22 @@ export async function polishPlacementReport({ userId, payload, authUser = null }
     weaknesses: payload.weaknesses || [],
   });
 
-  let billing = { cost: 0, creditsRemaining: rows[0]?.ai_credits ?? 0 };
-  if (cost > 0) {
-    billing = await withTransaction(async (q) => {
-      const locked = await q(
-        `SELECT ai_credits FROM users WHERE id = $1 FOR UPDATE`,
-        [userId]
-      );
-      const current = locked.rows[0]?.ai_credits ?? 0;
-      if (current < cost) {
-        throw new AppError(
-          "AI_CREDITS_EXHAUSTED",
-          "Keine AI-Credits mehr verfügbar.",
-          402
-        );
-      }
       await q(
-        `UPDATE users SET ai_credits = ai_credits - $2, used_ai_credits = used_ai_credits + $2, last_ai_usage_at = NOW() WHERE id = $1`,
-        [userId, cost]
+        `INSERT INTO ai_completion_logs
+           (user_id, mode, service_type, model_name, credits_charged, success)
+         VALUES ($1, 'report_narrative'::ai_gateway_mode, 'placement_test', $2, 0, TRUE)`,
+        [userId, env.openaiModel]
       );
-      const remaining = current - cost;
-      await q(
-        `INSERT INTO ai_credits (user_id, amount, balance_after, reason, service_type)
-         VALUES ($1, $2, $3, 'placement_report_polish', 'placement_test')`,
-        [userId, -cost, remaining]
-      );
-      await q(
-        `INSERT INTO ai_completion_logs (user_id, mode, service_type, model_name, credits_charged, success)
-         VALUES ($1, 'report_narrative'::ai_gateway_mode, 'placement_test', $2, $3, TRUE)`,
-        [userId, env.openaiModel, cost]
-      );
-      return { cost, creditsRemaining: remaining };
-    });
-  }
 
-  return {
-    polished,
-    level,
-    skillBands,
-    creditsUsed: billing.cost,
-    creditsRemaining: billing.creditsRemaining,
-  };
+      return {
+        polished,
+        level,
+        skillBands,
+        creditsUsed: 0,
+        creditsRemaining: null,
+      };
+    }
+  );
 }
 
 /** Test helper — sanitize without OpenAI */
