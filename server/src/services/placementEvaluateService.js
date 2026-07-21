@@ -357,7 +357,7 @@ async function chargePlacementCredits(userId, cost) {
     const remaining = current - cost;
     await q(
       `INSERT INTO ai_credits (user_id, amount, balance_after, reason, service_type)
-       VALUES ($1, $2, $3, 'placement_evaluate_turn', 'placement_test')`,
+       VALUES ($1, $2, $3, 'placement_test', 'placement_test')`,
       [userId, -cost, remaining]
     );
     await q(
