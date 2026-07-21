@@ -8,7 +8,11 @@ import {
 import { getUsers, USERS_KEY } from '../userAccess';
 import AdminActionBar from '../components/AdminActionBar';
 import { useBackend } from '../../api/useBackend.js';
-import { listAdminUsers, patchAdminUser } from '../../api/repositories/index.js';
+import {
+  grantAdminPlacement,
+  listAdminUsers,
+  patchAdminUser,
+} from '../../api/repositories/index.js';
 import { accessStatusLabel } from '../../utils/accessStatus.js';
 function getUserCode(user) {
   if (user.userCode) return user.userCode;
@@ -35,8 +39,10 @@ function mapApiUser(u) {
     status: u.status || 'approved',
     level: u.level || 'B1',
     allowedLevels: u.allowedLevels || u.allowed_levels || ['A2', 'B1', 'B2'],
-    subscription: { type: u.plan || 'free', status: 'active' },
+    subscription: u.subscription || { type: u.plan || 'free', status: 'inactive', remainingExams: 0 },
+    permissions: u.permissions || {},
     aiCredits: u.aiCredits ?? 0,
+    usedAiCredits: u.usedAiCredits ?? 0,
     createdAt: u.createdAt,
     lastLogin: u.lastLogin,
     trialStartedAt: u.trialStartedAt,
@@ -380,6 +386,44 @@ const addActivity = (user, action, details = '') => {
     ];
 
     const subscriptionActions = [
+      {
+        id: "sub-placement",
+        icon: "📝",
+        label: "Einstufungstest geben",
+        variant: "blue",
+        onClick: async () => {
+          if (!useBackend() || processingAction) return;
+          setProcessingAction("sub-placement");
+          try {
+            const data = await grantAdminPlacement(selectedUser.id);
+            const updated = {
+              ...selectedUser,
+              subscription: {
+                type: "placement_test",
+                status: "active",
+                remainingExams: data.remainingExams ?? 1,
+              },
+              permissions: {
+                ...(selectedUser.permissions || {}),
+                placementTest: true,
+                reports: true,
+              },
+            };
+            setUsers((current) => current.map((user) =>
+              String(user.id) === String(selectedUser.id) ? updated : user
+            ));
+            setSelectedUser(updated);
+            alert(data.alreadyEntitled
+              ? "Benutzer hat bereits einen offenen Placement-Versuch."
+              : "Einstufungstest freigegeben (1 Versuch)."
+            );
+          } catch (error) {
+            alert(error?.message || "Placement-Freigabe fehlgeschlagen.");
+          } finally {
+            setProcessingAction(null);
+          }
+        },
+      },
       {
         id: "sub-ai-exam",
         icon: "🤖",

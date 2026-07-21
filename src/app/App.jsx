@@ -365,7 +365,7 @@ export default function App() {
             <button
               onClick={() => {
                 localStorage.removeItem("isAdminPreview");
-                window.location.reload();
+                setActiveTabGuarded("admin");
               }}
               style={{
                 border: "none",

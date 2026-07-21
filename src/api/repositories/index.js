@@ -94,6 +94,33 @@ export async function requestAiCompletion(body) {
   });
 }
 
+/** Placement-only turn evaluation — POST /v1/placement/evaluate-turn */
+export async function evaluatePlacementTurn(body) {
+  return apiFetch("/placement/evaluate-turn", {
+    method: "POST",
+    json: body,
+  });
+}
+
+/** Placement-only learner report polish — POST /v1/placement/report */
+export async function polishPlacementReport(body) {
+  return apiFetch("/placement/report", {
+    method: "POST",
+    json: body,
+  });
+}
+
+export async function getPlacementEntitlement() {
+  return apiFetch("/placement/entitlement");
+}
+
+export async function consumePlacementEntitlement(idempotencyKey) {
+  return apiFetch("/placement/consume-entitlement", {
+    method: "POST",
+    json: { idempotencyKey },
+  });
+}
+
 export async function fetchAiUsage() {
   return apiFetch("/ai/usage");
 }
@@ -135,5 +162,12 @@ export async function patchAdminUser(userId, body) {
   return apiFetch(`/admin/users/${userId}`, {
     method: "PATCH",
     json: body,
+  });
+}
+
+export async function grantAdminPlacement(userId) {
+  return apiFetch(`/admin/users/${userId}/grant-placement`, {
+    method: "POST",
+    json: {},
   });
 }

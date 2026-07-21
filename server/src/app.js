@@ -11,6 +11,7 @@ import reportsRoutes from "./routes/reports.routes.js";
 import studentProfileRoutes from "./routes/studentProfile.routes.js";
 import subscriptionRoutes from "./routes/subscription.routes.js";
 import aiRoutes from "./routes/ai.routes.js";
+import placementRoutes from "./routes/placement.routes.js";
 import webhooksRoutes from "./routes/webhooks.routes.js";
 import examinerLabRoutes from "./routes/admin/examinerLab.routes.js";
 import ruleRegistryPublicRoutes from "./routes/ruleRegistry.routes.js";
@@ -42,6 +43,7 @@ export function createApp() {
   app.use("/student-profile", studentProfileRoutes);
   app.use("/subscription", subscriptionRoutes);
   app.use("/ai", aiRoutes);
+  app.use("/placement", placementRoutes);
   app.use("/admin/examiner-lab", examinerLabRoutes);
   app.use("/admin/rule-registry", ruleRegistryAdminRoutes);
   app.use("/rule-registry", ruleRegistryPublicRoutes);

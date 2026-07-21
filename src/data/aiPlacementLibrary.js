@@ -1,5 +1,37 @@
 // src/data/aiPlacementLibrary.js
 
+function makePlacementListeningModel({
+  id,
+  level,
+  difficulty = 'mittel',
+  title,
+  audioText,
+  listeningQuestions,
+  source,
+}) {
+  return {
+    id,
+    service: 'placement',
+    level,
+    skill: 'hoeren',
+    difficulty,
+    title,
+    prompt: 'Der Schüler hört einen kurzen vorhandenen Trainingstext und beantwortet drei Verständnisfragen.',
+    audioText,
+    listeningQuestions,
+    requiredTopics: listeningQuestions.map((question) => question.question),
+    examinerQuestions: [],
+    followUpRules: [],
+    reportFields: ['Hörverstehen', 'Hauptinformationen', 'Detailinformationen'],
+    benchmarkMarkers: {
+      A2: ['einzelne Hauptinformationen erkennen'],
+      B1: ['Haupt- und Detailinformationen sicher unterscheiden'],
+      B2: ['komplexere Zusammenhänge und Begründungen erfassen']
+    },
+    placementSource: source,
+  };
+}
+
 export const aiPlacementLibrary = [
   {
     id: 'a2_self_mittel',
@@ -194,6 +226,26 @@ export const aiPlacementLibrary = [
       'Der Schüler hört eine kurze Nachricht und beantwortet Fragen zu Grund und Zeit.',
     audioText:
       'Hallo Anna. Ich komme heute später. Auf der Autobahn gibt es einen Stau. Ich bin ungefähr 30 Minuten verspätet.',
+    listeningQuestions: [
+      {
+        id: 'a2-listen-reason',
+        question: 'Warum kommt die Person später?',
+        options: ['Wegen eines Staus.', 'Wegen eines Termins.', 'Wegen des Wetters.'],
+        correctOption: 'Wegen eines Staus.'
+      },
+      {
+        id: 'a2-listen-delay',
+        question: 'Wie lange ist die Person ungefähr verspätet?',
+        options: ['13 Minuten.', '30 Minuten.', 'Eine Stunde.'],
+        correctOption: '30 Minuten.'
+      },
+      {
+        id: 'a2-listen-place',
+        question: 'Wo gibt es das Problem?',
+        options: ['Auf der Autobahn.', 'Am Bahnhof.', 'In der Sprachschule.'],
+        correctOption: 'Auf der Autobahn.'
+      }
+    ],
     requiredTopics: ['Grund', 'Zeitangabe'],
     examinerQuestions: [
       'Warum kommt die Person später?',
@@ -443,6 +495,32 @@ export const aiPlacementLibrary = [
       'Der Schüler hört eine kurze Nachricht mit Grund, Terminänderung und Handlung.',
     audioText:
       'Guten Tag, hier ist die Sprachschule. Der Deutschkurs am Montag kann leider nicht stattfinden, weil die Lehrerin krank ist. Der Unterricht wird auf Mittwoch um 18 Uhr verschoben. Bitte bestätigen Sie kurz per E-Mail, ob Sie kommen können.',
+    listeningQuestions: [
+      {
+        id: 'b1-listen-reason',
+        question: 'Warum findet der Kurs am Montag nicht statt?',
+        options: ['Die Lehrerin ist krank.', 'Die Schule ist geschlossen.', 'Es gibt zu wenige Teilnehmer.'],
+        correctOption: 'Die Lehrerin ist krank.'
+      },
+      {
+        id: 'b1-listen-day',
+        question: 'Wann ist der neue Termin?',
+        options: ['Dienstag.', 'Mittwoch.', 'Donnerstag.'],
+        correctOption: 'Mittwoch.'
+      },
+      {
+        id: 'b1-listen-time',
+        question: 'Um wie viel Uhr beginnt der Kurs?',
+        options: ['Um 16 Uhr.', 'Um 18 Uhr.', 'Um 20 Uhr.'],
+        correctOption: 'Um 18 Uhr.'
+      },
+      {
+        id: 'b1-listen-action',
+        question: 'Was soll die Person machen?',
+        options: ['Per E-Mail bestätigen.', 'Die Lehrerin anrufen.', 'Zur Schule fahren.'],
+        correctOption: 'Per E-Mail bestätigen.'
+      }
+    ],
     requiredTopics: ['Grund', 'neuer Termin', 'Uhrzeit', 'Handlung'],
     examinerQuestions: [
       'Warum findet der Kurs am Montag nicht statt?',
@@ -659,6 +737,71 @@ export const aiPlacementLibrary = [
   },
 
   {
+    id: 'b2_bild_mittel',
+    service: 'placement',
+    level: 'B2',
+    skill: 'bildbeschreibung',
+    difficulty: 'mittel',
+    title: 'B2 Bildbeschreibung – Analyse und Interpretation',
+    prompt:
+      'Der Schüler beschreibt das ausgewählte anspruchsvolle B2-Bild oder die Grafik kohärent und detailliert, interpretiert die Aussage, nennt mögliche Gründe und Folgen und begründet eine Meinung oder einen Vergleich.',
+    studentPreview:
+      'Beschreiben Sie das Bild oder die Grafik zusammenhängend. Interpretieren Sie die Aussage und sprechen Sie über mögliche Gründe, Folgen, Vergleiche oder Ihre Meinung.',
+    requiredTopics: [
+      'Kohärente detaillierte Beschreibung',
+      'Wichtige visuelle Informationen',
+      'Interpretation oder Schlussfolgerung',
+      'Gründe oder Ursachen',
+      'Folgen oder Konsequenzen',
+      'Begründete Meinung oder Vergleich'
+    ],
+    examinerQuestions: [
+      'Welche zentrale Aussage hat das Bild oder die Grafik Ihrer Meinung nach?',
+      'Welche Gründe könnten zu dieser Situation oder Entwicklung geführt haben?',
+      'Welche Folgen könnte diese Situation oder Entwicklung haben?',
+      'Wie beurteilen Sie das dargestellte Thema?',
+      'Wie lässt sich das mit einer anderen Situation oder mit Ihrem Heimatland vergleichen?'
+    ],
+    followUpRules: [
+      'Wenn nur Gegenstände genannt werden -> nach der zentralen Aussage fragen',
+      'Wenn Interpretation fehlt -> nach einer Schlussfolgerung fragen',
+      'Wenn Gründe fehlen -> nach möglichen Ursachen fragen',
+      'Wenn Folgen fehlen -> nach Konsequenzen fragen',
+      'Wenn die Antwort rein beschreibend bleibt -> nach begründeter Meinung oder Vergleich fragen',
+      'Höchstens zwei Nachfragen aus examinerQuestions stellen'
+    ],
+    reportFields: [
+      'Kohärenz',
+      'Detaillierte Beschreibung',
+      'Interpretation',
+      'Gründe und Folgen',
+      'Vergleich',
+      'Begründete Meinung',
+      'Reaktion auf Nachfragen'
+    ],
+    benchmarkMarkers: {
+      A2: [
+        'einzelne sichtbare Elemente nennen',
+        'kurze einfache Sätze',
+        'kaum Interpretation'
+      ],
+      B1: [
+        'zusammenhängende Beschreibung',
+        'einfache Meinung mit Grund',
+        'eine naheliegende Schlussfolgerung'
+      ],
+      B2: [
+        'klar strukturierte und detaillierte Beschreibung',
+        'relevante visuelle Informationen gewichten',
+        'plausible Interpretation und Schlussfolgerung',
+        'Ursachen und Konsequenzen differenziert erläutern',
+        'Vergleich oder Meinung nachvollziehbar begründen',
+        'flexibel auf Nachfragen reagieren'
+      ]
+    }
+  },
+
+  {
     id: 'b2_grafik_mittel',
     service: 'placement',
     level: 'B2',
@@ -725,6 +868,32 @@ export const aiPlacementLibrary = [
       'Der Schüler hört einen kurzen Beitrag mit Meinung, Vorteil, Nachteil und Schlussfolgerung.',
     audioText:
       'In einem Interview erklärt eine Mitarbeiterin, dass Homeoffice ihr mehr Flexibilität gibt. Gleichzeitig sagt sie, dass der direkte Kontakt zu Kollegen manchmal fehlt. Ihrer Meinung nach ist eine Mischung aus Büro und Homeoffice die beste Lösung.',
+    listeningQuestions: [
+      {
+        id: 'b2-listen-topic',
+        question: 'Worum geht es im Interview?',
+        options: ['Um Homeoffice.', 'Um eine Bewerbung.', 'Um einen Sprachkurs.'],
+        correctOption: 'Um Homeoffice.'
+      },
+      {
+        id: 'b2-listen-benefit',
+        question: 'Welchen Vorteil nennt die Mitarbeiterin?',
+        options: ['Mehr Flexibilität.', 'Mehr Gehalt.', 'Kürzere Besprechungen.'],
+        correctOption: 'Mehr Flexibilität.'
+      },
+      {
+        id: 'b2-listen-drawback',
+        question: 'Welchen Nachteil nennt sie?',
+        options: ['Der direkte Kontakt fehlt manchmal.', 'Die Technik ist zu teuer.', 'Die Arbeit dauert länger.'],
+        correctOption: 'Der direkte Kontakt fehlt manchmal.'
+      },
+      {
+        id: 'b2-listen-solution',
+        question: 'Welche Lösung findet sie am besten?',
+        options: ['Nur Büro.', 'Nur Homeoffice.', 'Eine Mischung aus beidem.'],
+        correctOption: 'Eine Mischung aus beidem.'
+      }
+    ],
     requiredTopics: [
       'Thema',
       'Vorteil',
@@ -816,7 +985,117 @@ export const aiPlacementLibrary = [
         'klare Schlussfolgerung'
       ]
     }
-  }
+  },
+
+  makePlacementListeningModel({
+    id: 'a2_hoeren_arzt_apotheke',
+    level: 'A2',
+    title: 'A2 Hören – Arzt und Apotheke',
+    source: 'placementBank placement_01.hoeren',
+    audioText:
+      'Herr Müller fährt morgen mit seinem Sohn zum Arzt. Nach dem Termin gehen sie in die Apotheke. Dort kauft Herr Müller ein Medikament für seinen Sohn.',
+    listeningQuestions: [
+      {
+        id: 'a2-arzt-person',
+        question: 'Mit wem fährt Herr Müller zum Arzt?',
+        options: ['mit der Sohn', 'mit seinem Sohn', 'mit den Sohn'],
+        correctOption: 'mit seinem Sohn'
+      },
+      {
+        id: 'a2-arzt-danach',
+        question: 'Wo gehen sie nach dem Termin hin?',
+        options: ['zum Arzt', 'in die Apotheke', 'nach Hause'],
+        correctOption: 'in die Apotheke'
+      }
+    ]
+  }),
+
+  makePlacementListeningModel({
+    id: 'b1_hoeren_supermarkt',
+    level: 'B1',
+    difficulty: 'leicht',
+    title: 'B1 Hören – Supermarkt-Durchsage',
+    source: 'b1HorenModels b1-hoeren-01 Teil 2',
+    audioText:
+      'Liebe Kundinnen und Kunden, bitte beachten Sie unsere heutigen Öffnungszeiten. Die Bäckerei schließt bereits um 18 Uhr. Die Fleischabteilung bleibt bis 20 Uhr geöffnet. Frisches Obst und Gemüse finden Sie heute mit 20 Prozent Rabatt im Eingangsbereich. Am Sonntag bleibt unser Markt geschlossen. Vielen Dank für Ihren Einkauf.',
+    listeningQuestions: [
+      { id: 'b1-markt-18', question: 'Welche Abteilung schließt um 18 Uhr?', options: ['Die Bäckerei.', 'Die Fleischabteilung.', 'Obst und Gemüse.'], correctOption: 'Die Bäckerei.' },
+      { id: 'b1-markt-20', question: 'Bis wann ist die Fleischabteilung geöffnet?', options: ['Bis 18 Uhr.', 'Bis 20 Uhr.', 'Bis Sonntag.'], correctOption: 'Bis 20 Uhr.' },
+      { id: 'b1-markt-rabatt', question: 'Wo gibt es Obst und Gemüse mit Rabatt?', options: ['Im Eingangsbereich.', 'In der Bäckerei.', 'In der Fleischabteilung.'], correctOption: 'Im Eingangsbereich.' }
+    ]
+  }),
+
+  makePlacementListeningModel({
+    id: 'b1_hoeren_bahnhof',
+    level: 'B1',
+    title: 'B1 Hören – Bahnhofsdurchsage',
+    source: 'b1HorenModels b1-hoeren-02 Teil 1',
+    audioText:
+      'Achtung, eine Durchsage. Der Regionalzug 2246 nach Linz Hauptbahnhof fährt heute nicht von Gleis 4, sondern von Gleis 14 ab. Die Abfahrt verzögert sich um etwa 15 Minuten. Grund dafür ist eine technische Kontrolle. Reisende nach Amstetten steigen bitte ebenfalls in diesen Zug ein.',
+    listeningQuestions: [
+      { id: 'b1-bahn-ziel', question: 'Wohin fährt der Zug?', options: ['Nach Linz Hauptbahnhof.', 'Nach Amstetten.', 'Zur technischen Kontrolle.'], correctOption: 'Nach Linz Hauptbahnhof.' },
+      { id: 'b1-bahn-gleis', question: 'Von welchem Gleis fährt der Zug heute ab?', options: ['Von Gleis 4.', 'Von Gleis 14.', 'Regionalzug 2246.'], correctOption: 'Von Gleis 14.' },
+      { id: 'b1-bahn-grund', question: 'Warum verspätet sich der Zug?', options: ['Wegen einer technischen Kontrolle.', 'Wegen der Reisenden nach Amstetten.', 'Wegen Gleis 4.'], correctOption: 'Wegen einer technischen Kontrolle.' }
+    ]
+  }),
+
+  makePlacementListeningModel({
+    id: 'b1_hoeren_arzttermin',
+    level: 'B1',
+    difficulty: 'stark',
+    title: 'B1 Hören – Arzttermin verschieben',
+    source: 'b1HorenModels b1-hoeren-03 Teil 2',
+    audioText:
+      'Hallo, hier ist Fatima. Ich kann leider nicht zum Termin morgen um 9 Uhr kommen, weil mein Sohn krank ist. Könntest du bitte in der Praxis anrufen und den Termin auf Freitag verschieben? Am Freitag wäre mir Vormittag besser. Danke dir.',
+    listeningQuestions: [
+      { id: 'b1-arzt-grund', question: 'Warum kann Fatima nicht kommen?', options: ['Weil ihr Sohn krank ist.', 'Weil die Praxis anruft.', 'Weil Freitag Vormittag ist.'], correctOption: 'Weil ihr Sohn krank ist.' },
+      { id: 'b1-arzt-alt', question: 'Wann war der ursprüngliche Termin?', options: ['Morgen um 9 Uhr.', 'Freitag Vormittag.', 'Am Freitag um 9 Uhr.'], correctOption: 'Morgen um 9 Uhr.' },
+      { id: 'b1-arzt-neu', question: 'Auf welchen Tag soll der Termin verschoben werden?', options: ['Auf morgen.', 'Auf Freitag.', 'Auf den Vormittag.'], correctOption: 'Auf Freitag.' }
+    ]
+  }),
+
+  makePlacementListeningModel({
+    id: 'b2_hoeren_buerotermin',
+    level: 'B2',
+    title: 'B2 Hören – Büro und Terminplanung',
+    source: 'b2HorenModels b2-hoeren-01 excerpt',
+    audioText:
+      'Hallo Frau Berger, hier ist Markus Klein aus der Projektabteilung. Unser Termin morgen um 10 Uhr muss leider verschoben werden, weil Herr Schneider kurzfristig zu einem Kundengespräch nach Linz fahren muss. Wir schlagen Donnerstag um 14 Uhr vor. Bitte bringen Sie die aktuellen Zahlen zur Präsentation mit. Guten Tag, hier spricht Anna Berger. Ich rufe wegen der Besprechung am Donnerstag an. Ich kann um 14 Uhr kommen, aber ich brauche vorher noch die Unterlagen. Könnten Sie mir die Tagesordnung und die Verkaufszahlen per E-Mail schicken? Dann kann ich mich besser vorbereiten.',
+    listeningQuestions: [
+      { id: 'b2-buero-grund', question: 'Warum wird der Termin verschoben?', options: ['Wegen eines Kundengesprächs in Linz.', 'Wegen der Verkaufszahlen.', 'Wegen der Tagesordnung.'], correctOption: 'Wegen eines Kundengesprächs in Linz.' },
+      { id: 'b2-buero-neu', question: 'Wann soll der neue Termin stattfinden?', options: ['Morgen um 10 Uhr.', 'Donnerstag um 14 Uhr.', 'Vor der Präsentation.'], correctOption: 'Donnerstag um 14 Uhr.' },
+      { id: 'b2-buero-unterlagen', question: 'Welche Unterlagen braucht Frau Berger vorher?', options: ['Tagesordnung und Verkaufszahlen.', 'Die aktuellen Zahlen zur Präsentation.', 'Unterlagen aus Linz.'], correctOption: 'Tagesordnung und Verkaufszahlen.' }
+    ]
+  }),
+
+  makePlacementListeningModel({
+    id: 'b2_hoeren_bewerbung',
+    level: 'B2',
+    title: 'B2 Hören – Bewerbung und Arbeitswelt',
+    source: 'b2HorenModels b2-hoeren-02 excerpt',
+    audioText:
+      'Guten Tag Herr Yilmaz, hier ist Sabine Meier von der Personalabteilung. Wir haben Ihre Bewerbung erhalten und möchten Sie nächste Woche zu einem Vorstellungsgespräch einladen. Bitte bringen Sie Ihre Zeugnisse und eine Kopie Ihres Lebenslaufs mit. Ich fand das Gespräch sehr angenehm. Die Stelle klingt interessant, aber die Arbeitszeiten sind etwas schwierig. Manchmal müsste ich bis 19 Uhr bleiben. Ich möchte zuerst mit meiner Familie sprechen, bevor ich eine Entscheidung treffe.',
+    listeningQuestions: [
+      { id: 'b2-job-anruf', question: 'Warum ruft Frau Meier an?', options: ['Wegen eines Vorstellungsgesprächs.', 'Wegen der Arbeitszeiten.', 'Wegen einer Familienentscheidung.'], correctOption: 'Wegen eines Vorstellungsgesprächs.' },
+      { id: 'b2-job-mitbringen', question: 'Was soll Herr Yilmaz mitbringen?', options: ['Zeugnisse und eine Kopie des Lebenslaufs.', 'Eine Entscheidung seiner Familie.', 'Die Arbeitszeiten bis 19 Uhr.'], correctOption: 'Zeugnisse und eine Kopie des Lebenslaufs.' },
+      { id: 'b2-job-problem', question: 'Was findet die Person an der Stelle schwierig?', options: ['Die Arbeitszeiten.', 'Das Vorstellungsgespräch.', 'Die Personalabteilung.'], correctOption: 'Die Arbeitszeiten.' }
+    ]
+  }),
+
+  makePlacementListeningModel({
+    id: 'b2_hoeren_digitalisierung',
+    level: 'B2',
+    difficulty: 'stark',
+    title: 'B2 Hören – Digitalisierung und Online-Meeting',
+    source: 'b2HorenModels b2-hoeren-03 excerpt',
+    audioText:
+      'Liebe Kolleginnen und Kollegen, das heutige Teammeeting findet nicht im Besprechungsraum statt, sondern online. Der Link wurde Ihnen bereits per E-Mail geschickt. Bitte testen Sie vorher Kamera und Mikrofon, damit wir pünktlich beginnen können. Ich finde digitale Tools sehr praktisch, aber beim Datenschutz muss man vorsichtig sein. In unserer Firma dürfen deshalb nur Programme benutzt werden, die vorher geprüft wurden.',
+    listeningQuestions: [
+      { id: 'b2-digital-ort', question: 'Wo findet das heutige Teammeeting statt?', options: ['Online.', 'Im Besprechungsraum.', 'Per E-Mail.'], correctOption: 'Online.' },
+      { id: 'b2-digital-test', question: 'Was sollen die Mitarbeiter vorher testen?', options: ['Kamera und Mikrofon.', 'Den Datenschutz.', 'Die geprüften Programme.'], correctOption: 'Kamera und Mikrofon.' },
+      { id: 'b2-digital-programme', question: 'Welche Programme dürfen in der Firma benutzt werden?', options: ['Nur vorher geprüfte Programme.', 'Alle praktischen digitalen Tools.', 'Nur Programme für Kamera und Mikrofon.'], correctOption: 'Nur vorher geprüfte Programme.' }
+    ]
+  })
 ];
 
 export function getPlacementModelsByLevel(level) {

@@ -1,4 +1,5 @@
 import React from "react";
+import { enableAdminQaMode } from "../../utils/adminQaMode.js";
 
 const TABS = [
   { id: "content", label: "📋 Content Manager", description: "Inhalte erstellen & extrahieren" },
@@ -29,6 +30,22 @@ export default function AdminNav({ activeTab, onTabChange, setActiveTab }) {
           🧠 Examiner Lab
         </button>
       </div>
+
+      <button
+        type="button"
+        onClick={() => {
+          enableAdminQaMode();
+          setActiveTab("home");
+        }}
+        style={qaButtonStyle}
+      >
+        🧪 Learner QA — echte Prüfungen als Schüler
+      </button>
+      <p style={qaHintStyle}>
+        Normale Lerner-UI. Über Home → AI-Training die Pläne öffnen (Einstufung / Training /
+        Wochenplan). Zahlung bleibt Coming Soon für normale User; in QA öffnen die Buttons die
+        echten Flows. Fehlende KI = „not evaluated / QA only“ — kein erfundenes Ergebnis.
+      </p>
     </nav>
   );
 }
@@ -81,3 +98,24 @@ const toolButtonStyle = (bg) => ({
   cursor: "pointer",
   fontSize: "13px",
 });
+
+const qaButtonStyle = {
+  border: "2px solid #ca8a04",
+  background: "#fef9c3",
+  color: "#713f12",
+  padding: "14px 16px",
+  borderRadius: "14px",
+  fontWeight: 800,
+  cursor: "pointer",
+  fontSize: "14px",
+  textAlign: "left",
+  marginTop: "4px",
+};
+
+const qaHintStyle = {
+  margin: "0",
+  fontSize: "12px",
+  color: "#64748b",
+  lineHeight: 1.45,
+  fontWeight: 600,
+};

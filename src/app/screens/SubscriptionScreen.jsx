@@ -1,14 +1,84 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { getUserLanguage } from '../../utils/userPreferences';
+import { isAdminQaMode } from '../../utils/adminQaMode.js';
+import {
+  fetchPlacementEntitlementView,
+  isPlacementPlan,
+  resolvePlacementCtaState,
+} from '../../utils/placementEntitlement.js';
 
-export default function SubscriptionScreen({ setActiveTab }) {
+export default function SubscriptionScreen({ setActiveTab, onOpenPremiumExam }) {
   const language = getUserLanguage();
 
   const t = content[language] || content.Deutsch;
   const plans = t.plans;
+  const [placementLoading, setPlacementLoading] = useState(true);
+  const [placementCanTake, setPlacementCanTake] = useState(false);
 
-  const handleSelectPlan = () => {
-    alert('Coming Soon');
+  useEffect(() => {
+    let cancelled = false;
+    fetchPlacementEntitlementView().then((view) => {
+      if (cancelled) return;
+      setPlacementCanTake(Boolean(view.canTake));
+      setPlacementLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleSelectPlan = (plan) => {
+    if (isPlacementPlan(plan)) {
+      const state = resolvePlacementCtaState({
+        loading: placementLoading,
+        canTake: placementCanTake,
+      });
+      if (state.action === 'open_placement') {
+        setActiveTab?.('placementTest');
+      } else if (state.action === 'coming_soon') {
+        alert('Coming Soon');
+      }
+      return;
+    }
+
+    // Normal users: payment still Coming Soon (unchanged)
+    if (!isAdminQaMode()) {
+      alert('Coming Soon');
+      return;
+    }
+
+    // Admin QA only: enter the real learner flow for this plan (no payment, no fake scores)
+    const type = plan?.type || plan?.id;
+
+    if (type === 'placement') {
+      setActiveTab?.('placementTest');
+      return;
+    }
+
+    if (type === 'weekly_plan' || type === 'weekly-plan') {
+      setActiveTab?.('weeklyPlanSetup');
+      return;
+    }
+
+    if (type === 'ai_exam' || type === 'ai-exam') {
+      localStorage.setItem('austriaPathCurrentPremiumType', 'ai_exam');
+      setActiveTab?.('premiumSchedule');
+      return;
+    }
+
+    if (type === 'intensive_week' || type === 'intensive-week') {
+      localStorage.setItem('austriaPathCurrentPremiumType', 'intensive_week');
+      setActiveTab?.('premiumSchedule');
+      return;
+    }
+
+    if (type === 'premium_month' || type === 'premium-month') {
+      localStorage.setItem('austriaPathCurrentPremiumType', 'premium_month');
+      setActiveTab?.('premiumSchedule');
+      return;
+    }
+
+    onOpenPremiumExam?.();
   };
   return (
     <div style={container}>
@@ -19,7 +89,14 @@ export default function SubscriptionScreen({ setActiveTab }) {
       <h1 style={title}>{t.title}</h1>
       <p style={subtitle}>{t.subtitle}</p>
 
-      {plans.map((plan) => (
+      {plans.map((plan) => {
+        const placementState = isPlacementPlan(plan)
+          ? resolvePlacementCtaState({
+              loading: placementLoading,
+              canTake: placementCanTake,
+            })
+          : null;
+        return (
         <div
           key={plan.id}
           style={{
@@ -41,13 +118,15 @@ export default function SubscriptionScreen({ setActiveTab }) {
           </ul>
 
           <button
-            style={button}
+            style={{ ...button, opacity: placementState?.disabled ? 0.7 : 1 }}
+            disabled={Boolean(placementState?.disabled)}
             onClick={() => handleSelectPlan(plan)}
           >
-            {plan.buttonText || t.select}
+            {placementState?.buttonText || plan.buttonText || t.select}
           </button>
         </div>
-      ))}
+        );
+      })}
 
       <div style={infoBox}>
         <h3 style={{ marginTop: 0 }}>{t.infoTitle}</h3>

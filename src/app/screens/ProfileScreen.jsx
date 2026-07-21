@@ -5,6 +5,7 @@ import { buildWeeklySession } from '../../data/weeklyPlanLibrary';
 import { buildPremiumExamParts } from '../../data/premiumExamBuilder';
 import { readJsonStorage } from '../../security/secureStorage';
 import { AI_SESSION_STORAGE_KEY } from '../../constants/storageKeys';
+import { isAdminQaMode } from '../../utils/adminQaMode.js';
 export function ProfileScreen({ setActiveTab }) {
   const placementProfile = useMemo(() => {
     return readJsonStorage('austriaPathPlacementProfile', null);
@@ -37,14 +38,20 @@ const targetLevel =
 
   const hasAIResult = Boolean(placementProfile);
   const level = placementProfile?.level || targetLevel;
-  const scores = placementProfile?.skillScores || {};
   const strengths = placementProfile?.strengths || [];
   const focusAreas =
-    placementProfile?.focusAreas ||
     placementProfile?.recommendedFocus ||
+    placementProfile?.focusAreas ||
     [];
+  const learnerReport = placementProfile?.learnerReport || null;
+  const skillBands = placementProfile?.skillBands || {};
 
-  const skillCards = buildSkillCards(level, scores, hasAIResult);
+  const skillCards = buildSkillCardsFromPlacement({
+    level,
+    skillBands,
+    learnerReport,
+    hasAIResult,
+  });
   const calendarPlan = buildCalendarPlan(hasAIResult, placementProfile, weeklyPlan);
   const exams = buildPremiumExamCards(premiumExams, level);
 
@@ -230,7 +237,7 @@ const handlePremiumExamClick = (exam) => {
     localStorage.getItem("austriaPathSubscription") || "null"
   );
 
-  if (!subscription) {
+  if (!subscription && !isAdminQaMode()) {
     alert("Bitte zuerst einen Premium-Plan auswählen.");
     setActiveTab("premium");
     return;
@@ -616,6 +623,7 @@ function skillName(skill) {
     bildbeschreibung: 'Bildbeschreibung',
     grafikbeschreibung: 'Grafikbeschreibung',
     hoeren: 'Hören',
+    lesenHoeren: 'Hören',
     planung: 'Planung',
     diskussion: 'Diskussion',
     lesen: 'Lesen',
@@ -660,61 +668,63 @@ function buildPremiumExamCards(exams, level) {
   ];
 }
 
-function buildSkillCards(level, scores, hasAIResult) {
-  const hoerenWeak = scores.hoeren === 'A2' || scores.hoeren === 'A2+';
+function buildSkillCardsFromPlacement({ level, skillBands, learnerReport, hasAIResult }) {
+  const areas = learnerReport?.areas || [];
+  const bySkill = new Map(areas.map((a) => [a.skill, a]));
 
-  return [
+  const defs = [
     {
-      title: 'Lesen',
-      icon: '📖',
-      level,
-      status: hasAIResult ? 'Gut' : 'Noch leer',
+      skill: 'selbstvorstellung',
+      title: 'Selbstvorstellung',
+      icon: '👤',
       color: '#2563eb',
       border: '#bfdbfe',
-      bars: hasAIResult ? 5 : 1,
-      points: hasAIResult
-        ? ['Hauptinformationen verstanden', 'Wichtige Details erkannt', 'Wenige Fehler gemacht']
-        : ['Noch kein AI-Ergebnis'],
     },
     {
+      skill: 'lesenHoeren',
       title: 'Hören',
       icon: '🎧',
-      level: scores.hoeren || level,
-      status: hoerenWeak ? 'Verbesserung nötig' : hasAIResult ? 'Gut' : 'Noch leer',
       color: '#f97316',
       border: '#fed7aa',
-      bars: hoerenWeak ? 3 : hasAIResult ? 5 : 1,
-      points: hoerenWeak
-        ? ['Zahlen und Uhrzeiten schwierig', 'Einige Informationen verpasst', 'Mehr Hörübungen empfohlen']
-        : hasAIResult
-        ? ['Hauptinformationen verstanden', 'Fragen beantwortet']
-        : ['Noch kein AI-Ergebnis'],
     },
     {
+      skill: 'bildbeschreibung',
       title: 'Bildbeschreibung',
       icon: '🖼️',
-      level: scores.bildbeschreibung || level,
-      status: hasAIResult ? 'Sehr gut' : 'Noch leer',
       color: '#16a34a',
       border: '#bbf7d0',
-      bars: hasAIResult ? 6 : 1,
-      points: hasAIResult
-        ? ['Bild gut beschrieben', 'Eigene Meinung gegeben', 'Eigene Erfahrung erwähnt', 'Gute Satzverbindungen']
-        : ['Noch kein AI-Ergebnis'],
     },
     {
-      title: 'Sprechen üben',
+      skill: 'planung',
+      title: 'Planung',
       icon: '💬',
-      level: scores.planung || scores.diskussion || level,
-      status: hasAIResult ? 'Mittel' : 'Noch leer',
       color: '#7c3aed',
       border: '#ddd6fe',
-      bars: hasAIResult ? 3 : 1,
-      points: hasAIResult
-        ? ['Antworten oft zu kurz', 'Mehr Begründungen geben', 'weil / deshalb häufiger benutzen']
-        : ['Noch kein AI-Ergebnis'],
     },
   ];
+
+  return defs.map((def) => {
+    const area = bySkill.get(def.skill);
+    const band = skillBands?.[def.skill];
+    const bars =
+      band === 'strong' ? 6 : band === 'medium' ? 4 : band === 'weak' ? 2 : hasAIResult ? 3 : 1;
+
+    return {
+      title: def.title,
+      icon: def.icon,
+      level: hasAIResult ? level : '—',
+      status: area?.performanceLabel || (hasAIResult ? 'Auswertung vorhanden' : 'Noch leer'),
+      color: def.color,
+      border: def.border,
+      bars,
+      points: hasAIResult
+        ? [
+            area?.summary,
+            ...(area?.missingTopics || []).slice(0, 2).map((t) => `Üben: ${t}`),
+          ].filter(Boolean)
+        : ['Noch kein AI-Ergebnis'],
+    };
+  });
 }
 
 function buildCalendarPlan(hasAIResult, profile, weeklyPlan) {
@@ -727,6 +737,17 @@ function buildCalendarPlan(hasAIResult, profile, weeklyPlan) {
       text: `${item.date} · ${item.time}`,
       duration: item.duration || 20,
       color: getCalendarColor(item.focus),
+    }));
+  }
+
+  const studyPlan = profile?.studyPlan || profile?.learnerReport?.studyPlan;
+  if (hasAIResult && studyPlan?.length) {
+    return studyPlan.map((item) => ({
+      day: item.day,
+      icon: getCalendarIcon(item.focus || item.skill),
+      title: focusTitle(item.focus || item.skill),
+      text: item.task,
+      color: getCalendarColor(item.focus || item.skill),
     }));
   }
 
@@ -751,11 +772,13 @@ function getCalendarIcon(focus) {
   const icons = {
     selbstvorstellung: '👤',
     hoeren: '🎧',
+    lesenHoeren: '🎧',
     bildbeschreibung: '🖼️',
     planung: '💬',
     lesen: '📖',
     schreiben: '✍️',
     diskussion: '🗣️',
+    prüfungsvorbereitung: '⭐',
   };
   return icons[focus] || '⭐';
 }
@@ -764,11 +787,13 @@ function focusTitle(focus) {
   const names = {
     selbstvorstellung: 'Selbstvorstellung',
     hoeren: 'Hören üben',
+    lesenHoeren: 'Hören üben',
     bildbeschreibung: 'Bildbeschreibung',
     planung: 'Planung üben',
     lesen: 'Lesen üben',
     schreiben: 'Schreiben üben',
     diskussion: 'Diskussion',
+    prüfungsvorbereitung: 'Wiederholung',
   };
   return names[focus] || 'Training';
 }

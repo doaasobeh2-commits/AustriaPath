@@ -6,6 +6,7 @@ import {
   savePremiumExamPackage,
 } from '../../data/premiumExamBuilder';
 import { getUserLanguage } from '../../utils/userPreferences';
+import { isAdminQaMode } from '../../utils/adminQaMode.js';
 
 const premiumTexts = {
   Deutsch: {
@@ -302,6 +303,11 @@ const startExam = () => {
       : 'placement_test';
 
   if (packageType === 'placement_test') {
+    // Admin QA: use the real Placement learner flow, not the inline Weiter stub
+    if (isAdminQaMode()) {
+      setActiveTab('placementTest');
+      return;
+    }
     setStarted(true);
     setStep(0);
     setAnswers({});

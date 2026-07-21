@@ -5,6 +5,7 @@ import {
   buildWeeklySession,
   getDailyTrainingMessages,
 } from '../../data/weeklyPlanLibrary';
+import { mapFocusListForWeeklyPlan } from '../../data/utils/placementReport';
 import { AI_SESSION_STORAGE_KEY } from '../../constants/storageKeys';
 
 export default function WeeklyPlanSetupScreen({ setActiveTab }) {
@@ -19,15 +20,16 @@ export default function WeeklyPlanSetupScreen({ setActiveTab }) {
   const hasPlacement = Boolean(placementProfile);
 
   const [level, setLevel] = useState(
-    placementProfile?.level?.replace('+', '') ||
+    placementProfile?.level?.replace('+', '')?.replace('-', '') ||
       localStorage.getItem('userLevel') ||
       'B1'
   );
 
-  const recommendedFocus =
+  const recommendedFocus = mapFocusListForWeeklyPlan(
     placementProfile?.recommendedFocus ||
-    placementProfile?.focusAreas ||
-    ['selbstvorstellung', 'hoeren', 'planung'];
+      placementProfile?.focusAreas ||
+      ['selbstvorstellung', 'hoeren', 'planung']
+  );
 
   const weaknessOptions = [
     { key: 'selbstvorstellung', label: 'Selbstvorstellung' },
