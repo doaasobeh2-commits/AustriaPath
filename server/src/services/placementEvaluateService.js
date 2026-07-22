@@ -6,6 +6,13 @@
 
 import { getPlacementModel } from "../../../src/data/aiPlacementLibrary.js";
 import { getPlacementBildAssessmentPack } from "../../../src/data/placementBildAssessmentPacks.js";
+import {
+  buildPlanningEvidenceLedger,
+  getPlacementPlanningMove,
+  getPlacementPlanningPack,
+  planningTopicsFromLedger,
+  selectNextPlanningMove,
+} from "../../../src/data/placementPlanningPacks.js";
 import { AppError } from "../middleware/errorHandler.js";
 import { env } from "../config/env.js";
 import { withAuthorizedPlacementUsage } from "./placementEntitlementService.js";
@@ -333,6 +340,11 @@ function sanitizeDynamicImageQuestion(value) {
  * @returns {string[]}
  */
 export function buildAllowedFollowUps(model, conversation = []) {
+  const planningPack = model?.skill === "planung" ? getPlacementPlanningPack(model.id) : null;
+  if (planningPack) {
+    const next = selectNextPlanningMove(planningPack, conversation);
+    return next ? [next.text] : [];
+  }
   const allowed = [];
   const seen = new Set();
   const alreadyAsked = new Set(
@@ -447,6 +459,7 @@ export function sanitizePlacementEvaluation(
   conversation = [],
   selectedImageContext = null
 ) {
+  const planningPack = model?.skill === "planung" ? getPlacementPlanningPack(model.id) : null;
   const bildPack = model?.skill === "bildbeschreibung"
     ? getPlacementBildAssessmentPack(
         selectedImageContext?.catalogLevel,
@@ -493,11 +506,28 @@ export function sanitizePlacementEvaluation(
   let followUpQuestionId = null;
   let followUpSource = null;
 
-  if (followUpCount >= PLACEMENT_MAX_FOLLOWUPS) {
+  if (!planningPack && followUpCount >= PLACEMENT_MAX_FOLLOWUPS) {
     needsFollowUp = false;
   }
 
-  if (needsFollowUp) {
+  if (planningPack) {
+    const currentMove = getPlacementPlanningMove(
+      planningPack,
+      conversation.at(-1)?.moveId
+    );
+    const providerMoveId = String(
+      raw?.nextMoveId || raw?.followUpQuestionId || ""
+    ).trim();
+    const nextMove = currentMove?.closing
+      ? null
+      : selectNextPlanningMove(planningPack, conversation, providerMoveId);
+    needsFollowUp = Boolean(nextMove);
+    followUpQuestion = nextMove?.text || null;
+    followUpQuestionId = nextMove?.id || null;
+    followUpSource = nextMove
+      ? (providerMoveId === nextMove.id ? "examinerQuestions" : "deterministicPlanningFallback")
+      : null;
+  } else if (needsFollowUp) {
     const proposedCandidates = [raw, ...(Array.isArray(raw?.followUpCandidates) ? raw.followUpCandidates : [])];
     let matchedBildQuestion = null;
     let matched = null;
@@ -536,20 +566,31 @@ export function sanitizePlacementEvaluation(
     }
   }
 
+  const planningLedger = planningPack
+    ? buildPlanningEvidenceLedger(planningPack, conversation)
+    : null;
+  const planningTopics = planningPack
+    ? planningTopicsFromLedger(planningPack, planningLedger)
+    : null;
   return {
     productType: "placement_test",
     modelId: model.id,
     skill: model.skill,
     modelLevel: model.level,
     band,
-    coveredTopics,
-    missingTopics,
+    coveredTopics: planningTopics?.coveredTopics || coveredTopics,
+    missingTopics: planningTopics?.missingTopics || missingTopics,
     needsFollowUp,
     followUpQuestion,
-    ...(model.skill === "bildbeschreibung" ? { followUpQuestionId } : {}),
+    ...(["bildbeschreibung", "planung"].includes(model.skill) ? { followUpQuestionId } : {}),
     followUpSource,
     notes,
     evaluationMethod: PLACEMENT_EVAL_METHOD,
+    ...(planningPack ? {
+      planningPackId: planningPack.scenarioId,
+      planningEvidenceLedger: planningLedger,
+      planningComplete: Boolean(getPlacementPlanningMove(planningPack, conversation.at(-1)?.moveId)?.closing),
+    } : {}),
     ...(model.skill === "bildbeschreibung" && bildPack
       ? { bildAssessmentPackKey: bildPack.key }
       : {}),
@@ -591,6 +632,7 @@ export function buildExaminerSystemPrompt(
 ) {
   const isBild = model?.skill === "bildbeschreibung";
   const isSelf = model?.skill === "selbstvorstellung";
+  const planningPack = model?.skill === "planung" ? getPlacementPlanningPack(model.id) : null;
   const bildPack = isBild
     ? getPlacementBildAssessmentPack(
         selectedImageContext?.catalogLevel,
@@ -615,6 +657,21 @@ export function buildExaminerSystemPrompt(
     modelPayload.prompt = model.prompt;
   }
   if (isSelf) modelPayload.semanticEvidence = getSelfTopicCoverage(conversation);
+  if (planningPack) {
+    modelPayload.requiredTopics = [];
+    modelPayload.examinerQuestions = [];
+    modelPayload.followUpRules = [];
+    modelPayload.planningPack = {
+      scenarioId: planningPack.scenarioId,
+      level: planningPack.level,
+      learnerTask: planningPack.learnerTask,
+      evidenceLedger: buildPlanningEvidenceLedger(planningPack, conversation),
+      allowedNextMoves: planningPack.moves
+        .filter((move) => !conversation.some((turn) => turn?.moveId === move.id))
+        .map(({ id, text }) => ({ id, text })),
+      finalMoveId: planningPack.finalMoveId,
+    };
+  }
 
   const lines = [
     "Du bist ausschließlich der AustriaPath Placement-Prüfer für EIN Placement-Modell.",
@@ -670,6 +727,15 @@ export function buildExaminerSystemPrompt(
       "Frage nur, wenn zusätzliche Bewertungsevidenz nützlich ist. Ein freier Frageplatz allein ist kein Grund; dann needsFollowUp=false.",
       "Wenn die letzte Antwort klar nicht zur gestellten Frage passt und die Absicht not_covered bleibt, ist höchstens eine einfachere erlaubte Umformulierung derselben Absicht zulässig. Keine zweite Umformulierung und keine Schleife.",
       "Ein Grund und ein Beispiel in der Antwort sperren allgemeine Warum-/Beispielfragen. Bereits genannte Kinder, Tätigkeit, Hobby oder Deutschlern-Grund sperren die jeweilige allgemeine Wiederholungsfrage."
+    );
+  }
+  if (planningPack) {
+    lines.push(
+      "PLANUNG IST GESCHLOSSEN. nextMoveId darf nur eine ID aus planningPack.allowedNextMoves sein; erfinde niemals Fragetext oder Themen-IDs.",
+      "Bewerte kommunikative Wirksamkeit, Interaktion, Vorschläge/Reaktionen, Gründe/Alternativen, Kohärenz, Sprache und niveaugerechtes Problemlösen über die gesamte Unterhaltung.",
+      "Faktische Themenabdeckung wird serverseitig aus dem geschlossenen Evidence-Ledger bestimmt. coveredTopics/missingTopics des Providers werden für Planung ignoriert.",
+      "Eine Antwort kann mehrere Evidenzdimensionen abdecken. Off-topic-Inhalt erfüllt das aktuelle Frageziel nicht.",
+      "Bei der Abschlussfrage ist die Bewertung eine konsolidierte Gesamtbewertung der vollständigen Planung."
     );
   }
 
@@ -763,6 +829,7 @@ export async function evaluatePlacementTurn({
   followUpCount = 0,
   conversation = [],
   currentQuestion = null,
+  currentMoveId = null,
   inputMode = "typed",
   selectedImage = null,
 }) {
@@ -774,7 +841,7 @@ export async function evaluatePlacementTurn({
     );
   }
 
-  const model = getPlacementModel(modelId);
+  const model = getPlacementModel(modelId) || getPlacementPlanningPack(modelId);
   if (!model || model.service !== "placement") {
     throw new AppError("VALIDATION_ERROR", "Unbekanntes Placement-Modell.", 400);
   }
@@ -808,18 +875,21 @@ export async function evaluatePlacementTurn({
   }
 
   const count = Math.max(0, Number(followUpCount) || 0);
+  const conversationLimit = model.skill === "planung" ? 12 : 6;
   const safeConversation = (Array.isArray(conversation) ? conversation : [])
-    .slice(-6)
+    .slice(-conversationLimit)
     .map((turn) => ({
       question: String(turn?.question || "").trim().slice(0, 300),
       transcript: String(turn?.transcript || "").trim().slice(0, 3000),
       inputMode: turn?.inputMode === "voice_transcript" ? "voice_transcript" : "typed",
+      moveId: String(turn?.moveId || "").trim().slice(0, 120) || null,
     }))
     .filter((turn) => turn.transcript);
   const currentTurn = {
     question: String(currentQuestion || "").trim().slice(0, 300),
     transcript: text.slice(0, 3000),
     inputMode: inputMode === "voice_transcript" ? "voice_transcript" : "typed",
+    moveId: String(currentMoveId || "").trim().slice(0, 120) || null,
   };
   const fullConversation = [...safeConversation, currentTurn];
 
@@ -893,7 +963,7 @@ export function evaluatePlacementTurnOffline({
   conversation = [],
   selectedImage = null,
 }) {
-  const model = getPlacementModel(modelId);
+  const model = getPlacementModel(modelId) || getPlacementPlanningPack(modelId);
   if (!model) throw new Error("model not found");
   const imageContext = model.skill === "bildbeschreibung"
     ? sanitizeSelectedImageContext(selectedImage)

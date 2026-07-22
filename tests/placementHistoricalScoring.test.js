@@ -156,7 +156,7 @@ describe("historical routing", () => {
 
   it("makes b1_planung_mittel reachable", () => {
     const step = getPlanningStep({
-      selfIntroResult: "strong", imageResult: "strong", lesenHoerenResult: "strong",
+      selfIntroResult: "strong", imageResult: "strong", lesenHoerenResult: "medium",
     });
     expect(resolvePlacementModelFromStep(step)?.id).toBe("b1_planung_mittel");
   });

@@ -252,6 +252,12 @@ describe("deterministic Placement report", () => {
           coveredTopicIds: ["place"],
         },
         lesenHoeren: { coveredTopics: [], missingTopics: [], listeningQuestionResults: [] },
+        planung: {
+          coveredTopics: ["Gemeinsame Entscheidung"],
+          missingTopics: [],
+          planningPackIds: ["b1_planung_mittel"],
+          transcripts: [{ question: "Abschluss", transcript: "Unser Plan steht." }],
+        },
       },
     });
 
@@ -360,7 +366,7 @@ describe("AI polish sanitize", () => {
     expect(merged.skillBands.lesenHoeren).toBe("weak");
   });
 
-  it("blocks legacy Hören prose while retaining the previous Planung polish behavior", () => {
+  it("blocks legacy Hören prose and prevents Planning polish from replacing grounded evidence", () => {
     const base = assemblePlacementLearnerProfile({
       historicalResult: buildHistoricalPlacementResult({
         selectedLevel: "A2",
@@ -387,7 +393,13 @@ describe("AI polish sanitize", () => {
             ],
           },
         }],
-        planung: [{ missingTopics: ["Zeit"] }],
+        planung: [{
+          modelId: "a2_planung_mittel",
+          planningPackId: "a2_planung_mittel",
+          coveredTopics: [],
+          missingTopics: ["date_time"],
+          transcript: "Ich weiß noch nicht.",
+        }],
       },
     });
     const planningBefore = base.learnerReport.areas.find((area) => area.skill === "planung");
@@ -406,12 +418,8 @@ describe("AI polish sanitize", () => {
     const planning = merged.learnerReport.areas.find((area) => area.skill === "planung");
     expect(listening.summary).toContain("Apothekentermin");
     expect(JSON.stringify(merged.learnerReport)).not.toMatch(/Herr Müller|Berlin|Bahnhofsereignisse/);
-    expect(planning).toEqual({
-      ...planningBefore,
-      performanceLabel: "Planung individuell",
-      summary: "Planungstext unverändert polierbar.",
-    });
-    expect(merged.learnerReport.recommendations).toContain(
+    expect(planning).toEqual(planningBefore);
+    expect(merged.learnerReport.recommendations).not.toContain(
       "Planung: Zeit und Entscheidung weiter üben."
     );
   });

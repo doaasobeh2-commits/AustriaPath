@@ -304,6 +304,16 @@ export function getPlanningStep(results) {
   ).length;
   const weakCount = bands.filter((band) => band === "weak").length;
 
+  if (strongCount === 3) {
+    return {
+      skill: "planung",
+      level: "B2",
+      difficulty: "mittel",
+      internalLevel: "B2-",
+      reason: "Durchgehend starke Evidenz vor Planung → B2 Planung",
+    };
+  }
+
   if (weakCount === 0 && strongCount >= 2) {
     return {
       skill: "planung",

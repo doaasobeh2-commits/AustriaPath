@@ -38,6 +38,21 @@ describe("Placement in-progress browser session", () => {
     expect(loadPlacementSession("attempt-2")).toBeNull();
   });
 
+  it("preserves the sticky Planning scenario and current move", () => {
+    savePlacementSession("attempt-planning", {
+      currentModelId: "b2_planung_weiterbildung",
+      planningMoveId: "training-format",
+      planningPhase: "responding",
+      planningResponseSeconds: 42,
+    });
+    expect(loadPlacementSession("attempt-planning")).toMatchObject({
+      currentModelId: "b2_planung_weiterbildung",
+      planningMoveId: "training-format",
+      planningPhase: "responding",
+      planningResponseSeconds: 42,
+    });
+  });
+
   it("keeps only compact content ids for the five most recent completed attempts", () => {
     for (let i = 0; i < PLACEMENT_HISTORY_LIMIT + 2; i += 1) {
       recordCompletedPlacementContent({

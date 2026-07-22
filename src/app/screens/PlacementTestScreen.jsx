@@ -29,6 +29,12 @@ import { ApiError } from '../../api/httpClient.js';
 import { selectPlacementBildImageSafe } from '../../data/utils/placementImagePool.js';
 import { selectPlacementListeningModel } from '../../data/utils/placementListeningPool.js';
 import {
+  getPlacementPlanningMove,
+  getPlacementPlanningPack,
+  isPlanningRecordingAllowed,
+  selectPlacementPlanningPack,
+} from '../../data/placementPlanningPacks.js';
+import {
   ADMIN_QA_NOT_EVALUATED,
   isAdminQaMode,
 } from '../../utils/adminQaMode.js';
@@ -85,6 +91,10 @@ export default function PlacementTestScreen({ setActiveTab }) {
   const [selectedBildImage, setSelectedBildImage] = useState(null);
   const [bildImageBroken, setBildImageBroken] = useState(false);
   const [retryAnswer, setRetryAnswer] = useState(null);
+  const [planningMoveId, setPlanningMoveId] = useState(null);
+  const [planningPhase, setPlanningPhase] = useState('idle');
+  const [planningCountdown, setPlanningCountdown] = useState(15);
+  const [planningResponseSeconds, setPlanningResponseSeconds] = useState(0);
   const recognitionRef = useRef(null);
   const listeningAudioRef = useRef(null);
   const transcriptRef = useRef('');
@@ -123,6 +133,45 @@ export default function PlacementTestScreen({ setActiveTab }) {
       window.speechSynthesis.cancel();
     }
   };
+
+  const playPlanningExaminerMove = (move) => {
+    if (!move?.audioUrl || skill !== 'planung') return;
+    stopRecognition();
+    stopAudio();
+    setPlanningPhase('examiner');
+    setControlMessage('Der Prüfer spricht …');
+    const audio = new Audio(move.audioUrl);
+    listeningAudioRef.current = audio;
+    audio.addEventListener('ended', () => {
+      if (listeningAudioRef.current === audio) listeningAudioRef.current = null;
+      setPlanningPhase('responding');
+      setPlanningResponseSeconds(move.responseSeconds);
+      setControlMessage('Sie können jetzt antworten.');
+    }, { once: true });
+    audio.addEventListener('error', () => {
+      if (listeningAudioRef.current === audio) listeningAudioRef.current = null;
+      setPlanningPhase('playback-error');
+      setControlMessage('Die Prüferfrage konnte nicht abgespielt werden. Bitte tippen Sie auf „Erneut abspielen“.');
+    }, { once: true });
+    void audio.play().catch(() => {
+      if (listeningAudioRef.current === audio) listeningAudioRef.current = null;
+      setPlanningPhase('playback-error');
+      setControlMessage('Die Prüferfrage konnte nicht abgespielt werden. Bitte tippen Sie auf „Erneut abspielen“.');
+    });
+  };
+
+  useEffect(() => {
+    if (skill !== 'planung' || planningPhase !== 'preparing') return undefined;
+    if (planningCountdown <= 0) {
+      playPlanningExaminerMove(planningMove);
+      return undefined;
+    }
+    const timer = window.setTimeout(
+      () => setPlanningCountdown((value) => Math.max(0, value - 1)),
+      1000
+    );
+    return () => window.clearTimeout(timer);
+  }, [skill, planningPhase, planningCountdown, planningMoveId]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -163,7 +212,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
         setAttemptId(entitlement.attemptId);
         const saved = loadPlacementSession(entitlement.attemptId);
         const savedModel = saved?.currentModelId
-          ? getPlacementModel(saved.currentModelId)
+          ? getPlacementModel(saved.currentModelId) || getPlacementPlanningPack(saved.currentModelId)
           : null;
         if (!saved || !savedModel) return;
         hydratingRef.current = true;
@@ -182,6 +231,16 @@ export default function PlacementTestScreen({ setActiveTab }) {
         setAnswerSubmitted(Boolean(saved.answerSubmitted));
         setFinalizedTranscript(saved.finalizedTranscript || '');
         setRetryAnswer(saved.retryAnswer || null);
+        setPlanningMoveId(saved.planningMoveId || null);
+        setPlanningPhase(
+          saved.planningPhase === 'examiner'
+            ? 'playback-error'
+            : saved.planningPhase === 'evaluating'
+              ? 'responding'
+              : saved.planningPhase || 'idle'
+        );
+        setPlanningCountdown(Number(saved.planningCountdown) || 15);
+        setPlanningResponseSeconds(Number(saved.planningResponseSeconds) || 0);
         transcriptRef.current = saved.finalizedTranscript || saved.retryAnswer?.text || '';
         setStarted(true);
         setControlMessage('Ihr begonnener Einstufungstest wurde wiederhergestellt.');
@@ -214,12 +273,17 @@ export default function PlacementTestScreen({ setActiveTab }) {
       answerSubmitted,
       finalizedTranscript,
       retryAnswer,
+      planningMoveId,
+      planningPhase,
+      planningCountdown,
+      planningResponseSeconds,
     });
   }, [
     resumeChecked, started, attemptId, selectedLevel, stageIndex, currentModel,
     skillBands, numericScores, modelsUsed, turnEvidence, selectedBildImage,
     followUpCount, activeFollowUp, listeningAnswers, answerSubmitted,
-    finalizedTranscript, retryAnswer,
+    finalizedTranscript, retryAnswer, planningMoveId, planningPhase,
+    planningCountdown, planningResponseSeconds,
   ]);
 
   useEffect(() => {
@@ -265,10 +329,13 @@ export default function PlacementTestScreen({ setActiveTab }) {
   };
 
   const evidenceKey = currentModel?.skill;
+  const planningMove = skill === 'planung'
+    ? getPlacementPlanningMove(currentModel, planningMoveId)
+    : null;
   const currentTurnQuestion =
     activeFollowUp ||
     (skill === 'planung'
-      ? currentModel?.examinerQuestions?.[0] || getStudentPrompt(currentModel)
+      ? planningMove?.text || ''
       : getStudentPrompt(currentModel));
 
   const finishSkillAndAdvance = async (completedBands, completedScores, completedModels, evidenceSnapshot, options = {}) => {
@@ -377,7 +444,11 @@ export default function PlacementTestScreen({ setActiveTab }) {
         ? selectPlacementListeningModel(nextStep, {
             recentIds: recentPlacementContentIds('listening'),
           })
-        : resolvePlacementModelFromStep(nextStep)
+        : nextStep.skill === 'planung'
+          ? selectPlacementPlanningPack(nextStep, {
+              recentIds: recentPlacementContentIds('planning'),
+            })
+          : resolvePlacementModelFromStep(nextStep)
       : null;
     if (!nextModel) {
       setControlMessage(
@@ -414,6 +485,11 @@ export default function PlacementTestScreen({ setActiveTab }) {
     ]);
     setStageIndex(stageIndex + 1);
     setCurrentModel(nextModel);
+    if (nextStep.skill === 'planung') {
+      setPlanningMoveId(nextModel.mainMoves[0]?.id || null);
+      setPlanningPhase('idle');
+      setPlanningCountdown(15);
+    }
   };
 
   const handleWeiter = () => {
@@ -423,7 +499,9 @@ export default function PlacementTestScreen({ setActiveTab }) {
     if (!currentModel || isEvaluating || isBuildingReport) return;
 
     const evaluations = turnEvidence[evidenceKey] || [];
-    const band = getFinalBandFromTurnEvidence(evaluations);
+    const band = skill === 'planung' && evaluations.at(-1)?.planningComplete
+      ? evaluations.at(-1)?.band
+      : getFinalBandFromTurnEvidence(evaluations);
     const score = bandToPlacementScore(band);
     const qaMode = isAdminQaMode();
     const last = evaluations[evaluations.length - 1];
@@ -461,6 +539,17 @@ export default function PlacementTestScreen({ setActiveTab }) {
   };
 
   const startRecording = () => {
+    if (skill === 'planung' && !isPlanningRecordingAllowed({
+      phase: planningPhase,
+      examinerAudioActive: Boolean(listeningAudioRef.current),
+    })) {
+      setControlMessage('Bitte warten Sie, bis die Prüferfrage vollständig abgespielt wurde.');
+      return;
+    }
+    if (!qaSkip && skill === 'planung' && planningPhase !== 'complete') {
+      setControlMessage('Bitte schließen Sie zuerst das Planungsgespräch ab.');
+      return;
+    }
     setControlMessage('');
     if (!SpeechRecognitionCtor) {
       setTypedFallbackAllowed(true);
@@ -694,6 +783,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
     if (!currentModel?.id || isEvaluating) return;
 
     setIsEvaluating(true);
+    if (currentModel.skill === 'planung') setPlanningPhase('evaluating');
     setControlMessage('Antwort wird ausgewertet…');
     submitAfterStopRef.current = false;
     stopRecognition();
@@ -708,6 +798,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
         followUpCount,
         selectedLevel,
         currentQuestion: currentTurnQuestion,
+        currentMoveId: currentModel.skill === 'planung' ? planningMoveId : null,
         inputMode,
         conversation: (turnEvidence[evidenceKey] || [])
           .filter((turn) => turn?.transcript)
@@ -715,6 +806,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
             question: turn.question,
             transcript: turn.transcript,
             inputMode: turn.inputMode,
+            moveId: turn.moveId || null,
           })),
       };
 
@@ -741,6 +833,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
         question: currentTurnQuestion,
         transcript: text,
         inputMode,
+        ...(currentModel.skill === 'planung' ? { moveId: planningMoveId } : {}),
       };
 
       const skillKey = currentModel.skill;
@@ -752,7 +845,30 @@ export default function PlacementTestScreen({ setActiveTab }) {
 
       setAnswerSubmitted(true);
 
-      if (evaluation.needsFollowUp && evaluation.followUpQuestion) {
+      if (currentModel.skill === 'planung') {
+        if (evaluation.needsFollowUp && evaluation.followUpQuestionId) {
+          const nextMove = getPlacementPlanningMove(currentModel, evaluation.followUpQuestionId);
+          if (!nextMove) {
+            setPlanningPhase('idle');
+            setControlMessage('Die nächste geschlossene Prüferfrage ist ungültig. Bitte erneut versuchen.');
+          } else {
+            setFollowUpCount((c) => c + 1);
+            setPlanningMoveId(nextMove.id);
+            setActiveFollowUp(null);
+            setAnswerText('');
+            transcriptRef.current = '';
+            finalTranscriptRef.current = '';
+            setRecognizedDraft('');
+            setFinalizedTranscript('');
+            setAnswerSubmitted(false);
+            playPlanningExaminerMove(nextMove);
+          }
+        } else {
+          setPlanningPhase('complete');
+          setActiveFollowUp(null);
+          setControlMessage('Planung abgeschlossen. Klicken Sie auf Weiter.');
+        }
+      } else if (evaluation.needsFollowUp && evaluation.followUpQuestion) {
         setFollowUpCount((c) => c + 1);
         setActiveFollowUp(evaluation.followUpQuestion);
         setAnswerText('');
@@ -800,6 +916,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
         setControlMessage(`${ADMIN_QA_NOT_EVALUATED}. Sie können mit Weiter fortfahren. (${msg})`);
       } else {
         setRetryAnswer({ text, inputMode });
+        if (currentModel.skill === 'planung') setPlanningPhase('responding');
         setControlMessage(
           msg + ' Ihre erkannte Antwort bleibt erhalten. Bitte versuchen Sie die Auswertung erneut.'
         );
@@ -809,6 +926,30 @@ export default function PlacementTestScreen({ setActiveTab }) {
       setIsEvaluating(false);
     }
   };
+
+  useEffect(() => {
+    if (skill !== 'planung' || planningPhase !== 'responding') return undefined;
+    if (planningResponseSeconds <= 0) {
+      if (isListening && transcriptRef.current.trim()) {
+        stopRecording();
+      } else if (isListening) {
+        stopRecognition();
+        setPlanningPhase('response-timeout');
+        setControlMessage('Die Antwortzeit ist beendet. Bitte versuchen Sie die Antwort erneut.');
+      } else if (answerText.trim()) {
+        void handleSendAnswer(answerText, 'typed');
+      } else {
+        setPlanningPhase('response-timeout');
+        setControlMessage('Die Antwortzeit ist beendet. Bitte versuchen Sie die Antwort erneut.');
+      }
+      return undefined;
+    }
+    const timer = window.setTimeout(
+      () => setPlanningResponseSeconds((value) => Math.max(0, value - 1)),
+      1000
+    );
+    return () => window.clearTimeout(timer);
+  }, [skill, planningPhase, planningResponseSeconds, isListening, answerText]);
 
   if (result) {
     const report = result.learnerReport || {};
@@ -1014,8 +1155,50 @@ export default function PlacementTestScreen({ setActiveTab }) {
           <p style={followUpPromptStyle}>{activeFollowUp}</p>
         ) : null}
 
-        {skill === 'planung' && !activeFollowUp ? (
-          <p style={followUpPromptStyle}>{currentTurnQuestion}</p>
+        {skill === 'planung' ? (
+          <div style={followUpPromptStyle}>
+            {planningPhase === 'idle' ? (
+              <button
+                type="button"
+                style={secondaryActionStyle}
+                onClick={() => {
+                  setPlanningCountdown(15);
+                  setPlanningPhase('preparing');
+                  setControlMessage('Sie haben 15 Sekunden Vorbereitungszeit.');
+                }}
+              >
+                Planung starten
+              </button>
+            ) : null}
+            {planningPhase === 'preparing' ? <p>Vorbereitung: {planningCountdown} Sekunden</p> : null}
+            {planningPhase === 'examiner' ? <p>Prüferfrage wird abgespielt …</p> : null}
+            {planningPhase === 'playback-error' ? (
+              <button
+                type="button"
+                style={secondaryActionStyle}
+                onClick={() => playPlanningExaminerMove(planningMove)}
+              >
+                Prüferfrage erneut abspielen
+              </button>
+            ) : null}
+            {['responding', 'evaluating', 'complete'].includes(planningPhase) && currentTurnQuestion ? (
+              <p>{currentTurnQuestion}</p>
+            ) : null}
+            {planningPhase === 'responding' ? <p>Antwortzeit: {planningResponseSeconds} Sekunden</p> : null}
+            {planningPhase === 'response-timeout' ? (
+              <button
+                type="button"
+                style={secondaryActionStyle}
+                onClick={() => {
+                  setPlanningResponseSeconds(planningMove?.responseSeconds || 15);
+                  setPlanningPhase('responding');
+                  setControlMessage('Sie können die Antwort jetzt erneut geben.');
+                }}
+              >
+                Antwort erneut starten
+              </button>
+            ) : null}
+          </div>
         ) : null}
 
         {isListeningSkill ? (
@@ -1054,7 +1237,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
           </>
         ) : null}
 
-        {isVoiceSkill ? (
+        {isVoiceSkill && (skill !== 'planung' || planningPhase === 'responding') ? (
           <>
             <div style={voiceRowStyle}>
               {!isListening ? (
@@ -1111,7 +1294,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
           </>
         ) : null}
 
-        {isVoiceSkill && typedFallbackAllowed ? (
+        {isVoiceSkill && typedFallbackAllowed && (skill !== 'planung' || planningPhase === 'responding') ? (
           <>
             <p style={fallbackHintStyle}>
               Die Spracherkennung ist nicht verfügbar. Sie können diese Antwort stattdessen tippen.
@@ -1136,7 +1319,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
         ) : null}
         {controlMessage ? <p style={{ ...smallTextStyle, color: '#b45309' }}>{controlMessage}</p> : null}
 
-        {isVoiceSkill && typedFallbackAllowed ? (
+        {isVoiceSkill && typedFallbackAllowed && (skill !== 'planung' || planningPhase === 'responding') ? (
           <button
             type="button"
             style={sendButtonStyle}

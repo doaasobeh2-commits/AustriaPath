@@ -7,6 +7,10 @@ import {
   getPlacementBildAssessmentPackByKey,
   getPlacementBildReportTopic,
 } from "../placementBildAssessmentPacks.js";
+import {
+  getPlacementPlanningPack,
+  getPlacementPlanningReportTopic,
+} from "../placementPlanningPacks.js";
 
 export const PLACEMENT_AREA_ORDER = [
   "selbstvorstellung",
@@ -204,6 +208,7 @@ export function buildEvidenceSummary(turnEvidence = {}, skillBands = {}) {
     const bildPackKeys = new Set();
     const listeningModels = new Map();
     const listeningQuestionResults = new Map();
+    const planningPackIds = new Set();
     const transcripts = [];
 
     const selfSemanticCovered = skillKey === "selbstvorstellung"
@@ -264,6 +269,22 @@ export function buildEvidenceSummary(turnEvidence = {}, skillBands = {}) {
           });
           (result?.isCorrect ? covered : missing).add(question);
         }
+      } else if (skillKey === "planung") {
+        const pack = getPlacementPlanningPack(ev?.planningPackId || ev?.modelId);
+        if (!pack || ev?.planningPackId !== pack.scenarioId) continue;
+        planningPackIds.add(pack.scenarioId);
+        for (const id of ev?.coveredTopics || []) {
+          const topic = getPlacementPlanningReportTopic(pack, id);
+          if (!topic) continue;
+          coveredTopicIds.add(topic.id);
+          covered.add(topic.label);
+        }
+        for (const id of ev?.missingTopics || []) {
+          const topic = getPlacementPlanningReportTopic(pack, id);
+          if (!topic) continue;
+          missingTopicIds.add(topic.id);
+          missing.add(topic.label);
+        }
       } else {
         for (const t of ev?.coveredTopics || []) {
           const s = String(t || "").trim();
@@ -299,7 +320,7 @@ export function buildEvidenceSummary(turnEvidence = {}, skillBands = {}) {
       band: normalizeBand(skillBands[skillKey]) || null,
       coveredTopics: [...covered].slice(0, 12),
       missingTopics: [...missing].slice(0, 12),
-      ...(["selbstvorstellung", "bildbeschreibung"].includes(skillKey)
+      ...(["selbstvorstellung", "bildbeschreibung", "planung"].includes(skillKey)
         ? {
             coveredTopicIds: [...coveredTopicIds].slice(0, 12),
             missingTopicIds: [...missingTopicIds].slice(0, 12),
@@ -313,6 +334,9 @@ export function buildEvidenceSummary(turnEvidence = {}, skillBands = {}) {
             listeningModels: [...listeningModels.values()],
             listeningQuestionResults: [...listeningQuestionResults.values()],
           }
+        : {}),
+      ...(skillKey === "planung"
+        ? { planningPackIds: [...planningPackIds] }
         : {}),
       transcripts: transcripts.slice(0, 6),
     };
@@ -463,19 +487,6 @@ function buildRecommendations(level, skillBands, evidenceSummary) {
   for (const skill of ordered) {
     const band = normalizeBand(skillBands[skill]);
     const miss = evidenceSummary[skill]?.missingTopics || [];
-    // Planung remains on its existing report behavior until its separate redesign.
-    if (skill === "planung") {
-      if (band === "weak") {
-        add(
-          miss.length
-            ? `${areaLabel(skill)}: Zuerst die fehlenden Punkte üben (${miss.slice(0, 3).join(", ")}).`
-            : `${areaLabel(skill)}: Täglich 5–10 Minuten mit einfachem Aufbau üben.`
-        );
-      } else if (band === "medium") {
-        add(`${areaLabel(skill)}: Antworten etwas länger machen und mit weil/deshalb begründen.`);
-      }
-      continue;
-    }
     if (band === "weak") {
       add(
         miss.length
@@ -489,7 +500,7 @@ function buildRecommendations(level, skillBands, evidenceSummary) {
 
   const strong = ordered.filter((s) =>
     normalizeBand(skillBands[s]) === "strong" &&
-    (s === "planung" || hasEvidenceForSkill(s, evidenceSummary[s]))
+    hasEvidenceForSkill(s, evidenceSummary[s])
   );
   if (strong.length) {
     add(
@@ -514,6 +525,9 @@ function hasEvidenceForSkill(skill, evidence = {}) {
   if (skill === "lesenHoeren") {
     return Boolean(evidence.listeningQuestionResults?.length);
   }
+  if (skill === "planung") {
+    return Boolean(evidence.planningPackIds?.length && evidence.transcripts?.length);
+  }
   return true;
 }
 
@@ -534,15 +548,13 @@ export function buildDeterministicLearnerReport({
     evidenceSummary,
   });
   const evidenceStrengths = strengths.filter((skill) =>
-    skill === "planung" || (
-      normalizeBand(skillBands[skill]) === "strong" &&
-      hasEvidenceForSkill(skill, evidenceSummary[skill])
-    )
+    normalizeBand(skillBands[skill]) === "strong" &&
+    hasEvidenceForSkill(skill, evidenceSummary[skill])
   );
   const improvementSkills = [...new Set([
     ...weaknesses,
     ...PLACEMENT_AREA_ORDER.filter((skill) =>
-      skill !== "planung" && (evidenceSummary[skill]?.missingTopics || []).length > 0
+      (evidenceSummary[skill]?.missingTopics || []).length > 0
     ),
   ])];
 
@@ -678,16 +690,7 @@ export function applyPolishedLearnerReport(profile, polished) {
 }
 
 function mergeGroundedRecommendations(baseRecommendations = [], polishedRecommendations = []) {
-  const base = baseRecommendations.map(String).filter(Boolean);
-  const basePlanning = base.filter((text) => normalizeSemanticText(text).startsWith("planung "));
-  const baseValidated = base.filter((text) => !normalizeSemanticText(text).startsWith("planung "));
-  const polishedPlanning = Array.isArray(polishedRecommendations)
-    ? polishedRecommendations
-        .map((text) => String(text || "").trim())
-        .filter((text) => normalizeSemanticText(text).startsWith("planung "))
-        .slice(0, basePlanning.length || 1)
-    : [];
-  return [...baseValidated, ...(polishedPlanning.length ? polishedPlanning : basePlanning)].slice(0, 8);
+  return baseRecommendations.map(String).filter(Boolean).slice(0, 8);
 }
 
 function polishAreas(baseAreas = [], polishedAreas = [], skillBands = {}) {
@@ -695,23 +698,7 @@ function polishAreas(baseAreas = [], polishedAreas = [], skillBands = {}) {
   return baseAreas.map((area) => {
     const p = bySkill.get(area.skill);
     if (!p) return area;
-    // Non-Planning area prose stays deterministic because it carries evidence claims.
-    // Planung deliberately retains its previous polishing behavior.
-    if (area.skill !== "planung") return area;
-    return {
-      ...area,
-      band: normalizeBand(skillBands[area.skill]) || area.band,
-      performanceLabel:
-        typeof p.performanceLabel === "string" && p.performanceLabel.trim()
-          ? p.performanceLabel.trim()
-          : area.performanceLabel,
-      summary:
-        typeof p.summary === "string" && p.summary.trim()
-          ? p.summary.trim()
-          : area.summary,
-      coveredTopics: area.coveredTopics,
-      missingTopics: area.missingTopics,
-    };
+    return area;
   });
 }
 
@@ -723,13 +710,7 @@ function polishList(baseList = [], polishedList = [], allowedSkills = []) {
   return baseList.map((item) => {
     const p = bySkill.get(item.skill);
     if (!p) return item;
-    if (item.skill !== "planung") return item;
-    return {
-      ...item,
-      text:
-        typeof p.text === "string" && p.text.trim() ? p.text.trim() : item.text,
-      missingTopics: item.missingTopics,
-    };
+    return item;
   });
 }
 
