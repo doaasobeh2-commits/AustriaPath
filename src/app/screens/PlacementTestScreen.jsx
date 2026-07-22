@@ -545,10 +545,6 @@ export default function PlacementTestScreen({ setActiveTab }) {
       setControlMessage('Bitte warten Sie, bis die Prüferfrage vollständig abgespielt wurde.');
       return;
     }
-    if (!qaSkip && skill === 'planung' && planningPhase !== 'complete') {
-      setControlMessage('Bitte schließen Sie zuerst das Planungsgespräch ab.');
-      return;
-    }
     setControlMessage('');
     if (!SpeechRecognitionCtor) {
       setTypedFallbackAllowed(true);
