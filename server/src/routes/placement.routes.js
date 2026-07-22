@@ -46,7 +46,14 @@ router.post("/begin-attempt", requireAuth, requireActiveAccess, async (req, res,
 
 router.post("/complete-attempt", requireAuth, requireActiveAccess, async (req, res, next) => {
   try {
-    success(res, await completePlacementAttempt(req.auth.userId, req.body?.attemptId));
+    success(
+      res,
+      await completePlacementAttempt(
+        req.auth.userId,
+        req.body?.attemptId,
+        req.body?.reportSnapshot
+      )
+    );
   } catch (e) {
     next(e);
   }

@@ -15,6 +15,7 @@ import {
   getPlacementEntitlement,
   grantPlacementAttempt,
 } from "../../server/src/services/placementEntitlementService.js";
+import { placementReportSnapshot } from "../helpers/placementReportSnapshot.js";
 
 describe("one-shot Placement entitlement", () => {
   let userId;
@@ -73,9 +74,9 @@ describe("one-shot Placement entitlement", () => {
       remainingExams: 1,
     });
 
-    const completed = await completePlacementAttempt(userId, started.attemptId);
+    const completed = await completePlacementAttempt(userId, started.attemptId, placementReportSnapshot());
     expect(completed).toMatchObject({ completed: true, replayed: false, remainingExams: 0 });
-    const replay = await completePlacementAttempt(userId, started.attemptId);
+    const replay = await completePlacementAttempt(userId, started.attemptId, placementReportSnapshot());
     expect(replay).toMatchObject({ completed: false, replayed: true, remainingExams: 0 });
     await expect(getPlacementEntitlement(userId)).resolves.toMatchObject({
       canTake: false,

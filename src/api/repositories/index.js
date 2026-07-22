@@ -123,11 +123,19 @@ export async function beginPlacementAttempt() {
   });
 }
 
-export async function completePlacementAttempt(attemptId) {
+export async function completePlacementAttempt(attemptId, reportSnapshot) {
   return apiFetch("/placement/complete-attempt", {
     method: "POST",
-    json: { attemptId },
+    json: { attemptId, reportSnapshot },
   });
+}
+
+export async function listMessages() {
+  return apiFetch("/messages");
+}
+
+export async function fetchMessage(messageId) {
+  return apiFetch(`/messages/${encodeURIComponent(messageId)}`);
 }
 
 export async function fetchAiUsage() {

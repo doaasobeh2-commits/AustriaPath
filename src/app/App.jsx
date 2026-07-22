@@ -51,6 +51,7 @@ import {
   LEGACY_AI_SESSION_STORAGE_KEY,
 } from "../constants/storageKeys.js";
 import TrialExpiredScreen from "./screens/TrialExpiredScreen";
+import MessagesScreen from "./screens/MessagesScreen.jsx";
 import { isTrialExpiredUser } from "../utils/accessStatus.js";
 import { isOnboardingComplete, markOnboardingComplete } from "../utils/userPreferences.js";
 
@@ -217,7 +218,7 @@ export default function App() {
   };
 
   const handleNotifications = () => {
-    alert("Benachrichtigungen kommen bald.");
+    setActiveTabGuarded("messages");
   };
 
   const openWithLevel = (target) => {
@@ -403,6 +404,10 @@ export default function App() {
           <Suspense fallback={<AdminRouteFallback />}>
           {guardedTab === "home" && (
             <HomeScreen setActiveTab={setActiveTabGuarded} />
+          )}
+
+          {guardedTab === "messages" && (
+            <MessagesScreen setActiveTab={setActiveTabGuarded} />
           )}
 
           {guardedTab === "examinerLab" &&

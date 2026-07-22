@@ -15,6 +15,7 @@ import {
   grantPlacementAttempt,
   withAuthorizedPlacementUsage,
 } from "../../server/src/services/placementEntitlementService.js";
+import { placementReportSnapshot } from "../helpers/placementReportSnapshot.js";
 
 describe("Placement attempt usage bounds", () => {
   let userId;
@@ -92,7 +93,7 @@ describe("Placement attempt usage bounds", () => {
   });
 
   it("allows exactly one report for the completed matching attempt", async () => {
-    await completePlacementAttempt(userId, attemptId);
+    await completePlacementAttempt(userId, attemptId, placementReportSnapshot());
     await expect(
       withAuthorizedPlacementUsage(
         {

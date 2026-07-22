@@ -375,30 +375,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
         turnEvidence: evidenceSnapshot || turnEvidence,
       });
 
-      try {
-        await completePlacementAttempt(attemptId);
-      } catch (error) {
-        setControlMessage(
-          (error instanceof ApiError
-            ? error.message
-            : 'Abschluss konnte nicht gespeichert werden.') +
-            ' Bitte erneut auf Weiter klicken.'
-        );
-        return;
-      }
-
-      // Persist deterministic report immediately — level/bands frozen
-      savePlacementProfile(profile);
-      recordCompletedPlacementContent({
-        attemptId,
-        bild: selectedBildImage
-          ? `${selectedBildImage.catalogLevel}:${selectedBildImage.catalogId}`
-          : null,
-        listening: completedModels.find((item) => item.stage === 'lesenHoeren')?.modelId || null,
-        planning: completedModels.find((item) => item.stage === 'planung')?.modelId || null,
-      });
-      clearPlacementSession(attemptId);
-      setResult(profile);
+      // Freeze the grounded final snapshot before atomically completing the attempt.
       setIsBuildingReport(true);
 
       try {
@@ -411,14 +388,36 @@ export default function PlacementTestScreen({ setActiveTab }) {
         );
         if (ai?.polished) {
           profile = applyPolishedLearnerReport(profile, ai.polished);
-          savePlacementProfile(profile);
-          setResult(profile);
         }
       } catch {
         // Fail closed: keep deterministic report; do not alter assessment
-      } finally {
-        setIsBuildingReport(false);
       }
+
+      try {
+        await completePlacementAttempt(attemptId, profile);
+      } catch (error) {
+        setIsBuildingReport(false);
+        setControlMessage(
+          (error instanceof ApiError
+            ? error.message
+            : 'Abschluss konnte nicht gespeichert werden.') +
+            ' Bitte erneut auf Weiter klicken.'
+        );
+        return;
+      }
+
+      savePlacementProfile(profile);
+      recordCompletedPlacementContent({
+        attemptId,
+        bild: selectedBildImage
+          ? `${selectedBildImage.catalogLevel}:${selectedBildImage.catalogId}`
+          : null,
+        listening: completedModels.find((item) => item.stage === 'lesenHoeren')?.modelId || null,
+        planning: completedModels.find((item) => item.stage === 'planung')?.modelId || null,
+      });
+      clearPlacementSession(attemptId);
+      setResult(profile);
+      setIsBuildingReport(false);
       return;
     }
 

@@ -490,6 +490,22 @@ CREATE TABLE idempotency_records (
 
 CREATE INDEX idx_idempotency_expires ON idempotency_records (expires_at);
 
+CREATE TABLE user_messages (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id               UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  kind                  VARCHAR(32) NOT NULL DEFAULT 'system',
+  source_type           VARCHAR(64) NOT NULL,
+  source_id             VARCHAR(128) NOT NULL,
+  title                 VARCHAR(255) NOT NULL,
+  subtitle              VARCHAR(255),
+  snapshot              JSONB NOT NULL,
+  created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT user_messages_source_unique UNIQUE (user_id, source_type, source_id)
+);
+
+CREATE INDEX idx_user_messages_user_created
+  ON user_messages (user_id, created_at DESC);
+
 -- ─── CONTENT (legacy examiner_rules parity) ──────────────────────────────────
 
 CREATE TABLE examiner_content_rules (

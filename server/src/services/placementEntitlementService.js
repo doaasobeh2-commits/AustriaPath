@@ -4,6 +4,10 @@ import { getSubscriptionForUser } from "../repositories/subscriptionRepository.j
 import { getPermissionsByPlan } from "../utils/permissions.js";
 import { randomUUID } from "node:crypto";
 import { createHash } from "node:crypto";
+import {
+  insertPlacementReportMessage,
+  sanitizePlacementReportSnapshot,
+} from "./messageService.js";
 
 function placementPermissions(subscription) {
   if (subscription?.permissions && typeof subscription.permissions === "object") {
@@ -302,11 +306,13 @@ export async function beginPlacementAttempt(userId) {
   });
 }
 
-export async function completePlacementAttempt(userId, attemptId) {
+export async function completePlacementAttempt(userId, attemptId, reportSnapshot) {
   const id = String(attemptId || "").trim();
   if (!id || id.length > 64) {
     throw new AppError("VALIDATION_ERROR", "attemptId erforderlich.", 400);
   }
+
+  const snapshot = sanitizePlacementReportSnapshot(reportSnapshot);
 
   return withTransaction(async (q) => {
     const { rows: replayRows } = await q(
@@ -315,7 +321,17 @@ export async function completePlacementAttempt(userId, attemptId) {
       [userId, id]
     );
     if (replayRows.length) {
-      return { completed: false, replayed: true, remainingExams: replayRows[0].remaining_after };
+      const messageId = await insertPlacementReportMessage(q, {
+        userId,
+        attemptId: id,
+        snapshot,
+      });
+      return {
+        completed: false,
+        replayed: true,
+        remainingExams: replayRows[0].remaining_after,
+        messageId,
+      };
     }
 
     const { rows } = await q(
@@ -366,6 +382,12 @@ export async function completePlacementAttempt(userId, attemptId) {
       [userId, subscription.id, id, remaining]
     );
 
-    return { completed: true, replayed: false, remainingExams: remaining };
+    const messageId = await insertPlacementReportMessage(q, {
+      userId,
+      attemptId: id,
+      snapshot,
+    });
+
+    return { completed: true, replayed: false, remainingExams: remaining, messageId };
   });
 }
