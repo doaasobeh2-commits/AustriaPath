@@ -13,7 +13,11 @@ import {
   getPlacementEntitlement,
   grantPlacementAttempt,
 } from "../../server/src/services/placementEntitlementService.js";
-import { getMessage, listMessages } from "../../server/src/services/messageService.js";
+import {
+  getMessage,
+  listMessages,
+  sanitizePlacementReportSnapshot,
+} from "../../server/src/services/messageService.js";
 import { placementReportSnapshot } from "../helpers/placementReportSnapshot.js";
 
 async function registerAndLogin(app, email) {
@@ -49,6 +53,17 @@ describe("Placement final report messages", () => {
     await closeDb();
   });
 
+  it("accepts exactly the supported internal Placement result levels", () => {
+    for (const level of ["A2", "A2+", "B1-", "B1", "B1+", "B2-"]) {
+      expect(sanitizePlacementReportSnapshot(placementReportSnapshot({ level })).level)
+        .toBe(level);
+    }
+    for (const level of ["A1", "B2", "C1", "unknown"]) {
+      expect(() => sanitizePlacementReportSnapshot(placementReportSnapshot({ level })))
+        .toThrow("Ungültiges Placement-Niveau.");
+    }
+  });
+
   it("creates exactly one owned snapshot, preserves report content, and reopens without AI", async () => {
     const beforeCredits = await query(`SELECT ai_credits FROM users WHERE id = $1`, [learner.userId]);
     await grantPlacementAttempt(learner.userId);
@@ -70,7 +85,7 @@ describe("Placement final report messages", () => {
     const replay = await completePlacementAttempt(
       learner.userId,
       attempt.attemptId,
-      placementReportSnapshot({ level: "B2" })
+      placementReportSnapshot({ level: "B2-" })
     );
     expect(replay).toMatchObject({ completed: false, replayed: true, messageId: completed.messageId });
     expect(await listMessages(learner.userId)).toHaveLength(1);
@@ -124,7 +139,7 @@ describe("Placement final report messages", () => {
     await completePlacementAttempt(
       learner.userId,
       secondAttempt.attemptId,
-      placementReportSnapshot({ level: "B2" })
+      placementReportSnapshot({ level: "B2-" })
     );
     const messages = await listMessages(learner.userId);
     expect(messages).toHaveLength(2);

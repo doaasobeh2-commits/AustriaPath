@@ -416,6 +416,23 @@ export function scoreKeyForModelSkill(modelSkill) {
   return modelSkill;
 }
 
+export function placementTurnIdempotencyKey({
+  stageIndex,
+  followUpCount,
+  skill,
+  modelId,
+  moveId,
+}) {
+  if (skill === "planung" && modelId && moveId) {
+    return `turn:${stageIndex}:${modelId}:${moveId}`;
+  }
+  return `turn:${stageIndex}:${followUpCount}`;
+}
+
+export function isPlanningEvaluationComplete(evaluation) {
+  return evaluation?.planningComplete === true;
+}
+
 /**
  * Build Placement-only result from four numeric skill scores.
  * Does not use placementEngine majority-CEFR.

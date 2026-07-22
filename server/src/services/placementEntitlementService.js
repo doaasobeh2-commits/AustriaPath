@@ -22,7 +22,13 @@ function placementAttempt(subscription) {
   return null;
 }
 
-const PLACEMENT_TURN_LIMIT = 9;
+export const PLACEMENT_TURN_BOUNDS = Object.freeze({
+  selbstvorstellung: 3, // initial response + at most two follow-ups
+  bildbeschreibung: 3, // initial response + at most two follow-ups
+  planung: 8, // longest current closed pack (main or replacement-equivalent moves)
+});
+export const PLACEMENT_TURN_LIMIT = Object.values(PLACEMENT_TURN_BOUNDS)
+  .reduce((total, value) => total + value, 0);
 const PLACEMENT_REPORT_LIMIT = 1;
 
 function canonicalizeForHash(value) {

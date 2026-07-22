@@ -8,6 +8,7 @@ const PLACEMENT_SKILLS = new Set([
   "lesenHoeren",
   "planung",
 ]);
+const PLACEMENT_REPORT_LEVELS = new Set(["A2", "A2+", "B1-", "B1", "B1+", "B2-"]);
 
 function cleanText(value, max = 1000) {
   return String(value || "").trim().slice(0, max);
@@ -42,7 +43,7 @@ export function sanitizePlacementReportSnapshot(value) {
     throw new AppError("VALIDATION_ERROR", "Finalisierter Placement-Bericht erforderlich.", 400);
   }
   const level = cleanText(value.level, 8).toUpperCase();
-  if (!/^(A2|B1|B2)$/.test(level)) {
+  if (!PLACEMENT_REPORT_LEVELS.has(level)) {
     throw new AppError("VALIDATION_ERROR", "Ungültiges Placement-Niveau.", 400);
   }
   const date = new Date(value.date);

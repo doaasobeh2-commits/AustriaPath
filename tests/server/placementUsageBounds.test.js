@@ -13,8 +13,11 @@ import {
   beginPlacementAttempt,
   completePlacementAttempt,
   grantPlacementAttempt,
+  PLACEMENT_TURN_BOUNDS,
+  PLACEMENT_TURN_LIMIT,
   withAuthorizedPlacementUsage,
 } from "../../server/src/services/placementEntitlementService.js";
+import { placementPlanningPacks } from "../../src/data/placementPlanningPacks.js";
 import { placementReportSnapshot } from "../helpers/placementReportSnapshot.js";
 
 describe("Placement attempt usage bounds", () => {
@@ -47,15 +50,50 @@ describe("Placement attempt usage bounds", () => {
     await closeDb();
   });
 
-  it("allows nine turns, rolls back failures, and rejects a tenth", async () => {
+  it("derives a bounded allowance that fits the longest legitimate current flow", async () => {
+    const longestPlanningPath = Math.max(
+      ...placementPlanningPacks.map((pack) => pack.mainMoves.length)
+    );
+    expect(longestPlanningPath).toBe(8);
+    expect(PLACEMENT_TURN_BOUNDS).toEqual({
+      selbstvorstellung: 3,
+      bildbeschreibung: 3,
+      planung: longestPlanningPath,
+    });
+    expect(PLACEMENT_TURN_LIMIT).toBe(14);
+
+    const longestPack = placementPlanningPacks.find(
+      (pack) => pack.mainMoves.length === longestPlanningPath
+    );
+    const legitimateTurns = [
+      ...[0, 1, 2].map((turn) => ({
+        key: `turn:0:${turn}`,
+        payload: { skill: "selbstvorstellung", turn },
+      })),
+      ...[0, 1, 2].map((turn) => ({
+        key: `turn:1:${turn}`,
+        payload: { skill: "bildbeschreibung", turn },
+      })),
+      ...longestPack.mainMoves.map((move) => ({
+        key: `turn:3:${longestPack.scenarioId}:${move.id}`,
+        payload: {
+          skill: "planung",
+          modelId: longestPack.scenarioId,
+          currentMoveId: move.id,
+          answer: `Antwort auf ${move.id}`,
+        },
+      })),
+    ];
+    expect(legitimateTurns).toHaveLength(PLACEMENT_TURN_LIMIT);
+
     await expect(
       withAuthorizedPlacementUsage(
         {
           userId,
           attemptId,
           operation: "turn",
-          idempotencyKey: "turn:failed",
-          requestPayload: { answer: "failed" },
+          idempotencyKey: legitimateTurns[0].key,
+          requestPayload: legitimateTurns[0].payload,
         },
         async () => {
           throw new Error("provider failed");
@@ -63,20 +101,37 @@ describe("Placement attempt usage bounds", () => {
       )
     ).rejects.toThrow("provider failed");
 
-    for (let i = 0; i < 9; i += 1) {
+    for (const [index, turn] of legitimateTurns.entries()) {
       await expect(
         withAuthorizedPlacementUsage(
           {
             userId,
             attemptId,
             operation: "turn",
-            idempotencyKey: `turn:${i}`,
-            requestPayload: { answer: i },
+            idempotencyKey: turn.key,
+            requestPayload: turn.payload,
           },
-          async () => i
+          async () => ({ index, moveId: turn.payload.currentMoveId || null })
         )
-      ).resolves.toBe(i);
+      ).resolves.toEqual({ index, moveId: turn.payload.currentMoveId || null });
     }
+
+    const closingTurn = legitimateTurns.at(-1);
+    await expect(
+      withAuthorizedPlacementUsage(
+        {
+          userId,
+          attemptId,
+          operation: "turn",
+          idempotencyKey: closingTurn.key,
+          requestPayload: closingTurn.payload,
+        },
+        async () => "must not run on replay"
+      )
+    ).resolves.toEqual({
+      index: legitimateTurns.length - 1,
+      moveId: longestPack.finalMoveId,
+    });
 
     await expect(
       withAuthorizedPlacementUsage(
@@ -84,16 +139,72 @@ describe("Placement attempt usage bounds", () => {
           userId,
           attemptId,
           operation: "turn",
-          idempotencyKey: "turn:10",
-          requestPayload: { answer: 10 },
+          idempotencyKey: "turn:overflow",
+          requestPayload: { answer: "overflow" },
         },
         async () => "unexpected"
       )
     ).rejects.toMatchObject({ code: "PLACEMENT_TURN_LIMIT_REACHED", status: 409 });
   });
 
+  it("allows Self, Bild, and every Picknick move through closing and completion", async () => {
+    const { rows } = await query(
+      `INSERT INTO users
+         (email, password_hash, level, allowed_levels, ai_credits, is_access_approved)
+       VALUES
+         ('placement-picnic-bound@test.local', 'unused-test-hash', 'A2', ARRAY['A2']::cefr_label[], 0, TRUE)
+       RETURNING id`
+    );
+    const picnicUserId = rows[0].id;
+    await query(
+      `INSERT INTO subscriptions
+         (user_id, type, status, remaining_exams, permissions, is_current)
+       VALUES ($1, 'free', 'inactive', 0, '{}'::jsonb, TRUE)`,
+      [picnicUserId]
+    );
+    await grantPlacementAttempt(picnicUserId);
+    const picnicAttempt = await beginPlacementAttempt(picnicUserId);
+    const picnicPack = placementPlanningPacks.find(
+      (pack) => pack.scenarioId === "a2_planung_picknick"
+    );
+    const turnKeys = [
+      ...[0, 1, 2].map((turn) => `turn:0:${turn}`),
+      ...[0, 1, 2].map((turn) => `turn:1:${turn}`),
+      ...picnicPack.mainMoves.map(
+        (move) => `turn:3:${picnicPack.scenarioId}:${move.id}`
+      ),
+    ];
+
+    for (const key of turnKeys) {
+      await expect(
+        withAuthorizedPlacementUsage(
+          {
+            userId: picnicUserId,
+            attemptId: picnicAttempt.attemptId,
+            operation: "turn",
+            idempotencyKey: key,
+            requestPayload: { key },
+          },
+          async () => key
+        )
+      ).resolves.toBe(key);
+    }
+    expect(turnKeys.at(-1)).toContain("picnic-close");
+    await expect(
+      completePlacementAttempt(
+        picnicUserId,
+        picnicAttempt.attemptId,
+        placementReportSnapshot({ level: "A2+" })
+      )
+    ).resolves.toMatchObject({ completed: true });
+  });
+
   it("allows exactly one report for the completed matching attempt", async () => {
-    await completePlacementAttempt(userId, attemptId, placementReportSnapshot());
+    await completePlacementAttempt(
+      userId,
+      attemptId,
+      placementReportSnapshot({ level: "A2+" })
+    );
     await expect(
       withAuthorizedPlacementUsage(
         {

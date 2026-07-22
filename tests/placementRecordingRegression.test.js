@@ -52,6 +52,10 @@ describe("Placement recording regression", () => {
 
   it("keeps Weiter guarded by valid evaluated evidence", () => {
     const handleWeiter = functionBody("handleWeiter", "startRecording");
+    expect(handleWeiter).toContain("skill === 'planung' && !isPlanningEvaluationComplete(last)");
+    expect(handleWeiter).toContain("Bitte schließen Sie zuerst das Planungsgespräch erfolgreich ab");
+    expect(handleWeiter.indexOf("!isPlanningEvaluationComplete(last)"))
+      .toBeLessThan(handleWeiter.indexOf("finishSkillAndAdvance"));
     expect(handleWeiter).toContain("if (!qaSkip && (!band || score == null))");
     expect(handleWeiter).toContain("Bitte senden Sie zuerst eine ausgewertete Antwort");
     expect(handleWeiter).toContain("if (!qaSkip && last?.needsFollowUp && activeFollowUp)");

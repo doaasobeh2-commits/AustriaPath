@@ -7,6 +7,10 @@ import {
   recordCompletedPlacementContent,
   savePlacementSession,
 } from "../src/utils/placementSession.js";
+import {
+  isPlanningEvaluationComplete,
+  placementTurnIdempotencyKey,
+} from "../src/data/placementLogic.js";
 
 describe("Placement in-progress browser session", () => {
   beforeEach(() => {
@@ -51,6 +55,34 @@ describe("Placement in-progress browser session", () => {
       planningPhase: "responding",
       planningResponseSeconds: 42,
     });
+  });
+
+  it("uses stable per-move Planning keys while preserving non-Planning semantics", () => {
+    const keyFor = (moveId) => placementTurnIdempotencyKey({
+      stageIndex: 3,
+      followUpCount: 4,
+      skill: "planung",
+      modelId: "a2_planung_picknick",
+      moveId,
+    });
+    expect(keyFor("picnic-items")).toBe("turn:3:a2_planung_picknick:picnic-items");
+    expect(keyFor("picnic-reaction")).toBe("turn:3:a2_planung_picknick:picnic-reaction");
+    expect(keyFor("picnic-close")).toBe("turn:3:a2_planung_picknick:picnic-close");
+    expect(keyFor("picnic-close")).toBe(keyFor("picnic-close"));
+    expect(placementTurnIdempotencyKey({
+      stageIndex: 0,
+      followUpCount: 2,
+      skill: "selbstvorstellung",
+      modelId: "a2_self_mittel",
+      moveId: null,
+    })).toBe("turn:0:2");
+  });
+
+  it("requires an explicitly completed Planning evaluation before finalization", () => {
+    expect(isPlanningEvaluationComplete({ band: "A2", planningComplete: true })).toBe(true);
+    expect(isPlanningEvaluationComplete({ band: "A2", planningComplete: false })).toBe(false);
+    expect(isPlanningEvaluationComplete({ band: "A2" })).toBe(false);
+    expect(isPlanningEvaluationComplete(null)).toBe(false);
   });
 
   it("keeps only compact content ids for the five most recent completed attempts", () => {

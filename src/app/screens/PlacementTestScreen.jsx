@@ -10,6 +10,8 @@ import {
   resolvePlacementModelFromStep,
   scorePlacementListeningAnswers,
   scoreKeyForModelSkill,
+  placementTurnIdempotencyKey,
+  isPlanningEvaluationComplete,
 } from '../../data/placementLogic';
 import {
   assemblePlacementLearnerProfile,
@@ -498,12 +500,16 @@ export default function PlacementTestScreen({ setActiveTab }) {
     if (!currentModel || isEvaluating || isBuildingReport) return;
 
     const evaluations = turnEvidence[evidenceKey] || [];
-    const band = skill === 'planung' && evaluations.at(-1)?.planningComplete
+    const band = skill === 'planung' && isPlanningEvaluationComplete(evaluations.at(-1))
       ? evaluations.at(-1)?.band
       : getFinalBandFromTurnEvidence(evaluations);
     const score = bandToPlacementScore(band);
     const qaMode = isAdminQaMode();
     const last = evaluations[evaluations.length - 1];
+    if (skill === 'planung' && !isPlanningEvaluationComplete(last)) {
+      setControlMessage('Bitte schließen Sie zuerst das Planungsgespräch erfolgreich ab.');
+      return;
+    }
     const qaSkip =
       qaMode &&
       (!band || score == null || last?.evaluationMethod === 'qa-not-evaluated');
@@ -786,7 +792,13 @@ export default function PlacementTestScreen({ setActiveTab }) {
     try {
       const payload = {
         attemptId,
-        idempotencyKey: `turn:${stageIndex}:${followUpCount}`,
+        idempotencyKey: placementTurnIdempotencyKey({
+          stageIndex,
+          followUpCount,
+          skill: currentModel.skill,
+          modelId: currentModel.id,
+          moveId: planningMoveId,
+        }),
         productType: 'placement_test',
         modelId: currentModel.id,
         answerText: text,
