@@ -87,6 +87,61 @@ describe("deterministic Placement report", () => {
     expect(JSON.stringify(summary)).not.toMatch(/SECRET/);
   });
 
+  it("maps validated Koffergeschäft topic IDs to learner labels", () => {
+    const summary = buildEvidenceSummary(
+      {
+        bildbeschreibung: [{
+          bildAssessmentPackKey: "A2:6",
+          coveredTopics: ["place", "woman_action"],
+          missingTopics: ["shop_details", "travel_preference"],
+        }],
+      },
+      { bildbeschreibung: "medium" }
+    );
+
+    expect(summary.bildbeschreibung).toMatchObject({
+      coveredTopicIds: ["place", "woman_action"],
+      missingTopicIds: ["shop_details", "travel_preference"],
+      coveredTopics: ["Ort", "Handlung der Frau"],
+      missingTopics: ["Koffer und Taschen im Geschäft", "Persönliche Reiseerfahrung"],
+      bildAssessmentPackKeys: ["A2:6"],
+    });
+    expect(JSON.stringify(summary.bildbeschreibung)).not.toContain("Lebensmittel");
+  });
+
+  it("rejects cross-pack and stale Bild topics during report assembly", () => {
+    const summary = buildEvidenceSummary(
+      {
+        bildbeschreibung: [{
+          bildAssessmentPackKey: "A2:6",
+          coveredTopics: ["place", "market_goods"],
+          missingTopics: ["Lebensmittel", "cooking_preference", "travel_preference"],
+        }],
+      },
+      { bildbeschreibung: "medium" }
+    );
+
+    expect(summary.bildbeschreibung.coveredTopicIds).toEqual(["place"]);
+    expect(summary.bildbeschreibung.missingTopicIds).toEqual(["travel_preference"]);
+    expect(summary.bildbeschreibung.missingTopics).toEqual(["Persönliche Reiseerfahrung"]);
+  });
+
+  it("omits unresolvable legacy Bild topics instead of using generic model metadata", () => {
+    const summary = buildEvidenceSummary(
+      {
+        bildbeschreibung: [{
+          coveredTopics: ["Ort"],
+          missingTopics: ["Eigene Erfahrung", "Lebensmittel"],
+        }],
+      },
+      { bildbeschreibung: "medium" }
+    );
+
+    expect(summary.bildbeschreibung.coveredTopics).toEqual([]);
+    expect(summary.bildbeschreibung.missingTopics).toEqual([]);
+    expect(JSON.stringify(summary.bildbeschreibung)).not.toContain("Lebensmittel");
+  });
+
   it("maps lesenHoeren to hoeren for Weekly Plan", () => {
     expect(mapFocusListForWeeklyPlan(["lesenHoeren", "planung", "lesenHoeren"])).toEqual([
       "hoeren",

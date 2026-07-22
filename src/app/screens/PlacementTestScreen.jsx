@@ -125,6 +125,12 @@ export default function PlacementTestScreen({ setActiveTab }) {
   };
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+  }, [stageIndex, currentModel?.id]);
+
+  useEffect(() => {
     if (hydratingRef.current) {
       hydratingRef.current = false;
       return;

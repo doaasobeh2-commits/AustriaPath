@@ -234,7 +234,7 @@ describe("placementEvaluateService — sanitize", () => {
     expect(allowed).not.toContain("Was sind Ihre Hobbys?");
   });
 
-  it("rejects redundant Bild location and action questions already answered semantically", () => {
+  it("replaces an invalid Bild question only from the selected image pack", () => {
     const bildModel = getPlacementModel("a2_bild_mittel");
     const conversation = [
       {
@@ -263,13 +263,16 @@ describe("placementEvaluateService — sanitize", () => {
       },
       bildModel,
       0,
-      conversation
+      conversation,
+      {
+        catalogLevel: "A2", catalogId: 9, imagePath: "/images/a2/bank.jpeg",
+        title: "Bank", sceneDescription: "Ein Mann spricht in einer Bank mit einer Mitarbeiterin.",
+      }
     );
 
     expect(result.needsFollowUp).toBe(true);
-    expect(result.followUpQuestion).toBe(
-      "Warum ist ein Bankkonto im Alltag wichtig?"
-    );
+    expect(result.followUpQuestionId).toBe("A2_BANK_04");
+    expect(result.followUpQuestion).toBe("Was macht der Mann vielleicht bei der Bank?");
   });
 
   it("asks no Bild follow-up when every proposed candidate is redundant", () => {

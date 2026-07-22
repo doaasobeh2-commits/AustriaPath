@@ -3,6 +3,11 @@
  * Does NOT re-score or change final level / skillBands.
  */
 
+import {
+  getPlacementBildAssessmentPackByKey,
+  getPlacementBildReportTopic,
+} from "../placementBildAssessmentPacks.js";
+
 export const PLACEMENT_AREA_ORDER = [
   "selbstvorstellung",
   "bildbeschreibung",
@@ -93,16 +98,40 @@ export function buildEvidenceSummary(turnEvidence = {}, skillBands = {}) {
       [];
     const covered = new Set();
     const missing = new Set();
+    const coveredTopicIds = new Set();
+    const missingTopicIds = new Set();
+    const bildPackKeys = new Set();
     const transcripts = [];
 
     for (const ev of evals) {
-      for (const t of ev?.coveredTopics || []) {
-        const s = String(t || "").trim();
-        if (s) covered.add(s);
-      }
-      for (const t of ev?.missingTopics || []) {
-        const s = String(t || "").trim();
-        if (s) missing.add(s);
+      if (skillKey === "bildbeschreibung") {
+        const pack = getPlacementBildAssessmentPackByKey(ev?.bildAssessmentPackKey);
+        if (pack) {
+          bildPackKeys.add(pack.key);
+          for (const t of ev?.coveredTopics || []) {
+            const topic = getPlacementBildReportTopic(pack, t);
+            if (!topic) continue;
+            coveredTopicIds.add(topic.id);
+            covered.add(topic.label);
+          }
+          for (const t of ev?.missingTopics || []) {
+            const topic = getPlacementBildReportTopic(pack, t);
+            if (!topic) continue;
+            missingTopicIds.add(topic.id);
+            missing.add(topic.label);
+          }
+        }
+        // Legacy Bild evidence without a resolvable closed pack is omitted.
+        // It must never fall back to stale routed-model topics.
+      } else {
+        for (const t of ev?.coveredTopics || []) {
+          const s = String(t || "").trim();
+          if (s) covered.add(s);
+        }
+        for (const t of ev?.missingTopics || []) {
+          const s = String(t || "").trim();
+          if (s) missing.add(s);
+        }
       }
       if (ev?.transcript) {
         transcripts.push({
@@ -116,11 +145,19 @@ export function buildEvidenceSummary(turnEvidence = {}, skillBands = {}) {
 
     // Topics that appear covered later should not stay as missing
     for (const c of covered) missing.delete(c);
+    for (const c of coveredTopicIds) missingTopicIds.delete(c);
 
     summary[skillKey] = {
       band: normalizeBand(skillBands[skillKey]) || null,
       coveredTopics: [...covered].slice(0, 12),
       missingTopics: [...missing].slice(0, 12),
+      ...(skillKey === "bildbeschreibung"
+        ? {
+            coveredTopicIds: [...coveredTopicIds].slice(0, 12),
+            missingTopicIds: [...missingTopicIds].slice(0, 12),
+            bildAssessmentPackKeys: [...bildPackKeys],
+          }
+        : {}),
       transcripts: transcripts.slice(0, 6),
     };
   }

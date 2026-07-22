@@ -5,6 +5,7 @@
  */
 
 import { getPlacementModel } from "../../../src/data/aiPlacementLibrary.js";
+import { getPlacementBildAssessmentPack } from "../../../src/data/placementBildAssessmentPacks.js";
 import { AppError } from "../middleware/errorHandler.js";
 import { env } from "../config/env.js";
 import { withAuthorizedPlacementUsage } from "./placementEntitlementService.js";
@@ -125,6 +126,73 @@ function coverageState(text, { mention, sufficient }) {
   if (sufficient.test(text)) return COVERAGE.SUFFICIENT;
   if (mention.test(text)) return COVERAGE.PARTIAL;
   return COVERAGE.NOT_COVERED;
+}
+
+function matchesBildPatterns(text, patterns = []) {
+  return patterns.some((pattern) => {
+    try {
+      return new RegExp(normalizeText(pattern), "i").test(text);
+    } catch {
+      return false;
+    }
+  });
+}
+
+export function getBildEvidenceCoverage(pack, conversation = []) {
+  const text = sectionTranscript(conversation);
+  const result = {};
+  for (const evidence of pack?.referenceEvidence || []) {
+    const sufficient = matchesBildPatterns(text, evidence.sufficient || []);
+    const partial = matchesBildPatterns(text, evidence.mention || []);
+    result[evidence.id] = sufficient
+      ? COVERAGE.SUFFICIENT
+      : partial
+        ? COVERAGE.PARTIAL
+        : COVERAGE.NOT_COVERED;
+  }
+  return result;
+}
+
+export function getEligibleBildFollowUps(pack, conversation = [], semanticCovered = []) {
+  if (!pack) return [];
+  const coverage = getBildEvidenceCoverage(pack, conversation);
+  const alreadyAskedTexts = new Set(
+    (Array.isArray(conversation) ? conversation : [])
+      .map((turn) => normalizeText(turn?.question || ""))
+      .filter(Boolean)
+  );
+  const askedIntents = new Set(
+    (Array.isArray(conversation) ? conversation : [])
+      .map((turn) => pack.followUpBank.find(
+        (question) => normalizeText(question.question) === normalizeText(turn?.question || "")
+      )?.intent)
+      .filter(Boolean)
+  );
+  const providerCovered = new Set(
+    (Array.isArray(semanticCovered) ? semanticCovered : [])
+      .map((item) => normalizeText(item))
+      .filter(Boolean)
+  );
+  const evidencePriority = new Map(
+    (pack.referenceEvidence || []).map((item) => [item.id, item.priority ?? 9])
+  );
+
+  return pack.followUpBank
+    .filter((question) => !alreadyAskedTexts.has(normalizeText(question.question)))
+    .filter((question) => !askedIntents.has(question.intent))
+    .filter((question) => !providerCovered.has(normalizeText(question.intent)))
+    .filter((question) => coverage[question.intent] !== COVERAGE.SUFFICIENT)
+    .filter((question) => (question.prerequisites || []).every(
+      (intent) => coverage[intent] === COVERAGE.SUFFICIENT
+    ))
+    .map((question, index) => ({ ...question, index, evidenceState: coverage[question.intent] }))
+    .sort((a, b) => {
+      const partialDelta = Number(b.evidenceState === COVERAGE.PARTIAL) - Number(a.evidenceState === COVERAGE.PARTIAL);
+      if (partialDelta) return partialDelta;
+      const priorityDelta = (evidencePriority.get(a.intent) ?? 9) - (evidencePriority.get(b.intent) ?? 9);
+      return priorityDelta || a.index - b.index;
+    })
+    .map(({ index, evidenceState, ...question }) => question);
 }
 
 function selfQuestionTopic(question) {
@@ -311,9 +379,21 @@ export function sanitizePlacementEvaluation(
   raw,
   model,
   followUpCount = 0,
-  conversation = []
+  conversation = [],
+  selectedImageContext = null
 ) {
-  const allowed = buildAllowedFollowUps(model, conversation);
+  const bildPack = model?.skill === "bildbeschreibung"
+    ? getPlacementBildAssessmentPack(
+        selectedImageContext?.catalogLevel,
+        selectedImageContext?.catalogId
+      )
+    : null;
+  const eligibleBildQuestions = getEligibleBildFollowUps(
+    bildPack, conversation, raw?.coveredTopics
+  );
+  const allowed = model?.skill === "bildbeschreibung"
+    ? eligibleBildQuestions.map((item) => item.question)
+    : buildAllowedFollowUps(model, conversation);
   if (!BANDS.has(raw?.band)) {
     throw new AppError(
       "AI_INVALID_RESPONSE",
@@ -323,18 +403,29 @@ export function sanitizePlacementEvaluation(
   }
   const band = raw.band;
 
-  const coveredTopics = Array.isArray(raw?.coveredTopics)
-    ? raw.coveredTopics.map((t) => String(t)).filter(Boolean).slice(0, 20)
-    : [];
-  const missingTopics = Array.isArray(raw?.missingTopics)
-    ? raw.missingTopics.map((t) => String(t)).filter(Boolean).slice(0, 20)
-    : [];
+  const validBildTopicIds = bildPack
+    ? new Set(bildPack.referenceEvidence.map((item) => item.id))
+    : null;
+  const sanitizeTopics = (topics) => {
+    const values = Array.isArray(topics)
+      ? topics.map((t) => String(t).trim()).filter(Boolean)
+      : [];
+    const valid = validBildTopicIds
+      ? values.filter((topic) => validBildTopicIds.has(topic))
+      : model?.skill === "bildbeschreibung"
+        ? []
+        : values;
+    return [...new Set(valid)].slice(0, 20);
+  };
+  const coveredTopics = sanitizeTopics(raw?.coveredTopics);
+  const missingTopics = sanitizeTopics(raw?.missingTopics);
   const notes = Array.isArray(raw?.notes)
     ? raw.notes.map((t) => String(t)).filter(Boolean).slice(0, 8)
     : [];
 
   let needsFollowUp = Boolean(raw?.needsFollowUp);
   let followUpQuestion = null;
+  let followUpQuestionId = null;
   let followUpSource = null;
 
   if (followUpCount >= PLACEMENT_MAX_FOLLOWUPS) {
@@ -342,23 +433,32 @@ export function sanitizePlacementEvaluation(
   }
 
   if (needsFollowUp) {
-    const proposedCandidates = [
-      raw?.followUpQuestion,
-      ...(Array.isArray(raw?.followUpCandidates) ? raw.followUpCandidates : []),
-    ];
-    const matched =
-      model?.skill === "bildbeschreibung"
-        ? proposedCandidates
-            .map(sanitizeDynamicImageQuestion)
-            .find(
-              (question) =>
-                question && !isRedundantImageFollowUp(question, conversation)
-            ) || null
-        : proposedCandidates
-            .map((question) => matchAllowedFollowUp(question, allowed))
-            .find(Boolean) || null;
+    const proposedCandidates = [raw, ...(Array.isArray(raw?.followUpCandidates) ? raw.followUpCandidates : [])];
+    let matchedBildQuestion = null;
+    let matched = null;
+    if (model?.skill === "bildbeschreibung") {
+      matchedBildQuestion = proposedCandidates
+        .map((candidate) => {
+          const id = String(candidate?.followUpQuestionId || candidate?.id || "").trim();
+          const question = String(candidate?.followUpQuestion || candidate?.question || "").trim();
+          return eligibleBildQuestions.find(
+            (item) => item.id === id && item.question === question
+          ) || null;
+        })
+        .find(Boolean) || eligibleBildQuestions[0] || null;
+      matched = matchedBildQuestion?.question || null;
+    } else {
+      const textCandidates = [
+        raw?.followUpQuestion,
+        ...(Array.isArray(raw?.followUpCandidates) ? raw.followUpCandidates : []),
+      ];
+      matched = textCandidates
+        .map((question) => matchAllowedFollowUp(question, allowed))
+        .find(Boolean) || null;
+    }
     if (matched) {
       followUpQuestion = matched;
+      followUpQuestionId = matchedBildQuestion?.id || null;
       const claimed = String(raw?.followUpSource || "");
       followUpSource = FOLLOW_UP_SOURCES.has(claimed)
         ? claimed
@@ -366,6 +466,7 @@ export function sanitizePlacementEvaluation(
     } else {
       needsFollowUp = false;
       followUpQuestion = null;
+      followUpQuestionId = null;
       followUpSource = null;
     }
   }
@@ -380,9 +481,13 @@ export function sanitizePlacementEvaluation(
     missingTopics,
     needsFollowUp,
     followUpQuestion,
+    ...(model.skill === "bildbeschreibung" ? { followUpQuestionId } : {}),
     followUpSource,
     notes,
     evaluationMethod: PLACEMENT_EVAL_METHOD,
+    ...(model.skill === "bildbeschreibung" && bildPack
+      ? { bildAssessmentPackKey: bildPack.key }
+      : {}),
   };
 }
 
@@ -420,15 +525,21 @@ export function buildExaminerSystemPrompt(
   conversation = []
 ) {
   const isBild = model?.skill === "bildbeschreibung";
+  const bildPack = isBild
+    ? getPlacementBildAssessmentPack(
+        selectedImageContext?.catalogLevel,
+        selectedImageContext?.catalogId
+      )
+    : null;
   const modelPayload = {
     id: model.id,
     skill: model.skill,
     level: model.level,
     difficulty: model.difficulty,
-    requiredTopics: model.requiredTopics || [],
-    examinerQuestions: model.examinerQuestions || [],
-    followUpRules: model.followUpRules || [],
-    benchmarkMarkers: model.benchmarkMarkers || {},
+    requiredTopics: isBild ? [] : model.requiredTopics || [],
+    examinerQuestions: isBild ? [] : model.examinerQuestions || [],
+    followUpRules: isBild ? [] : model.followUpRules || [],
+    benchmarkMarkers: isBild ? {} : model.benchmarkMarkers || {},
   };
 
   if (isBild && selectedImageContext) {
@@ -446,18 +557,29 @@ export function buildExaminerSystemPrompt(
     "Du darfst KEINE neuen Szenarien oder nicht belegten Bilddetails erfinden.",
     "selectedLevel / Startniveau darf die Bewertung NICHT beeinflussen — nur die Antwort und die Modellfelder.",
     "Antworte NUR mit einem JSON-Objekt (kein Markdown), Schema:",
-    '{"band":"weak|medium|strong","coveredTopics":[],"missingTopics":[],"needsFollowUp":boolean,"followUpQuestion":string|null,"followUpCandidates":[],"followUpSource":"examinerQuestions|followUpRules|missingTopic"|null,"notes":[]}',
-    "band: weak/medium/strong nur anhand der Antwort vs requiredTopics und benchmarkMarkers.",
+    '{"band":"weak|medium|strong","coveredTopics":[],"missingTopics":[],"needsFollowUp":boolean,"followUpQuestionId":string|null,"followUpQuestion":string|null,"followUpCandidates":[],"followUpSource":"examinerQuestions|followUpRules|missingTopic"|null,"notes":[]}',
+    isBild
+      ? "band: weak/medium/strong nur anhand der Antwort und der evidenceStates des ausgewählten Assessment-Packs."
+      : "band: weak/medium/strong nur anhand der Antwort vs requiredTopics und benchmarkMarkers.",
   ];
 
   if (isBild && selectedImageContext) {
     lines.push(
-      "BILDFRAGEN dürfen dynamisch formuliert werden, müssen aber ausschließlich zur selectedImage-Szene und zur bisherigen Unterhaltung passen.",
-      "Prüfe die GESAMTE Antwortgeschichte semantisch: Frage niemals erneut nach Informationen, die bereits ausdrücklich oder sinngemäß genannt wurden.",
-      "Wenn Personen, Ort und Tätigkeit bereits beschrieben sind, frage NICHT erneut nach Wer/Wo/Was.",
-      "Bevorzuge dann eine neue sprachliche Dimension: Meinung mit Begründung, persönliche Erfahrung, vermuteter Grund/Folge oder Vergleich mit dem Heimatland.",
-      "Gib bei needsFollowUp=true in followUpQuestion die beste Frage und in followUpCandidates bis zu zwei weitere Fragen aus unterschiedlichen neuen Dimensionen zurück.",
-      "Jede Kandidatenfrage muss genau eine kurze Frage sein. Keine generische Frage, die unabhängig von dieser konkreten Szene gleich wäre."
+      "BILDFRAGEN SIND GESCHLOSSEN. Du darfst keine Frage erfinden, umformulieren, paraphrasieren oder aus einem anderen Bild oder Modell übernehmen.",
+      "Bei needsFollowUp=true müssen followUpQuestionId UND followUpQuestion exakt demselben Eintrag in eligibleFollowUps entsprechen.",
+      "coveredTopics und missingTopics dürfen bei Bildbeschreibung nur evidence-unit IDs aus evidenceStates enthalten.",
+      "Wenn keine eligibleFollowUps-Frage nützlich ist: needsFollowUp=false. Ein freier Nachfrageplatz ist kein Grund für eine Frage.",
+      "Bewerte Grammatik getrennt von semantischer Abdeckung. Verständliche unvollkommene Formen zählen als Bild-Evidenz.",
+      "referenceAnswer ist nur eine semantische Referenz und niemals ein Pflichttext. Akzeptiere andere richtige Wörter, sichtbare Details, Satzfolgen und Paraphrasen.",
+      "B2: Ursache und Folge sind getrennte Dimensionen. Eine vorhandene Ursache sperrt keine Folgenfrage und umgekehrt.",
+      "Aktueller geschlossener assessmentPack:",
+      JSON.stringify({
+        key: bildPack?.key,
+        title: bildPack?.title,
+        referenceAnswer: bildPack?.referenceAnswer,
+        evidenceStates: getBildEvidenceCoverage(bildPack, conversation),
+        eligibleFollowUps: allowedFollowUps,
+      })
     );
   } else {
     lines.push(
@@ -599,6 +721,13 @@ export async function evaluatePlacementTurn({
         400
       );
     }
+    if (!getPlacementBildAssessmentPack(imageContext.catalogLevel, imageContext.catalogId)) {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "Für dieses Bild ist kein geschlossenes Assessment-Pack freigegeben.",
+        400
+      );
+    }
   }
 
   const count = Math.max(0, Number(followUpCount) || 0);
@@ -617,7 +746,12 @@ export async function evaluatePlacementTurn({
   };
   const fullConversation = [...safeConversation, currentTurn];
 
-  const allowedFollowUps = buildAllowedFollowUps(model, fullConversation);
+  const imagePack = imageContext
+    ? getPlacementBildAssessmentPack(imageContext.catalogLevel, imageContext.catalogId)
+    : null;
+  const allowedFollowUps = imagePack
+    ? getEligibleBildFollowUps(imagePack, fullConversation)
+    : buildAllowedFollowUps(model, fullConversation);
   const system = buildExaminerSystemPrompt(
     model,
     allowedFollowUps,
@@ -656,7 +790,8 @@ export async function evaluatePlacementTurn({
         raw,
         model,
         count,
-        fullConversation
+        fullConversation,
+        imageContext
       );
       await q(
         `INSERT INTO ai_completion_logs
@@ -679,8 +814,14 @@ export function evaluatePlacementTurnOffline({
   raw,
   followUpCount = 0,
   conversation = [],
+  selectedImage = null,
 }) {
   const model = getPlacementModel(modelId);
   if (!model) throw new Error("model not found");
-  return sanitizePlacementEvaluation(raw || {}, model, followUpCount, conversation);
+  const imageContext = model.skill === "bildbeschreibung"
+    ? sanitizeSelectedImageContext(selectedImage)
+    : null;
+  return sanitizePlacementEvaluation(
+    raw || {}, model, followUpCount, conversation, imageContext
+  );
 }
