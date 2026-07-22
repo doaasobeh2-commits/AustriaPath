@@ -56,4 +56,13 @@ describe("Placement recording regression", () => {
     expect(handleWeiter).toContain("Bitte senden Sie zuerst eine ausgewertete Antwort");
     expect(handleWeiter).toContain("if (!qaSkip && last?.needsFollowUp && activeFollowUp)");
   });
+
+  it("shows remaining Planning time without changing configured durations or retry semantics", () => {
+    expect(screenSource).toContain("Verbleibende Antwortzeit: {planningResponseSeconds} Sekunden");
+    expect(screenSource).toContain("setPlanningResponseSeconds(move.responseSeconds)");
+    expect(screenSource).toContain("Math.max(0, value - 1)");
+    expect(screenSource).toContain("Number(saved.planningResponseSeconds) || 0");
+    expect(screenSource).toContain("setRetryAnswer({ text, inputMode })");
+    expect(screenSource).toContain("Bitte versuchen Sie die Auswertung erneut");
+  });
 });

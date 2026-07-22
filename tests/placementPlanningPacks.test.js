@@ -118,6 +118,25 @@ describe("closed Placement Planning packs", () => {
     expect(selectNextPlanningMove(pack, conversation).id).toBe(pack.finalMoveId);
   });
 
+  it("never repeats a successfully evaluated weak move and still reaches the Picknick closing", () => {
+    const weakItemsConversation = [
+      { moveId: "picnic-time", transcript: "Samstag um zehn Uhr." },
+      { moveId: "picnic-meet", transcript: "Vor dem Park." },
+      { moveId: "picnic-food", transcript: "Brot und Wasser." },
+      { moveId: "picnic-items", transcript: "Nichts." },
+    ];
+    const afterWeakItems = selectNextPlanningMove("a2_planung_picknick", weakItemsConversation);
+    expect(afterWeakItems.id).toBe("picnic-reaction");
+    expect(afterWeakItems.id).not.toBe("picnic-items");
+
+    const beforeClosing = [
+      ...weakItemsConversation,
+      { moveId: "picnic-reaction", transcript: "Nein." },
+    ];
+    expect(selectNextPlanningMove("a2_planung_picknick", beforeClosing).id)
+      .toBe("picnic-close");
+  });
+
   it("uses level-appropriate timing and never permits recording over examiner audio", () => {
     for (const pack of getPlacementPlanningPacksByLevel("A2")) {
       expect(pack.mainMoves.every((move) => move.responseSeconds === 15)).toBe(true);

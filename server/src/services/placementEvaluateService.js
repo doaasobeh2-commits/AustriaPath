@@ -847,10 +847,14 @@ export async function evaluatePlacementTurn({
   }
 
   const text = String(answerText || "").trim();
-  if (text.length < 8) {
+  const isPlanning = model.skill === "planung";
+  const hasUsablePlanningText = /[\p{L}\p{N}]/u.test(text);
+  if ((isPlanning && !hasUsablePlanningText) || (!isPlanning && text.length < 8)) {
     throw new AppError(
       "VALIDATION_ERROR",
-      "Antwort ist zu kurz für die Auswertung.",
+      isPlanning
+        ? "Antwort fehlt für die Auswertung."
+        : "Antwort ist zu kurz für die Auswertung.",
       400
     );
   }

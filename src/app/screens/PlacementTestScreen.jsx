@@ -1179,7 +1179,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
             {['responding', 'evaluating', 'complete'].includes(planningPhase) && currentTurnQuestion ? (
               <p>{currentTurnQuestion}</p>
             ) : null}
-            {planningPhase === 'responding' ? <p>Antwortzeit: {planningResponseSeconds} Sekunden</p> : null}
+            {planningPhase === 'responding' ? <p>Verbleibende Antwortzeit: {planningResponseSeconds} Sekunden</p> : null}
             {planningPhase === 'response-timeout' ? (
               <button
                 type="button"

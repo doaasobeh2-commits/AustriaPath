@@ -154,6 +154,76 @@ describe("Placement provider evaluation", () => {
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
 
+  it.each([
+    ["Decke.", "covered", "decke"],
+    ["Nichts.", "tested_but_weak_or_incomplete", "nichts"],
+    ["Ein Ball.", "covered", "ball"],
+  ])("evaluates a short usable Planning answer %s and advances", async (answerText, expectedState, key) => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [{
+          message: {
+            content: JSON.stringify({ band: "weak", needsFollowUp: true }),
+          },
+        }],
+      }),
+    });
+
+    const result = await evaluatePlacementTurn({
+      userId,
+      attemptId,
+      idempotencyKey: `planning-short:${key}`,
+      productType: "placement_test",
+      modelId: "a2_planung_picknick",
+      answerText,
+      currentQuestion: "Was brauchen wir noch für das Picknick?",
+      currentMoveId: "picnic-items",
+      inputMode: "voice_transcript",
+      conversation: [
+        { moveId: "picnic-time", question: "Termin?", transcript: "Samstag um zehn Uhr." },
+        { moveId: "picnic-meet", question: "Treffpunkt?", transcript: "Wir treffen uns vor dem Park." },
+        { moveId: "picnic-food", question: "Essen?", transcript: "Wir bringen Brot und Wasser mit." },
+      ],
+    });
+
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    expect(result.planningEvidenceLedger.items.finalState).toBe(expectedState);
+    expect(result.followUpQuestionId).toBe("picnic-reaction");
+    expect(result.followUpQuestionId).not.toBe("picnic-items");
+  });
+
+  it("keeps empty Planning and short non-Planning answers on validation failure", async () => {
+    globalThis.fetch = vi.fn();
+    await expect(evaluatePlacementTurn({
+      userId,
+      attemptId,
+      idempotencyKey: "planning-empty",
+      productType: "placement_test",
+      modelId: "a2_planung_picknick",
+      answerText: "   ",
+      currentMoveId: "picnic-items",
+    })).rejects.toMatchObject({ code: "VALIDATION_ERROR", status: 400 });
+    await expect(evaluatePlacementTurn({
+      userId,
+      attemptId,
+      idempotencyKey: "planning-punctuation-only",
+      productType: "placement_test",
+      modelId: "a2_planung_picknick",
+      answerText: "...",
+      currentMoveId: "picnic-items",
+    })).rejects.toMatchObject({ code: "VALIDATION_ERROR", status: 400 });
+    await expect(evaluatePlacementTurn({
+      userId,
+      attemptId,
+      idempotencyKey: "self-short",
+      productType: "placement_test",
+      modelId: "a2_self_mittel",
+      answerText: "Kurz.",
+    })).rejects.toMatchObject({ code: "VALIDATION_ERROR", status: 400 });
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
   it("polishes one report without pooled credits and logs zero charged credits", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -208,6 +278,9 @@ describe("Placement provider evaluation", () => {
     );
     expect(usage.rows).toEqual([
       { mode: "conversational", credits_charged: 0 },
+      { mode: "conversational", credits_charged: 0 },
+      { mode: "conversational", credits_charged: 0 },
+      { mode: "conversational", credits_charged: 0 },
       { mode: "report_narrative", credits_charged: 0 },
     ]);
 
@@ -252,9 +325,9 @@ describe("Placement provider evaluation", () => {
       [userId]
     );
     expect(reportMetadata.rows[0].metadata.placementUsage).toMatchObject({
-      evaluatedTurns: 1,
+      evaluatedTurns: 4,
       reports: 1,
     });
-    expect(reportMetadata.rows[0].metadata.placementUsage.completedOperations).toHaveLength(2);
+    expect(reportMetadata.rows[0].metadata.placementUsage.completedOperations).toHaveLength(5);
   });
 });
