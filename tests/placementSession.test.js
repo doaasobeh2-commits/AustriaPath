@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   clearPlacementSession,
   loadPlacementRecentContent,
@@ -8,8 +8,10 @@ import {
   savePlacementSession,
 } from "../src/utils/placementSession.js";
 import {
+  claimPlacementReportFinalization,
   isPlanningEvaluationComplete,
   placementTurnIdempotencyKey,
+  releasePlacementReportFinalization,
 } from "../src/data/placementLogic.js";
 
 describe("Placement in-progress browser session", () => {
@@ -83,6 +85,20 @@ describe("Placement in-progress browser session", () => {
     expect(isPlanningEvaluationComplete({ band: "A2", planningComplete: false })).toBe(false);
     expect(isPlanningEvaluationComplete({ band: "A2" })).toBe(false);
     expect(isPlanningEvaluationComplete(null)).toBe(false);
+  });
+
+  it("allows only one in-flight final report request per attempt", async () => {
+    const inFlightRef = { current: null };
+    const reportRequest = vi.fn(async () => "report");
+    const finalize = async () => {
+      if (!claimPlacementReportFinalization(inFlightRef, "attempt-1")) return null;
+      return reportRequest();
+    };
+
+    await Promise.all([finalize(), finalize()]);
+    expect(reportRequest).toHaveBeenCalledTimes(1);
+    releasePlacementReportFinalization(inFlightRef, "attempt-1");
+    expect(claimPlacementReportFinalization(inFlightRef, "attempt-1")).toBe(true);
   });
 
   it("keeps only compact content ids for the five most recent completed attempts", () => {

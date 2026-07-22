@@ -61,6 +61,13 @@ describe("Placement recording regression", () => {
     expect(handleWeiter).toContain("if (!qaSkip && last?.needsFollowUp && activeFollowUp)");
   });
 
+  it("guards final report generation immediately and disables Weiter while building", () => {
+    const finish = functionBody("finishSkillAndAdvance", "handleWeiter");
+    expect(finish).toContain("claimPlacementReportFinalization(finalReportInFlightRef, attemptId)");
+    expect(finish).toContain("releasePlacementReportFinalization(finalReportInFlightRef, attemptId)");
+    expect(screenSource).toContain("disabled={isEvaluating || isBuildingReport}");
+  });
+
   it("shows remaining Planning time without changing configured durations or retry semantics", () => {
     expect(screenSource).toContain("Verbleibende Antwortzeit: {planningResponseSeconds} Sekunden");
     expect(screenSource).toContain("setPlanningResponseSeconds(move.responseSeconds)");

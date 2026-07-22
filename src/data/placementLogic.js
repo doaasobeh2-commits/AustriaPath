@@ -433,6 +433,19 @@ export function isPlanningEvaluationComplete(evaluation) {
   return evaluation?.planningComplete === true;
 }
 
+export function claimPlacementReportFinalization(inFlightRef, attemptId) {
+  const id = String(attemptId || "").trim();
+  if (!id || inFlightRef?.current === id) return false;
+  inFlightRef.current = id;
+  return true;
+}
+
+export function releasePlacementReportFinalization(inFlightRef, attemptId) {
+  if (inFlightRef?.current === String(attemptId || "").trim()) {
+    inFlightRef.current = null;
+  }
+}
+
 /**
  * Build Placement-only result from four numeric skill scores.
  * Does not use placementEngine majority-CEFR.

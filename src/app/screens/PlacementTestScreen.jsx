@@ -12,6 +12,8 @@ import {
   scoreKeyForModelSkill,
   placementTurnIdempotencyKey,
   isPlanningEvaluationComplete,
+  claimPlacementReportFinalization,
+  releasePlacementReportFinalization,
 } from '../../data/placementLogic';
 import {
   assemblePlacementLearnerProfile,
@@ -98,6 +100,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
   const [planningCountdown, setPlanningCountdown] = useState(15);
   const [planningResponseSeconds, setPlanningResponseSeconds] = useState(0);
   const recognitionRef = useRef(null);
+  const finalReportInFlightRef = useRef(null);
   const listeningAudioRef = useRef(null);
   const transcriptRef = useRef('');
   const finalTranscriptRef = useRef('');
@@ -365,6 +368,8 @@ export default function PlacementTestScreen({ setActiveTab }) {
         return;
       }
 
+      if (!claimPlacementReportFinalization(finalReportInFlightRef, attemptId)) return;
+
       const historical = buildHistoricalPlacementResult({
         selectedLevel,
         numericScores: completedScores,
@@ -398,6 +403,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
       try {
         await completePlacementAttempt(attemptId, profile);
       } catch (error) {
+        releasePlacementReportFinalization(finalReportInFlightRef, attemptId);
         setIsBuildingReport(false);
         setControlMessage(
           (error instanceof ApiError
@@ -1352,7 +1358,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
           type="button"
           style={buttonStyle}
           onClick={handleWeiter}
-          disabled={isEvaluating}
+          disabled={isEvaluating || isBuildingReport}
         >
           Weiter
         </button>

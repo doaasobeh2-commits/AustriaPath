@@ -205,6 +205,7 @@ describe("Placement attempt usage bounds", () => {
       attemptId,
       placementReportSnapshot({ level: "A2+" })
     );
+    let providerCalls = 0;
     await expect(
       withAuthorizedPlacementUsage(
         {
@@ -214,9 +215,40 @@ describe("Placement attempt usage bounds", () => {
           idempotencyKey: "report:final",
           requestPayload: { level: "A2" },
         },
-        async () => "report"
+        async () => {
+          providerCalls += 1;
+          return "report";
+        }
       )
     ).resolves.toBe("report");
+
+    await expect(
+      withAuthorizedPlacementUsage(
+        {
+          userId,
+          attemptId,
+          operation: "report",
+          idempotencyKey: "report:final",
+          requestPayload: { level: "A2" },
+        },
+        async () => {
+          providerCalls += 1;
+          return "unexpected";
+        }
+      )
+    ).resolves.toBe("report");
+    expect(providerCalls).toBe(1);
+
+    const { rows } = await query(
+      `SELECT metadata FROM subscriptions WHERE user_id = $1 AND is_current = TRUE`,
+      [userId]
+    );
+    expect(rows[0].metadata.placementUsage.completedOperations).toHaveLength(10);
+    expect(rows[0].metadata.placementUsage.completedReportOperation).toMatchObject({
+      operation: "report",
+      idempotencyKey: "report:final",
+      response: "report",
+    });
 
     await expect(
       withAuthorizedPlacementUsage(
@@ -230,6 +262,45 @@ describe("Placement attempt usage bounds", () => {
         async () => "unexpected"
       )
     ).rejects.toMatchObject({ code: "PLACEMENT_REPORT_LIMIT_REACHED", status: 409 });
+  });
+
+  it("returns a safe replay when legacy metadata lost the report response", async () => {
+    const { rows } = await query(
+      `SELECT id, metadata FROM subscriptions WHERE user_id = $1 AND is_current = TRUE`,
+      [userId]
+    );
+    const metadata = rows[0].metadata;
+    delete metadata.placementUsage.completedReportOperation;
+    metadata.placementUsage.completedOperations = metadata.placementUsage.completedOperations
+      .filter((item) => item?.operation !== "report");
+    await query(
+      `UPDATE subscriptions SET metadata = $2::jsonb WHERE id = $1`,
+      [rows[0].id, JSON.stringify(metadata)]
+    );
+
+    let providerCalls = 0;
+    await expect(
+      withAuthorizedPlacementUsage(
+        {
+          userId,
+          attemptId,
+          operation: "report",
+          idempotencyKey: "report:final",
+          requestPayload: { level: "A2" },
+        },
+        async () => {
+          providerCalls += 1;
+          return "unexpected";
+        }
+      )
+    ).resolves.toEqual({
+      alreadyGenerated: true,
+      replayed: true,
+      polished: null,
+      creditsUsed: 0,
+      creditsRemaining: null,
+    });
+    expect(providerCalls).toBe(0);
   });
 
   it("rejects an unrelated attempt id", async () => {

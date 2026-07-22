@@ -328,6 +328,11 @@ describe("Placement provider evaluation", () => {
       evaluatedTurns: 4,
       reports: 1,
     });
-    expect(reportMetadata.rows[0].metadata.placementUsage.completedOperations).toHaveLength(5);
+    expect(reportMetadata.rows[0].metadata.placementUsage.completedOperations).toHaveLength(4);
+    expect(reportMetadata.rows[0].metadata.placementUsage.completedReportOperation).toMatchObject({
+      operation: "report",
+      idempotencyKey: "report:final",
+      response: result,
+    });
   });
 });

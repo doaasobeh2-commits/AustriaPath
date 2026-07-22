@@ -94,26 +94,38 @@ export async function withAuthorizedPlacementUsage(
     }
 
     const existingUsage = subscription.metadata?.placementUsage;
+    const legacyCompletedOperations = Array.isArray(existingUsage?.completedOperations)
+      ? existingUsage.completedOperations
+      : [];
+    const retainedReportOperation = existingUsage?.completedReportOperation
+      || legacyCompletedOperations.find((item) => item?.operation === "report")
+      || null;
     const usage =
       existingUsage?.attemptId === id
         ? {
             attemptId: id,
             evaluatedTurns: Math.max(0, Number(existingUsage.evaluatedTurns) || 0),
             reports: Math.max(0, Number(existingUsage.reports) || 0),
-            completedOperations: Array.isArray(existingUsage.completedOperations)
-              ? existingUsage.completedOperations.slice(-10)
-              : [],
+            completedOperations: legacyCompletedOperations
+              .filter((item) => item?.operation !== "report")
+              .slice(-10),
+            completedReportOperation: retainedReportOperation,
           }
         : {
             attemptId: id,
             evaluatedTurns: 0,
             reports: 0,
             completedOperations: [],
+            completedReportOperation: null,
           };
 
-    const completed = usage.completedOperations.find(
-      (item) => item?.operation === operation && item?.idempotencyKey === key
-    );
+    const completed = operation === "report"
+      ? usage.completedReportOperation?.idempotencyKey === key
+        ? usage.completedReportOperation
+        : null
+      : usage.completedOperations.find(
+          (item) => item?.operation === operation && item?.idempotencyKey === key
+        );
     if (completed) {
       if (completed.requestHash !== requestHash) {
         throw new AppError(
@@ -133,6 +145,15 @@ export async function withAuthorizedPlacementUsage(
       );
     }
     if (operation === "report" && usage.reports >= PLACEMENT_REPORT_LIMIT) {
+      if (!usage.completedReportOperation) {
+        return {
+          alreadyGenerated: true,
+          replayed: true,
+          polished: null,
+          creditsUsed: 0,
+          creditsRemaining: null,
+        };
+      }
       throw new AppError(
         "PLACEMENT_REPORT_LIMIT_REACHED",
         "Placement-Bericht wurde bereits erstellt.",
@@ -144,12 +165,17 @@ export async function withAuthorizedPlacementUsage(
 
     if (operation === "turn") usage.evaluatedTurns += 1;
     else usage.reports += 1;
-    usage.completedOperations.push({
+    const completedOperation = {
       operation,
       idempotencyKey: key,
       requestHash,
       response,
-    });
+    };
+    if (operation === "report") {
+      usage.completedReportOperation = completedOperation;
+    } else {
+      usage.completedOperations = [...usage.completedOperations, completedOperation].slice(-10);
+    }
 
     const metadata = {
       ...(subscription.metadata || {}),
