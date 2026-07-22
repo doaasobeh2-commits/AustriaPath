@@ -68,7 +68,7 @@ describe("Placement provider evaluation", () => {
                 coveredTopics: ["Name", "Wohnort", "Arbeit oder Kurs"],
                 missingTopics: ["Freizeit"],
                 needsFollowUp: true,
-                followUpQuestion: "Was machen Sie am Wochenende?",
+                followUpQuestion: "Was machen Sie gern in Ihrer Freizeit?",
                 followUpSource: "examinerQuestions",
                 notes: ["zusammenhängende Antwort"],
               }),
@@ -95,7 +95,7 @@ describe("Placement provider evaluation", () => {
       band: "strong",
       evaluationMethod: "placement-ai-turn-v1",
       needsFollowUp: true,
-      followUpQuestion: "Was machen Sie am Wochenende?",
+      followUpQuestion: "Was machen Sie gern in Ihrer Freizeit?",
       creditsUsed: 0,
       creditsRemaining: null,
     });

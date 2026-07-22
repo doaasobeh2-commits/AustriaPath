@@ -47,6 +47,107 @@ const LEVEL_EXPLANATIONS = {
   "B2-": "Sie zeigen bereits B2-nahe Leistungen. Differenzierte Meinungen und längere Gespräche gelingen Ihnen weitgehend sicher.",
 };
 
+const SELF_TOPICS = {
+  name: { label: "Name", aliases: /\b(name|heiss\w*)\b/ },
+  origin: { label: "Herkunft", aliases: /\b(herkunft|woher|heimat|komm\w* aus)\b/ },
+  residence: { label: "Wohnort", aliases: /\b(wohnort|wo wohn|leb\w* in)\b/ },
+  residence_duration: { label: "Aufenthaltsdauer", aliases: /\b(wie lange|aufenthaltsdauer|seit wann.*osterreich)\b/ },
+  work: { label: "Arbeit oder Ausbildung", aliases: /\b(arbeit|beruf|job|ausbildung|kurs|studium|tatigkeit)\b/ },
+  work_details: { label: "Berufliche Tätigkeit", aliases: /\b(arbeitsaufgabe|berufliche tatigkeit|was machen.*arbeit|arbeit.*genau)\b/ },
+  family: { label: "Familie", aliases: /\b(familie|kinder|kind|verheiratet)\b/ },
+  leisure: { label: "Freizeit", aliases: /\b(freizeit|hobb|wochenende)\b/ },
+  german_learning: { label: "Deutschlernen", aliases: /\b(deutschlernen|deutsch lernen|deutschkurs)\b/ },
+  german_reason: { label: "Grund für Deutschlernen", aliases: /\b(grund.*deutsch|warum.*deutsch|deutsch.*grund)\b/ },
+  german_difficulty: { label: "Schwierigkeiten beim Deutschlernen", aliases: /\b(schwierig\w*.*deutsch|deutsch.*schwierig|problem.*deutsch)\b/ },
+  learning_strategy: { label: "Lernstrategie", aliases: /\b(lernstrategie|hilft.*lernen|wie.*lern)\b/ },
+  daily_routine: { label: "Tagesablauf", aliases: /\b(tagesablauf|normaler tag|morgens.*abends)\b/ },
+  past_experience: { label: "Erfahrung in Österreich", aliases: /\b(erfahrung.*osterreich|anfang.*osterreich)\b/ },
+  future_plan: { label: "Zukunftspläne", aliases: /\b(zukunft|zukunftsplan|plane|pläne|spater.*machen)\b/ },
+  professional_goal: { label: "Berufliche Ziele", aliases: /\b(berufliche?\w* ziel\w*|karriere|spater.*arbeit|zukunft.*beruf)\b/ },
+  reason: { label: "Begründung", aliases: /\b(begrundung|grund|warum)\b/ },
+  example: { label: "Beispiel", aliases: /\b(beispiel)\b/ },
+  comparison: { label: "Vergleich", aliases: /\b(vergleich|heimatland|bei uns)\b/ },
+  opinion: { label: "Eigene Meinung", aliases: /\b(meinung|ich finde|ich denke)\b/ },
+  integration_opinion: { label: "Meinung zum Leben in Österreich", aliases: /\b(integration|zugehor|dazugehor|gut leben.*osterreich)\b/ },
+};
+
+function normalizeSemanticText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/ß/g, "ss")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function canonicalSelfTopic(value) {
+  const text = normalizeSemanticText(value);
+  if (!text) return null;
+  if (SELF_TOPICS[text]) return text;
+  if (/\b(berufliche?\w* ziel\w*|karriere|spater.*arbeit|beruflich.*zukunft)\b/.test(text)) {
+    return "professional_goal";
+  }
+  if (/\b(zukunft|zukunftsplan|plane|spater.*machen)\b/.test(text)) {
+    return "future_plan";
+  }
+  return Object.entries(SELF_TOPICS).find(([, topic]) => topic.aliases.test(text))?.[0] || null;
+}
+
+function semanticSelfCoverage(evals = []) {
+  const transcript = normalizeSemanticText(
+    evals.map((ev) => ev?.transcript || "").filter(Boolean).join(" ")
+  );
+  const covered = new Set();
+  const mark = (id, pattern) => { if (pattern.test(transcript)) covered.add(id); };
+  mark("name", /\b(?:ich heisse|mein name ist|ich name)\s+[a-z]{2,}/);
+  mark("origin", /\b(?:ich\s+)?komm\w*\s+(?:aus\s+)?[a-z]{3,}/);
+  mark("residence", /\b(?:ich\s+)?(?:wohn\w*|leb\w*)\s+(?:in\s+)?[a-z]{3,}/);
+  mark("residence_duration", /\bseit\s+(?:\d+|ein\w*|zwei|drei|vier|funf|sechs|sieben|acht|neun|zehn)\s+(?:monat\w*|jahr\w*)/);
+  mark("work", /\b(?:arbeite|arbeiten|tatig|ausbildung|deutschkurs|studiere|studium|arbeitslos|arbeitssuchend)\b/);
+  mark("work_details", /\b(kontrollier\w*|bereit\w*|bedien\w*|verkauf\w*|liefer\w*|reparier\w*|organisier\w*|betreu\w*|pflege\w*)\b/);
+  mark("family", /\b(familie|verheiratet|kind\w*|sohn|tochter|ehemann|ehefrau|partner)\b/);
+  mark("leisure", /\b(?:freizeit|wochenende|hobby)\b[^.]*|\b(?:spiele|lese|trainiere|wandere|schwimme)\b[^.]*/);
+  mark("german_learning", /\b(?:lerne|lernen|ubere|besuche)\b[^.]*\bdeutsch|\bdeutschkurs\b/);
+  mark("german_reason", /\bdeutsch\b[^.]*(?:weil|damit|fur|um zu)\b|(?:weil|damit|um zu)\b[^.]*\bdeutsch\b/);
+  mark("german_difficulty", /\b(?:deutsch|lernen|sprechen|verstehen)\b[^.]*(?:schwierig|schwer|problem)/);
+  mark("learning_strategy", /\b(?:hilft|lerne|ubere)\b[^.]*(?:lesen|horen|sprechen|app|kurs|podcast|freunde)/);
+  mark("daily_routine", /\b(?:morgens|vormittags|mittags|nachmittags|abends|jeden tag|normalerweise)\b[^.]+/);
+  mark("past_experience", /\b(?:am anfang|fruher|damals|als ich)\b[^.]*(?:osterreich|hier)/);
+  mark("future_plan", /\b(?:spater|in zukunft|nachstes jahr)\b[^.]*(?:mochte|werde|will)|\b(?:mochte|will|werde)\b[^.]*(?:machen|lernen|studieren|arbeiten|leben)/);
+  mark("professional_goal", /\b(?:beruflich|karriere)\b[^.]*(?:mochte|will|werde|ziel)|\b(?:mochte|will)\b[^.]*\b(?:arbeiten|ausbildung|selbststandig)\b/);
+  mark("reason", /\b(weil|denn|deshalb|daher|darum|damit|um zu)\b/);
+  mark("example", /\b(zum beispiel|beispielsweise|etwa)\b/);
+  mark("comparison", /\b(im vergleich|anders als|genauso wie|in meiner heimat|in meinem heimatland|bei uns)\b/);
+  mark("opinion", /\b(ich finde|ich denke|ich glaube|meiner meinung nach|fur mich)\b/);
+  mark("integration_opinion", /\b(dazugehor\w*|zugehor\w*|integra\w*|gut leben)\b[^.]*(?:wichtig|muss|sollte|braucht)/);
+  return covered;
+}
+
+function selfAssessmentOpportunities(evals = []) {
+  const assessed = new Set();
+  for (const ev of evals) {
+    const id = canonicalSelfTopic(ev?.question);
+    if (id) assessed.add(id);
+  }
+  return assessed;
+}
+
+function hadSelfAssessmentOpportunity(id, assessed) {
+  if (assessed.has(id)) return true;
+  if (["future_plan", "professional_goal"].includes(id)) {
+    return assessed.has("future_plan") || assessed.has("professional_goal");
+  }
+  if (["work", "work_details"].includes(id)) {
+    return assessed.has("work") || assessed.has("work_details");
+  }
+  if (["german_learning", "german_reason", "german_difficulty", "learning_strategy"].includes(id)) {
+    return assessed.has(id);
+  }
+  return false;
+}
+
 function normalizeBand(band) {
   const key = String(band || "")
     .toLowerCase()
@@ -101,7 +202,16 @@ export function buildEvidenceSummary(turnEvidence = {}, skillBands = {}) {
     const coveredTopicIds = new Set();
     const missingTopicIds = new Set();
     const bildPackKeys = new Set();
+    const listeningModels = new Map();
+    const listeningQuestionResults = new Map();
     const transcripts = [];
+
+    const selfSemanticCovered = skillKey === "selbstvorstellung"
+      ? semanticSelfCoverage(evals)
+      : new Set();
+    const selfAssessedTopics = skillKey === "selbstvorstellung"
+      ? selfAssessmentOpportunities(evals)
+      : new Set();
 
     for (const ev of evals) {
       if (skillKey === "bildbeschreibung") {
@@ -123,6 +233,37 @@ export function buildEvidenceSummary(turnEvidence = {}, skillBands = {}) {
         }
         // Legacy Bild evidence without a resolvable closed pack is omitted.
         // It must never fall back to stale routed-model topics.
+      } else if (skillKey === "selbstvorstellung") {
+        for (const t of ev?.coveredTopics || []) {
+          const id = canonicalSelfTopic(t);
+          if (id) coveredTopicIds.add(id);
+        }
+        for (const t of ev?.missingTopics || []) {
+          const id = canonicalSelfTopic(t);
+          if (id && hadSelfAssessmentOpportunity(id, selfAssessedTopics)) {
+            missingTopicIds.add(id);
+          }
+        }
+      } else if (skillKey === "lesenHoeren" && ev?.listeningResult?.questionResults) {
+        const modelId = String(ev?.listeningModel?.id || ev?.modelId || "").trim();
+        if (modelId) listeningModels.set(modelId, {
+          id: modelId,
+          title: String(ev?.listeningModel?.title || "").trim(),
+          level: String(ev?.listeningModel?.level || ev?.modelLevel || "").trim(),
+          difficulty: String(ev?.listeningModel?.difficulty || "").trim(),
+          audioRef: ev?.listeningModel?.audioRef || null,
+        });
+        for (const result of ev.listeningResult.questionResults) {
+          const questionId = String(result?.questionId || "").trim();
+          const question = String(result?.question || "").trim();
+          if (!questionId || !question) continue;
+          listeningQuestionResults.set(questionId, {
+            questionId,
+            question,
+            isCorrect: Boolean(result?.isCorrect),
+          });
+          (result?.isCorrect ? covered : missing).add(question);
+        }
       } else {
         for (const t of ev?.coveredTopics || []) {
           const s = String(t || "").trim();
@@ -143,6 +284,13 @@ export function buildEvidenceSummary(turnEvidence = {}, skillBands = {}) {
       }
     }
 
+    if (skillKey === "selbstvorstellung") {
+      for (const id of selfSemanticCovered) coveredTopicIds.add(id);
+      for (const id of coveredTopicIds) missingTopicIds.delete(id);
+      for (const id of coveredTopicIds) covered.add(SELF_TOPICS[id]?.label || id);
+      for (const id of missingTopicIds) missing.add(SELF_TOPICS[id]?.label || id);
+    }
+
     // Topics that appear covered later should not stay as missing
     for (const c of covered) missing.delete(c);
     for (const c of coveredTopicIds) missingTopicIds.delete(c);
@@ -151,11 +299,19 @@ export function buildEvidenceSummary(turnEvidence = {}, skillBands = {}) {
       band: normalizeBand(skillBands[skillKey]) || null,
       coveredTopics: [...covered].slice(0, 12),
       missingTopics: [...missing].slice(0, 12),
-      ...(skillKey === "bildbeschreibung"
+      ...(["selbstvorstellung", "bildbeschreibung"].includes(skillKey)
         ? {
             coveredTopicIds: [...coveredTopicIds].slice(0, 12),
             missingTopicIds: [...missingTopicIds].slice(0, 12),
-            bildAssessmentPackKeys: [...bildPackKeys],
+          }
+        : {}),
+      ...(skillKey === "bildbeschreibung"
+        ? { bildAssessmentPackKeys: [...bildPackKeys] }
+        : {}),
+      ...(skillKey === "lesenHoeren"
+        ? {
+            listeningModels: [...listeningModels.values()],
+            listeningQuestionResults: [...listeningQuestionResults.values()],
           }
         : {}),
       transcripts: transcripts.slice(0, 6),
@@ -189,6 +345,11 @@ function taskForSkill(level, skill, band, missingTopics = []) {
     : "";
 
   const n = normalizeBand(band);
+  if (skill !== "planung" && (n === "weak" || n === "medium")) {
+    return miss.length
+      ? `${level}: ${label} gezielt mit den tatsächlich offenen Punkten üben.${missHint}`
+      : `${level}: ${label} mit einer kurzen Aufgabe auf diesem Schwierigkeitsniveau festigen.`;
+  }
   if (n === "weak") {
     const base = {
       selbstvorstellung: `${level}: Selbstvorstellung mit Name, Herkunft, Wohnort, Arbeit/Kurs und Freizeit üben (1 Minute), dann 2–3 Nachfragen.${missHint}`,
@@ -270,12 +431,18 @@ function buildAreaBreakdown(skillBands, evidenceSummary) {
       short: "",
     };
     const ev = evidenceSummary[skill] || {};
+    const listeningTitle = skill === "lesenHoeren"
+      ? ev.listeningModels?.find((item) => item?.title)?.title
+      : null;
+    const summary = skill === "lesenHoeren" && ev.listeningQuestionResults?.length
+      ? `${learner.short}${listeningTitle ? ` in der Hörübung „${listeningTitle}“` : " in der ausgewählten Hörübung"}.`
+      : learner.short;
     return {
       skill,
       label: areaLabel(skill),
       band,
       performanceLabel: learner.label,
-      summary: learner.short,
+      summary,
       coveredTopics: ev.coveredTopics || [],
       missingTopics: ev.missingTopics || [],
     };
@@ -284,27 +451,48 @@ function buildAreaBreakdown(skillBands, evidenceSummary) {
 
 function buildRecommendations(level, skillBands, evidenceSummary) {
   const recs = [];
+  const seen = new Set();
+  const add = (text) => {
+    const key = normalizeSemanticText(text);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    recs.push(text);
+  };
   const ordered = prioritizeSkills(skillBands);
 
   for (const skill of ordered) {
     const band = normalizeBand(skillBands[skill]);
     const miss = evidenceSummary[skill]?.missingTopics || [];
+    // Planung remains on its existing report behavior until its separate redesign.
+    if (skill === "planung") {
+      if (band === "weak") {
+        add(
+          miss.length
+            ? `${areaLabel(skill)}: Zuerst die fehlenden Punkte üben (${miss.slice(0, 3).join(", ")}).`
+            : `${areaLabel(skill)}: Täglich 5–10 Minuten mit einfachem Aufbau üben.`
+        );
+      } else if (band === "medium") {
+        add(`${areaLabel(skill)}: Antworten etwas länger machen und mit weil/deshalb begründen.`);
+      }
+      continue;
+    }
     if (band === "weak") {
-      recs.push(
+      add(
         miss.length
           ? `${areaLabel(skill)}: Zuerst die fehlenden Punkte üben (${miss.slice(0, 3).join(", ")}).`
           : `${areaLabel(skill)}: Täglich 5–10 Minuten mit einfachem Aufbau üben.`
       );
-    } else if (band === "medium") {
-      recs.push(
-        `${areaLabel(skill)}: Antworten etwas länger machen und mit weil/deshalb begründen.`
-      );
+    } else if (miss.length) {
+      add(`${areaLabel(skill)}: Die noch offenen Punkte gezielt üben (${miss.slice(0, 3).join(", ")}).`);
     }
   }
 
-  const strong = ordered.filter((s) => normalizeBand(skillBands[s]) === "strong");
+  const strong = ordered.filter((s) =>
+    normalizeBand(skillBands[s]) === "strong" &&
+    (s === "planung" || hasEvidenceForSkill(s, evidenceSummary[s]))
+  );
   if (strong.length) {
-    recs.push(
+    add(
       `Stärken beibehalten: ${strong.map(areaLabel).join(", ")} — kurz wiederholen, nicht vernachlässigen.`
     );
   }
@@ -314,6 +502,19 @@ function buildRecommendations(level, skillBands, evidenceSummary) {
   }
 
   return recs.slice(0, 6);
+}
+
+function hasEvidenceForSkill(skill, evidence = {}) {
+  if (skill === "selbstvorstellung") {
+    return Boolean(evidence.transcripts?.length || evidence.coveredTopicIds?.length);
+  }
+  if (skill === "bildbeschreibung") {
+    return Boolean(evidence.bildAssessmentPackKeys?.length && evidence.coveredTopicIds?.length);
+  }
+  if (skill === "lesenHoeren") {
+    return Boolean(evidence.listeningQuestionResults?.length);
+  }
+  return true;
 }
 
 /**
@@ -332,6 +533,18 @@ export function buildDeterministicLearnerReport({
     skillBands,
     evidenceSummary,
   });
+  const evidenceStrengths = strengths.filter((skill) =>
+    skill === "planung" || (
+      normalizeBand(skillBands[skill]) === "strong" &&
+      hasEvidenceForSkill(skill, evidenceSummary[skill])
+    )
+  );
+  const improvementSkills = [...new Set([
+    ...weaknesses,
+    ...PLACEMENT_AREA_ORDER.filter((skill) =>
+      skill !== "planung" && (evidenceSummary[skill]?.missingTopics || []).length > 0
+    ),
+  ])];
 
   return {
     level,
@@ -339,15 +552,17 @@ export function buildDeterministicLearnerReport({
       LEVEL_EXPLANATIONS[level] ||
       `Ihr Ergebnis ist ${level}. Trainieren Sie gezielt die Bereiche mit dem größten Übungsbedarf.`,
     areas,
-    strengths: strengths.map((s) => ({
+    strengths: evidenceStrengths.map((s) => ({
       skill: s,
       label: areaLabel(s),
       text: `${areaLabel(s)} war in diesem Test eine Stärke.`,
     })),
-    improvements: weaknesses.map((s) => ({
+    improvements: improvementSkills.map((s) => ({
       skill: s,
       label: areaLabel(s),
-      text: `${areaLabel(s)} sollte priorisiert geübt werden.`,
+      text: weaknesses.includes(s)
+        ? `${areaLabel(s)} sollte priorisiert geübt werden.`
+        : `${areaLabel(s)} ist insgesamt tragfähig; einzelne Punkte können noch gezielt verbessert werden.`,
       missingTopics: evidenceSummary[s]?.missingTopics || [],
     })),
     recommendations: buildRecommendations(level, skillBands, evidenceSummary),
@@ -436,10 +651,10 @@ export function applyPolishedLearnerReport(profile, polished) {
     improvements: Array.isArray(polished.improvements) && polished.improvements.length
       ? polishList(base.improvements, polished.improvements, profile.weaknesses)
       : base.improvements,
-    recommendations: Array.isArray(polished.recommendations) &&
-      polished.recommendations.length
-      ? polished.recommendations.map((r) => String(r)).filter(Boolean).slice(0, 8)
-      : base.recommendations,
+    recommendations: mergeGroundedRecommendations(
+      base.recommendations,
+      polished.recommendations
+    ),
     studyPlan:
       Array.isArray(polished.studyPlan) && polished.studyPlan.length
         ? polished.studyPlan.slice(0, 6).map((item, i) => ({
@@ -462,11 +677,27 @@ export function applyPolishedLearnerReport(profile, polished) {
   };
 }
 
+function mergeGroundedRecommendations(baseRecommendations = [], polishedRecommendations = []) {
+  const base = baseRecommendations.map(String).filter(Boolean);
+  const basePlanning = base.filter((text) => normalizeSemanticText(text).startsWith("planung "));
+  const baseValidated = base.filter((text) => !normalizeSemanticText(text).startsWith("planung "));
+  const polishedPlanning = Array.isArray(polishedRecommendations)
+    ? polishedRecommendations
+        .map((text) => String(text || "").trim())
+        .filter((text) => normalizeSemanticText(text).startsWith("planung "))
+        .slice(0, basePlanning.length || 1)
+    : [];
+  return [...baseValidated, ...(polishedPlanning.length ? polishedPlanning : basePlanning)].slice(0, 8);
+}
+
 function polishAreas(baseAreas = [], polishedAreas = [], skillBands = {}) {
   const bySkill = new Map(polishedAreas.map((a) => [a.skill, a]));
   return baseAreas.map((area) => {
     const p = bySkill.get(area.skill);
     if (!p) return area;
+    // Non-Planning area prose stays deterministic because it carries evidence claims.
+    // Planung deliberately retains its previous polishing behavior.
+    if (area.skill !== "planung") return area;
     return {
       ...area,
       band: normalizeBand(skillBands[area.skill]) || area.band,
@@ -492,6 +723,7 @@ function polishList(baseList = [], polishedList = [], allowedSkills = []) {
   return baseList.map((item) => {
     const p = bySkill.get(item.skill);
     if (!p) return item;
+    if (item.skill !== "planung") return item;
     return {
       ...item,
       text:

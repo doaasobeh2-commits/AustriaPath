@@ -142,6 +142,127 @@ describe("deterministic Placement report", () => {
     expect(JSON.stringify(summary.bildbeschreibung)).not.toContain("Lebensmittel");
   });
 
+  it("reconciles Selbstvorstellung missing topics against the full semantic conversation", () => {
+    const summary = buildEvidenceSummary(
+      {
+        selbstvorstellung: [
+          {
+            question: "Stellen Sie sich bitte vor.",
+            transcript: "Ich heiße Samira und arbeite im Hotel.",
+            coveredTopics: ["Name"],
+            missingTopics: ["Berufliche Ziele", "Begründung"],
+          },
+          {
+            question: "Was möchten Sie in Zukunft machen?",
+            transcript: "Später möchte ich eine Ausbildung machen, weil ich beruflich weiterkommen möchte.",
+            coveredTopics: ["Zukunftspläne"],
+            missingTopics: ["Berufliche Ziele"],
+          },
+        ],
+      },
+      { selbstvorstellung: "strong" }
+    );
+
+    expect(summary.selbstvorstellung.coveredTopicIds).toEqual(
+      expect.arrayContaining(["name", "work", "future_plan", "professional_goal", "reason"])
+    );
+    expect(summary.selbstvorstellung.missingTopics).not.toEqual(
+      expect.arrayContaining(["Berufliche Ziele", "Begründung"])
+    );
+  });
+
+  it("reports a Selbstvorstellung topic missing only after a fair assessment opportunity", () => {
+    const notAsked = buildEvidenceSummary(
+      {
+        selbstvorstellung: [{
+          question: "Stellen Sie sich bitte kurz vor.",
+          transcript: "Ich heiße Mina und wohne in Graz.",
+          missingTopics: ["Berufliche Ziele", "Freizeit"],
+        }],
+      },
+      { selbstvorstellung: "medium" }
+    );
+    expect(notAsked.selbstvorstellung.missingTopics).toEqual([]);
+
+    const askedButMissing = buildEvidenceSummary(
+      {
+        selbstvorstellung: [{
+          question: "Was möchten Sie beruflich in Zukunft machen?",
+          transcript: "Das weiß ich noch nicht.",
+          missingTopics: ["Berufliche Ziele"],
+        }],
+      },
+      { selbstvorstellung: "medium" }
+    );
+    expect(askedButMissing.selbstvorstellung.missingTopics).toEqual(["Berufliche Ziele"]);
+  });
+
+  it("derives Hören evidence only from the selected model question results", () => {
+    const summary = buildEvidenceSummary(
+      {
+        hoeren: [{
+          modelId: "a2_listening_02",
+          modelLevel: "A2",
+          coveredTopics: ["Herr Müller fährt nach Berlin"],
+          missingTopics: ["Frau Becker verpasst den Zug"],
+          listeningModel: {
+            id: "a2_listening_02",
+            title: "Termin in der Apotheke",
+            level: "A2",
+            difficulty: "mittel",
+            audioRef: "/audio/placement/listening/Listening_02.mp3",
+          },
+          listeningResult: {
+            questionResults: [
+              { questionId: "q1", question: "Warum ruft die Person an?", isCorrect: true },
+              { questionId: "q2", question: "Wann ist der Termin?", isCorrect: false },
+            ],
+          },
+        }],
+      },
+      { lesenHoeren: "medium" }
+    );
+
+    expect(summary.lesenHoeren.coveredTopics).toEqual(["Warum ruft die Person an?"]);
+    expect(summary.lesenHoeren.missingTopics).toEqual(["Wann ist der Termin?"]);
+    expect(summary.lesenHoeren.listeningModels[0]).toMatchObject({
+      id: "a2_listening_02",
+      title: "Termin in der Apotheke",
+    });
+    expect(JSON.stringify(summary.lesenHoeren)).not.toMatch(/Müller|Becker|Berlin|Zug/);
+  });
+
+  it("requires evidence for strengths and reports limited missing evidence as improvement", () => {
+    const report = buildDeterministicLearnerReport({
+      level: "B1",
+      skillBands: {
+        selbstvorstellung: "strong",
+        bildbeschreibung: "medium",
+        lesenHoeren: "strong",
+        planung: "strong",
+      },
+      strengths: ["selbstvorstellung", "lesenHoeren", "planung"],
+      weaknesses: [],
+      evidenceSummary: {
+        selbstvorstellung: { coveredTopics: [], missingTopics: [], transcripts: [] },
+        bildbeschreibung: {
+          coveredTopics: ["Ort"],
+          missingTopics: ["Persönliche Reiseerfahrung"],
+          bildAssessmentPackKeys: ["A2:6"],
+          coveredTopicIds: ["place"],
+        },
+        lesenHoeren: { coveredTopics: [], missingTopics: [], listeningQuestionResults: [] },
+      },
+    });
+
+    expect(report.strengths.map((item) => item.skill)).toEqual(["planung"]);
+    expect(report.improvements).toEqual(expect.arrayContaining([
+      expect.objectContaining({ skill: "bildbeschreibung" }),
+    ]));
+    expect(report.improvements[0].text).not.toMatch(/keine.*schwäche/i);
+    expect(report.recommendations.join(" ")).toContain("Persönliche Reiseerfahrung");
+  });
+
   it("maps lesenHoeren to hoeren for Weekly Plan", () => {
     expect(mapFocusListForWeeklyPlan(["lesenHoeren", "planung", "lesenHoeren"])).toEqual([
       "hoeren",
@@ -237,5 +358,61 @@ describe("AI polish sanitize", () => {
     expect(merged.reportSource).toBe("ai");
     expect(merged.learnerReport.level).toBe(frozenLevel);
     expect(merged.skillBands.lesenHoeren).toBe("weak");
+  });
+
+  it("blocks legacy Hören prose while retaining the previous Planung polish behavior", () => {
+    const base = assemblePlacementLearnerProfile({
+      historicalResult: buildHistoricalPlacementResult({
+        selectedLevel: "A2",
+        numericScores: {
+          selbstvorstellung: 65,
+          bildbeschreibung: 65,
+          lesenHoeren: 35,
+          planung: 35,
+        },
+        bands: {
+          selbstvorstellung: "medium",
+          bildbeschreibung: "medium",
+          lesenHoeren: "weak",
+          planung: "weak",
+        },
+      }),
+      turnEvidence: {
+        hoeren: [{
+          modelId: "a2_listening_02",
+          listeningModel: { id: "a2_listening_02", title: "Apothekentermin", level: "A2" },
+          listeningResult: {
+            questionResults: [
+              { questionId: "q1", question: "Wann ist der Termin?", isCorrect: false },
+            ],
+          },
+        }],
+        planung: [{ missingTopics: ["Zeit"] }],
+      },
+    });
+    const planningBefore = base.learnerReport.areas.find((area) => area.skill === "planung");
+    const merged = applyPolishedLearnerReport(base, {
+      areas: [
+        { skill: "lesenHoeren", performanceLabel: "Perfekt", summary: "Herr Müller fährt nach Berlin." },
+        { skill: "planung", performanceLabel: "Planung individuell", summary: "Planungstext unverändert polierbar." },
+      ],
+      recommendations: [
+        "Herr Müller und alte Bahnhofsereignisse wiederholen.",
+        "Planung: Zeit und Entscheidung weiter üben.",
+      ],
+    });
+
+    const listening = merged.learnerReport.areas.find((area) => area.skill === "lesenHoeren");
+    const planning = merged.learnerReport.areas.find((area) => area.skill === "planung");
+    expect(listening.summary).toContain("Apothekentermin");
+    expect(JSON.stringify(merged.learnerReport)).not.toMatch(/Herr Müller|Berlin|Bahnhofsereignisse/);
+    expect(planning).toEqual({
+      ...planningBefore,
+      performanceLabel: "Planung individuell",
+      summary: "Planungstext unverändert polierbar.",
+    });
+    expect(merged.learnerReport.recommendations).toContain(
+      "Planung: Zeit und Entscheidung weiter üben."
+    );
   });
 });

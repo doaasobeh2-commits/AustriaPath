@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 import {
   buildAllowedFollowUps,
   getSelfTopicCoverage,
+  getRecommendedSelfFollowUp,
+  selfQuestionTopic,
   getPlanningIntentCoverage,
   matchAllowedFollowUp,
   sanitizePlacementEvaluation,
@@ -22,7 +24,7 @@ describe("placementEvaluateService — allowed follow-ups", () => {
 
     expect(allowed.length).toBeGreaterThan(0);
     expect(allowed).toContain("Wie heißen Sie?");
-    expect(allowed).toContain("Was sind Ihre Hobbys?");
+    expect(allowed).toContain("Was machen Sie gern in Ihrer Freizeit?");
     // followUpRules consequents must not become free-form questions
     expect(allowed.some((q) => /nach Kindern fragen/i.test(q))).toBe(false);
   });
@@ -46,10 +48,10 @@ describe("placementEvaluateService — allowed follow-ups", () => {
     const conversation = [{ transcript: "Seit drei Jahren arbeite ich in einem großen Lager." }];
     expect(getSelfTopicCoverage(conversation).work).toBe("sufficient");
     expect(buildAllowedFollowUps(model, conversation)).not.toContain(
-      "Was machen Sie beruflich?"
+      "Was arbeiten Sie jetzt?"
     );
     expect(buildAllowedFollowUps(model, conversation)).toContain(
-      "Welche Pläne haben Sie für die Zukunft?"
+      "Was möchten Sie in Zukunft in Österreich machen?"
     );
   });
 
@@ -58,8 +60,8 @@ describe("placementEvaluateService — allowed follow-ups", () => {
     const allowed = buildAllowedFollowUps(model, [{
       transcript: "Ich wohne mit meinen zwei Kindern in Graz.",
     }]);
-    expect(allowed).not.toContain("Erzählen Sie etwas über Ihre Familie.");
-    expect(allowed).toContain("Was sind Ihre Hobbys?");
+    expect(allowed).not.toContain("Haben Sie Familie oder Kinder?");
+    expect(allowed).toContain("Was machen Sie gern in Ihrer Freizeit?");
   });
 
   it("permits a deeper adjacent question when its intent is not already answered", () => {
@@ -113,7 +115,7 @@ describe("placementEvaluateService — allowed follow-ups", () => {
   it("keeps clarification eligible for partial occupation", () => {
     const model = getPlacementModel("b1_self_mittel");
     expect(buildAllowedFollowUps(model, [{ transcript: "Ich arbeite manchmal." }]))
-      .toContain("Was machen Sie beruflich?");
+      .toContain("Was arbeiten Sie jetzt?");
   });
 
   it("suppresses covered Planning date and alternative intents", () => {
@@ -144,6 +146,148 @@ describe("placementEvaluateService — allowed follow-ups", () => {
   });
 });
 
+describe("placementEvaluateService — Self semantic evidence matrix", () => {
+  const a2 = getPlacementModel("a2_self_mittel");
+  const b1 = getPlacementModel("b1_self_mittel");
+  const b2 = getPlacementModel("b2_self_mittel");
+  const coverage = (transcript) => getSelfTopicCoverage([{ transcript }]);
+  const allowed = (model, transcript, question = "Stellen Sie sich bitte kurz vor.") =>
+    buildAllowedFollowUps(model, [{ question, transcript }]);
+
+  it("asks a useful missing topic after name only", () => {
+    expect(getRecommendedSelfFollowUp(a2, [{ transcript: "Ich heiße Mina." }]))
+      .toBe("Woher kommen Sie?");
+  });
+
+  it("suppresses name, origin, residence and work from coordinated clauses", () => {
+    const questions = allowed(a2, "Ich heiße Ahmad, komme aus Syrien, wohne in Wien und arbeite als Fahrer.");
+    expect(questions).not.toEqual(expect.arrayContaining([
+      "Wie heißen Sie?", "Woher kommen Sie?", "Wo wohnen Sie?", "Was arbeiten Sie?",
+    ]));
+  });
+
+  it("suppresses family, leisure and German-reason duplicates in a rich A2 answer", () => {
+    const questions = allowed(a2, "Ich bin verheiratet und habe zwei Kinder. In meiner Freizeit spiele ich Fußball. Ich lerne Deutsch, weil ich hier arbeite.");
+    expect(questions).not.toEqual(expect.arrayContaining([
+      "Haben Sie Familie oder Kinder?", "Was machen Sie gern in Ihrer Freizeit?", "Warum lernen Sie Deutsch?",
+    ]));
+  });
+
+  it("keeps work clarification available for job seeking", () => {
+    expect(coverage("Ich suche Arbeit.").work).toBe("partial");
+    expect(allowed(a2, "Ich suche Arbeit.")).toContain("Arbeiten Sie oder gehen Sie in einen Kurs?");
+  });
+
+  it("blocks generic occupation after sufficient basic work", () => {
+    expect(coverage("Ich arbeite im Lager.").work).toBe("sufficient");
+    expect(allowed(a2, "Ich arbeite im Lager.")).not.toContain("Was arbeiten Sie?");
+  });
+
+  it("recognizes work and work details independently", () => {
+    expect(coverage("Ich arbeite im Lager. Ich kontrolliere Waren.")).toMatchObject({
+      work: "sufficient", work_details: "sufficient",
+    });
+  });
+
+  it("recognizes a concrete leisure activity", () => {
+    expect(coverage("Ich spiele Fußball.").leisure).toBe("sufficient");
+  });
+
+  it("treats fragmentary weekend football as partial, not absent", () => {
+    expect(coverage("Am Wochenende ... Fußball.").leisure).toBe("partial");
+  });
+
+  it("recognizes coordinated clauses without repeating ich", () => {
+    expect(coverage("Ich heiße Laila, komme aus Irak, wohne Graz und arbeite Hotel.")).toMatchObject({
+      name: "sufficient", origin: "sufficient", residence: "sufficient", work: "sufficient",
+    });
+  });
+
+  it("keeps semantic evidence despite understandable grammar errors", () => {
+    expect(coverage("Ich Name Omar, komme Somalia, wohnen Linz, arbeiten Küche.")).toMatchObject({
+      name: "sufficient", origin: "sufficient", residence: "sufficient", work: "sufficient",
+    });
+  });
+
+  it("prefers deeper missing B1 evidence after strong basics", () => {
+    const questions = allowed(b1, "Ich heiße Sara, komme aus Iran, wohne in Wien und arbeite im Hotel. In meiner Freizeit lese ich gern.");
+    expect(questions[0]).toBe("Was machen Sie dort genau?");
+    expect(questions).not.toContain("Was arbeiten Sie jetzt?");
+  });
+
+  it("suppresses future and why when a future plan already has a reason", () => {
+    const questions = allowed(b1, "In Zukunft möchte ich eine Ausbildung machen, weil ich beruflich weiterkommen möchte.");
+    expect(questions).not.toEqual(expect.arrayContaining([
+      "Was möchten Sie in Zukunft in Österreich machen?", "Warum möchten Sie das?",
+    ]));
+  });
+
+  it("suppresses German-difficulty duplicate", () => {
+    expect(allowed(b1, "Beim Deutschlernen ist schnelles Sprechen für mich schwierig."))
+      .not.toContain("Was ist für Sie beim Deutschlernen schwierig?");
+  });
+
+  it("suppresses daily-routine duplicate", () => {
+    expect(allowed(b1, "Morgens bringe ich die Kinder zur Schule, tagsüber arbeite ich und abends lerne ich Deutsch."))
+      .not.toContain("Was machen Sie normalerweise an einem Tag?");
+  });
+
+  it("maps both approved daily-routine phrasings to the same intent", () => {
+    expect(selfQuestionTopic("Was machen Sie normalerweise an einem Tag?"))
+      .toBe("daily_routine");
+    expect(selfQuestionTopic("Was machen Sie morgens und abends?"))
+      .toBe("daily_routine");
+  });
+
+  it("suppresses past-Austria-experience duplicate", () => {
+    expect(allowed(b1, "Am Anfang in Österreich war der Dialekt für mich schwierig."))
+      .not.toContain("Was war am Anfang in Österreich schwierig für Sie?");
+  });
+
+  it("maps the simplified Austria-experience question to past experience", () => {
+    expect(selfQuestionTopic("Was war am Anfang in Österreich schwierig für Sie?"))
+      .toBe("past_experience");
+  });
+
+  it("finishes a B2 bank when every higher-order intent is covered", () => {
+    const answer = "Ich möchte später als Ingenieur arbeiten, weil ich Technik mag. Deutsch ist für meine Zukunft wichtig. Beim Lernen ist der Dialekt schwierig, Podcasts helfen mir dabei. Am Anfang in Österreich war vieles neu. Für mich ist Zugehören wichtig, weil Kontakte helfen. Zum Beispiel hilft mein Verein. In meiner Heimat ist das ähnlich.";
+    expect(getRecommendedSelfFollowUp(b2, [{ transcript: answer }])).toBeNull();
+  });
+
+  it("does not ask generic why or example after both are present", () => {
+    const questions = allowed(b2, "Ich denke, Deutsch ist wichtig, weil ich mit Kunden spreche. Zum Beispiel leite ich jede Woche ein Gespräch.");
+    expect(questions).not.toEqual(expect.arrayContaining([
+      "Warum denken Sie so?", "Warum möchten Sie das?", "Können Sie ein Beispiel nennen?",
+    ]));
+  });
+
+  it("allows one simpler professional-goal rephrasing after apparent misunderstanding", () => {
+    expect(buildAllowedFollowUps(b2, [])).not.toContain(
+      "Welche Arbeit möchten Sie später machen?"
+    );
+    const conversation = [{
+      question: "Was möchten Sie beruflich in Zukunft machen?",
+      transcript: "Ich wohne in Wien.",
+    }];
+    expect(buildAllowedFollowUps(b2, conversation)).toContain("Welche Arbeit möchten Sie später machen?");
+    conversation.push({ question: "Welche Arbeit möchten Sie später machen?", transcript: "Ich wohne in Wien." });
+    expect(buildAllowedFollowUps(b2, conversation)).not.toContain("Welche Arbeit möchten Sie später machen?");
+  });
+
+  it("never exceeds the two-follow-up cap", () => {
+    const result = sanitizePlacementEvaluation({
+      band: "medium", needsFollowUp: true, followUpQuestion: "Woher kommen Sie?",
+    }, a2, 2, [{ transcript: "Ich heiße Ali." }]);
+    expect(result.needsFollowUp).toBe(false);
+  });
+
+  it("recognizes reason, example, comparison and opinion separately", () => {
+    expect(coverage("Ich denke, das ist gut, weil Menschen Kontakte brauchen. Zum Beispiel hilft ein Verein. In meiner Heimat ist das anders.")).toMatchObject({
+      opinion: "sufficient", reason: "sufficient", example: "sufficient", comparison: "sufficient",
+    });
+  });
+});
+
 describe("placementEvaluateService — sanitize", () => {
   const model = getPlacementModel("a2_self_mittel");
 
@@ -154,7 +298,7 @@ describe("placementEvaluateService — sanitize", () => {
         coveredTopics: ["Name"],
         missingTopics: ["Familie", "Freizeit"],
         needsFollowUp: true,
-        followUpQuestion: "Erzählen Sie etwas über Ihre Familie.",
+        followUpQuestion: "Haben Sie Familie oder Kinder?",
         followUpSource: "missingTopic",
         notes: ["kurze Antwort"],
       },
@@ -171,7 +315,7 @@ describe("placementEvaluateService — sanitize", () => {
       coveredTopics: ["Name"],
       missingTopics: ["Familie", "Freizeit"],
       needsFollowUp: true,
-      followUpQuestion: "Erzählen Sie etwas über Ihre Familie.",
+      followUpQuestion: "Haben Sie Familie oder Kinder?",
       followUpSource: "missingTopic",
       notes: ["kurze Antwort"],
       evaluationMethod: PLACEMENT_EVAL_METHOD,
@@ -202,7 +346,7 @@ describe("placementEvaluateService — sanitize", () => {
       {
         band: "medium",
         needsFollowUp: true,
-        followUpQuestion: "Was sind Ihre Hobbys?",
+        followUpQuestion: "Was machen Sie gern in Ihrer Freizeit?",
       },
       model,
       PLACEMENT_MAX_FOLLOWUPS
@@ -311,7 +455,7 @@ describe("placementEvaluateService — offline helper", () => {
         coveredTopics: ["Name", "Herkunftsland", "Wohnort", "Arbeit oder Kurs"],
         missingTopics: ["Freizeit"],
         needsFollowUp: true,
-        followUpQuestion: "Was machen Sie am Wochenende?",
+        followUpQuestion: "Was machen Sie gern in Ihrer Freizeit?",
         followUpSource: "followUpRules",
         notes: ["Antwort deckt Kernangaben ab"],
       },
@@ -320,7 +464,7 @@ describe("placementEvaluateService — offline helper", () => {
     expect(example.productType).toBe("placement_test");
     expect(example.evaluationMethod).toBe("placement-ai-turn-v1");
     expect(example.needsFollowUp).toBe(true);
-    expect(example.followUpQuestion).toBe("Was machen Sie am Wochenende?");
+    expect(example.followUpQuestion).toBe("Was machen Sie gern in Ihrer Freizeit?");
     expect(example.band).toBe("strong");
     // Evidence fields exist but must stay internal (UI must not render them)
     expect(Array.isArray(example.coveredTopics)).toBe(true);

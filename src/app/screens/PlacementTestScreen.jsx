@@ -664,6 +664,13 @@ export default function PlacementTestScreen({ setActiveTab }) {
       followUpSource: null,
       notes: [],
       evaluationMethod: 'placement-listening-objective-v1',
+      listeningModel: {
+        id: currentModel.id,
+        title: currentModel.title || '',
+        level: currentModel.level,
+        difficulty: currentModel.difficulty,
+        audioRef: currentModel.audioRef || null,
+      },
       listeningResult: scored,
     };
 

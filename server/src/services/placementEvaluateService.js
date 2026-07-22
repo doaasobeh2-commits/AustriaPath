@@ -195,54 +195,72 @@ export function getEligibleBildFollowUps(pack, conversation = [], semanticCovere
     .map(({ index, evidenceState, ...question }) => question);
 }
 
-function selfQuestionTopic(question) {
+export function selfQuestionTopic(question) {
   const text = normalizeText(question);
   if (/wie heissen|name/.test(text)) return "name";
+  if (/wie ist das in ihrem heimatland/.test(text)) return "comparison";
   if (/woher|herkunft|heimat/.test(text)) return "origin";
-  if (/wo wohnen|wie lange leben.*osterreich/.test(text)) return "residence";
-  if (/beruflich|arbeiten sie|arbeit oder|ausbildung/.test(text)) return "work";
-  if (/familie|kinder/.test(text)) return "family";
-  if (/hobby|freizeit|wochenende/.test(text)) return "leisure";
-  if (/zukunft|erreichen|beruflichen ziele/.test(text)) return "future";
-  if (/deutschlernen|deutsch lernen|sprache.*zukunft/.test(text)) return "german";
+  if (/wie lange leben.*osterreich/.test(text)) return "residence_duration";
+  if (/wo wohnen/.test(text)) return "residence";
+  if (/was machen sie (?:dort|bei der arbeit) genau?|was machen sie bei der arbeit/.test(text)) return "work_details";
+  if (/gefallt ihnen ihre arbeit|wie finden sie ihre arbeit/.test(text)) return "work_opinion";
+  if (/arbeiten sie.*kurs|arbeit oder/.test(text)) return "current_activity";
+  if (/was arbeiten/.test(text)) return "work";
+  if (/kurs|ausbildung|studium/.test(text)) return "course_education";
+  if (/gern zusammen/.test(text)) return "family_detail";
+  if (/familie oder kinder|familie|kinder/.test(text)) return "family";
+  if (/wie oft machen|mit wem machen/.test(text)) return "hobby_detail";
+  if (/freizeit|hobby|wochenende/.test(text)) return "leisure";
+  if (/normalerweise an einem tag|morgens und abends|normalerweise morgens|normaler tag/.test(text)) return "daily_routine";
+  if (/am anfang in osterreich|in osterreich erlebt|erfahrungen.*osterreich/.test(text)) return "past_experience";
+  if (/deutschlernen schwierig|beim deutschlernen schwierig/.test(text)) return "german_difficulty";
+  if (/hilft ihnen (?:beim lernen|dabei)/.test(text)) return "learning_strategy";
+  if (/warum lernen sie deutsch|deutsch.*zukunft wichtig/.test(text)) return "german_reason";
+  if (/seit wann lernen sie deutsch/.test(text)) return "german_duration";
+  if (/beruflich.*zukunft|spater arbeiten|welche arbeit.*spater machen/.test(text)) return "professional_goal";
+  if (/in zukunft.*machen/.test(text)) return "future_plan";
+  if (/warum mochten sie das|warum denken sie so/.test(text)) return "reason";
+  if (/beispiel nennen/.test(text)) return "example";
+  if (/gut leben und.*dazugehoren/.test(text)) return "integration_opinion";
   return null;
 }
 
 export function getSelfTopicCoverage(conversation = []) {
   const text = sectionTranscript(conversation);
+  const state = (mention, sufficient = mention) => coverageState(text, { mention, sufficient });
   return {
-    name: coverageState(text, {
-      mention: /\b(name|heiss\w*)\b/,
-      sufficient: /\b(?:ich\s+)?(?:heisse|name)\s+(?!ist\b)[a-z]{2,}|\bmein name ist\s+[a-z]{2,}/,
-    }),
-    origin: coverageState(text, {
-      mention: /\b(komme|kommen|herkunft|heimat)\b/,
-      sufficient: /\b(?:ich\s+)?komm\w*\s+(?:aus\s+)?[a-z]{3,}|\b(?:herkunft|heimat)(?:sland)?\s+(?:ist\s+)?[a-z]{3,}/,
-    }),
-    residence: coverageState(text, {
-      mention: /\b(wohn\w*|leb\w*|wohnort)\b/,
-      sufficient: /\b(?:ich\s+)?(?:wohn\w*|leb\w*)\s+(?:seit\s+[^,.]+\s+)?(?:in\s+)?[a-z]{3,}|\bwohnort\s+(?:ist\s+)?[a-z]{3,}/,
-    }),
-    work: coverageState(text, {
-      mention: /\b(arbeit\w*|beruf\w*|job|beschaftigt|ausbildung|studier\w*)\b/,
-      sufficient: /\b(?:arbeite|arbeiten)\s+(?!manchmal\b|gelegentlich\b)(?:(?:als|bei|in|im|auf)\s+)?[^,.]+|\bvon beruf bin ich\s+[^,.]+|\b(?:bin|ist)\s+(?!nicht\b)[^,.]{2,80}\bbeschaftigt\b|\bmein beruf ist\s+[^,.]+/,
-    }),
-    family: coverageState(text, {
-      mention: /\b(familie|verheiratet|kind\w*|sohn|tochter|ehemann|ehefrau|partner)\b/,
-      sufficient: /\b(?:bin|ist)\s+verheiratet\b|\b(?:habe|hat)\s+(?:\w+\s+){0,2}(?:kind\w*|sohn|tochter)\b|\b(?:mit\s+)?(?:mein\w*\s+)?(?:ein\w*|zwei|drei|vier|\d+)?\s*(?:kind\w*|sohn|tochter)\b|\b(?:mein|meine)\s+(?:ehemann|ehefrau|partner)\s+[^,.]+/,
-    }),
-    leisure: coverageState(text, {
-      mention: /\b(hobby|hobbys|freizeit|wochenende|sport|fussball|schach)\b/,
-      sufficient: /\b(?:in meiner freizeit|am wochenende|nach der arbeit)\s+(?:\w+\s+){0,4}(?:spiele|mache|gehe|lese|treffe|trainiere|fahre)\b|\b(?:spiele|mache|lese|trainiere)\s+(?:gern|oft|regelmassig)?\s*[^,.]+/,
-    }),
-    future: coverageState(text, {
-      mention: /\b(zukunft|plan\w*|ziel\w*|spater|mochte|werde)\b/,
-      sufficient: /\b(?:spater|in zukunft)\s+(?:\w+\s+){0,3}(?:mochte|werde|will)\s+[^,.]+|\b(?:mein ziel|meine plane?)\s+(?:ist|sind)\s+[^,.]+/,
-    }),
-    german: coverageState(text, {
-      mention: /\b(deutsch|deutschkurs|sprache)\b/,
-      sufficient: /\b(?:lerne|lernen)\s+deutsch\s+(?:weil|damit|fur|um)\b|\bdeutsch\s+(?:ist|brauche ich)\s+[^,.]+/,
-    }),
+    name: state(/\b(name|heiss\w*)\b/, /\b(?:ich\s+)?(?:heisse|name)\s+(?!ist\b)[a-z]{2,}|\bmein name ist\s+[a-z]{2,}/),
+    origin: state(/\b(komme|kommen|herkunft|heimat)\b/, /\b(?:ich\s+)?komm\w*\s+(?:aus\s+)?[a-z]{3,}|\b(?:herkunft|heimat)(?:sland)?\s+(?:ist\s+)?[a-z]{3,}/),
+    residence: state(/\b(wohn\w*|leb\w*|wohnort)\b/, /\b(?:ich\s+)?(?:wohn\w*|leb\w*)\s+(?:seit\s+[^,.]+\s+)?(?:in\s+)?[a-z]{3,}|\bwohnort\s+(?:ist\s+)?[a-z]{3,}/),
+    residence_duration: state(/\bseit\b/, /\bseit\s+(?:\d+|ein\w*|zwei|drei|vier|funf|sechs|sieben|acht|neun|zehn)\s+(?:tag\w*|monat\w*|jahr\w*)\b/),
+    current_activity: state(/\b(arbeit\w*|beruf\w*|job|kurs|schule|ausbildung|studier\w*|beschaftigt|arbeitslos|arbeitssuchend)\b/, /\b(?:arbeite|arbeiten)\s+(?!manchmal\b|gelegentlich\b)[^,.]+|\bvon beruf bin ich\s+[^,.]+|\b(?:bin|ist)\s+[^,.]{2,80}\bbeschaftigt\b|\b(?:mache|besuche|gehe|studiere?)\b[^,.]*(?:kurs|schule|ausbildung|studium|universitat)\b|\bdeutschkurs\b|\b(?:bin|ist)\s+(?:arbeitslos|arbeitssuchend)\b/),
+    work: state(/\b(arbeit\w*|beruf\w*|job|beschaftigt|arbeitslos|arbeitssuchend)\b/, /\b(?:arbeite|arbeiten)\s+(?!manchmal\b|gelegentlich\b)(?:(?:als|bei|in|im|auf)\s+)?[^,.]+|\bvon beruf bin ich\s+[^,.]+|\bmein beruf ist\s+[^,.]+|\b(?:bin|ist)\s+[^,.]{2,80}\bbeschaftigt\b|\b(?:bin|ist)\s+(?:arbeitslos|arbeitssuchend)\b/),
+    occupation: state(/\b(beruf|job|arbeite)\b/, /\b(?:arbeite|tatig)\s+als\s+[^,.]+|\bvon beruf bin ich\s+[^,.]+|\bmein beruf ist\s+[^,.]+/),
+    work_details: state(/\b(kontrollier\w*|bereit\w*|bedien\w*|verkauf\w*|liefer\w*|reparier\w*|organisier\w*|betreu\w*|pflege\w*)\b/),
+    course_education: state(/\b(kurs|schule|ausbildung|studier\w*|studium|universitat)\b/, /\b(?:mache|besuche|gehe|bin|studiere?)\s+(?:in|auf|an|einen?|einer?)?\s*[^,.]*(?:kurs|schule|ausbildung|studium|universitat)\b|\bdeutschkurs\b/),
+    family: state(/\b(familie|verheiratet|kind\w*|sohn|tochter|ehemann|ehefrau|partner)\b/, /\b(?:bin|ist)\s+verheiratet\b|\b(?:habe|hat|mit)\s+(?:\w+\s+){0,3}(?:kind\w*|sohn|tochter)\b|\b(?:mein|meine)\s+(?:ehemann|ehefrau|partner)\b/),
+    children: state(/\b(kind\w*|sohn|tochter)\b/, /\b(?:habe|hat|mit)\s+(?:\w+\s+){0,3}(?:kind\w*|sohn|tochter)\b/),
+    family_detail: state(/\b(?:mit mein\w* (?:familie|kind\w*)|zusammen)\b[^,.]*(?:spiele|mache|gehe|esse|koche|fahre|besuche|sehe)|\b(?:spiele|mache|gehe|esse|koche|fahre)\b[^,.]*\bzusammen\b/),
+    leisure: state(/\b(hobby|hobbys|freizeit|wochenende|sport|fussball|schach|wandern|schwimmen)\b/, /\b(?:in meiner freizeit|am wochenende|nach der arbeit)\s+(?:\w+\s+){0,5}(?:spiele|mache|gehe|lese|treffe|trainiere|fahre)\b|\b(?:spiele|mache|lese|trainiere|wandere|schwimme)\s+(?:gern\s+|oft\s+|regelmassig\s+)?[^,.]+/),
+    hobby_detail: state(/\b(oft|regelmassig|jede\w*|einmal|zweimal|mit mein\w*|mit freund\w*|allein)\b/),
+    german_learning: state(/\b(deutsch|deutschkurs|sprache)\b/, /\b(?:lerne|lernen|ubere|besuche)\b[^,.]*\bdeutsch|\bdeutschkurs\b/),
+    german_duration: state(/\bseit\b[^,.]*\bdeutsch|\bdeutsch\b[^,.]*\bseit\b/, /\bseit\s+(?:\d+|ein\w*|zwei|drei|vier|funf|sechs|sieben|acht|neun|zehn)\s+(?:tag\w*|monat\w*|jahr\w*)\b[^,.]*\bdeutsch|\bdeutsch\b[^,.]*\bseit\s+(?:\d+|ein\w*|zwei|drei|vier|funf|sechs|sieben|acht|neun|zehn)\s+(?:tag\w*|monat\w*|jahr\w*)\b/),
+    german_reason: state(/\bdeutsch\b[^,.]*(?:weil|damit|fur|um)\b|(?:weil|damit|um)\b[^,.]*\bdeutsch\b/),
+    german_difficulty: state(/\b(?:deutsch|lernen|sprechen|verstehen)\b[^,.]*(?:schwierig|schwer|problem)|(?:schwierig|schwer)\b[^,.]*\b(?:deutsch|lernen|sprechen|verstehen)\b/),
+    learning_strategy: state(/\b(?:hilft|lerne|ubere)\b[^,.]*(?:lesen|horen|sprechen|app|kurs|fernsehen|podcast|freunde|karten)/),
+    daily_routine: state(/\b(?:morgens|vormittags|mittags|nachmittags|abends|jeden tag|normalerweise)\b[^,.]+/),
+    past_experience: state(/\b(?:am anfang|fruher|damals|als ich|habe .* erlebt|war .* neu|war .* schwierig)\b/),
+    future_plan: state(/\b(zukunft|plan\w*|spater|mochte|werde|will)\b/, /\b(?:spater|in zukunft|nachste\w* jahr)\b[^,.]*(?:mochte|werde|will)|\b(?:mochte|will|werde)\b[^,.]*(?:machen|lernen|studieren|arbeiten|leben|ziehen|kaufen)/),
+    professional_goal: state(/\b(?:beruflich|karriere|ausbildung|teamleiter|selbststandig)\b[^,.]*(?:ziel|mochte|will|werde|machen)|\b(?:mochte|will)\b[^,.]*\b(?:arbeiten|ausbildung|teamleiter|selbststandig)\b/),
+    reason: state(/\b(weil|denn|deshalb|daher|darum|damit|um zu)\b/),
+    example: state(/\b(zum beispiel|beispielsweise|etwa)\b/),
+    comparison: state(/\b(im vergleich|anders als|genauso wie|mehr als|weniger als|in meiner heimat|in meinem heimatland|bei uns)\b/),
+    opinion: state(/\b(ich finde|ich denke|ich glaube|meiner meinung nach|fur mich)\b/),
+    integration_opinion: state(/\b(?:dazugehor\w*|zugehor\w*|integra\w*|gut leben)\b[^,.]*(?:wichtig|muss|sollte|braucht)|\b(?:wichtig|muss|sollte|braucht)\b[^,.]*(?:dazugehor\w*|zugehor\w*|integra\w*)/),
+    work_opinion: state(/\b(?:arbeit|job|beruf)\b[^,.]*(?:gefallt|gern|gut|schlecht|interessant)|\b(?:gefallt|mag)\b[^,.]*(?:arbeit|job|beruf)/),
+    // Compatibility aliases retained for existing internal consumers.
+    future: state(/\b(zukunft|plan\w*|spater|mochte|werde|will)\b/, /\b(?:spater|in zukunft)\b[^,.]*(?:mochte|werde|will)|\b(?:mochte|will|werde)\b[^,.]*(?:machen|lernen|studieren|arbeiten|leben)/),
+    german: state(/\b(deutsch|deutschkurs|sprache)\b/, /\b(?:lerne|lernen)\s+deutsch\s+(?:weil|damit|fur|um)\b|\bdeutsch\s+(?:ist|brauche ich)\s+[^,.]+/),
   };
 }
 
@@ -325,6 +343,19 @@ export function buildAllowedFollowUps(model, conversation = []) {
   const selfCoverage = model?.skill === "selbstvorstellung"
     ? getSelfTopicCoverage(conversation)
     : {};
+  const askedSelfIntents = new Set(
+    (Array.isArray(conversation) ? conversation : [])
+      .map((turn) => selfQuestionTopic(turn?.question || ""))
+      .filter(Boolean)
+  );
+  const latestSelfTranscript = normalizeText(
+    (Array.isArray(conversation) ? conversation.at(-1)?.transcript : "") || ""
+  );
+  const likelyMisunderstoodProfessionalGoal =
+    latestSelfTranscript.split(" ").filter(Boolean).length >= 3 &&
+    selfCoverage.professional_goal === COVERAGE.NOT_COVERED &&
+    [selfCoverage.name, selfCoverage.origin, selfCoverage.residence, selfCoverage.work]
+      .includes(COVERAGE.SUFFICIENT);
   const planningCoverage = model?.skill === "planung"
     ? getPlanningIntentCoverage(conversation)
     : {};
@@ -336,6 +367,30 @@ export function buildAllowedFollowUps(model, conversation = []) {
     if (alreadyAsked.has(key)) continue;
     const topic = selfQuestionTopic(text);
     if (topic && selfCoverage[topic] === "sufficient") continue;
+    const isSafeProfessionalRephrase =
+      topic === "professional_goal" &&
+      key === normalizeText("Welche Arbeit möchten Sie später machen?") &&
+      alreadyAsked.has(normalizeText("Was möchten Sie beruflich in Zukunft machen?")) &&
+      likelyMisunderstoodProfessionalGoal;
+    if (
+      topic === "professional_goal" &&
+      key === normalizeText("Welche Arbeit möchten Sie später machen?") &&
+      !isSafeProfessionalRephrase
+    ) continue;
+    if (topic && askedSelfIntents.has(topic)) {
+      if (!isSafeProfessionalRephrase) continue;
+    }
+    if (model?.skill === "selbstvorstellung" && topic) {
+      if (topic === "work_details" && selfCoverage.work !== COVERAGE.SUFFICIENT) continue;
+      if (topic === "family_detail" && selfCoverage.family !== COVERAGE.SUFFICIENT) continue;
+      if (topic === "hobby_detail" && selfCoverage.leisure !== COVERAGE.SUFFICIENT) continue;
+      if (topic === "german_duration" && selfCoverage.german_learning !== COVERAGE.SUFFICIENT) continue;
+      if (topic === "work_opinion" && selfCoverage.work !== COVERAGE.SUFFICIENT) continue;
+      if (topic === "learning_strategy" && selfCoverage.german_learning !== COVERAGE.SUFFICIENT) continue;
+      if (topic === "reason" && ![selfCoverage.future_plan, selfCoverage.professional_goal, selfCoverage.integration_opinion, selfCoverage.opinion].includes(COVERAGE.SUFFICIENT)) continue;
+      if (topic === "example" && ![selfCoverage.reason, selfCoverage.opinion, selfCoverage.past_experience].includes(COVERAGE.SUFFICIENT)) continue;
+      if (topic === "comparison" && ![selfCoverage.opinion, selfCoverage.integration_opinion, selfCoverage.past_experience].includes(COVERAGE.SUFFICIENT)) continue;
+    }
     const planningIntent = planningQuestionIntent(text);
     if (planningIntent && planningCoverage[planningIntent] === "sufficient") continue;
     if (seen.has(key)) continue;
@@ -343,7 +398,17 @@ export function buildAllowedFollowUps(model, conversation = []) {
     allowed.push(text);
   }
 
-  return allowed;
+  if (model?.skill !== "selbstvorstellung") return allowed;
+  return allowed.sort((a, b) => {
+    const aState = selfCoverage[selfQuestionTopic(a)];
+    const bState = selfCoverage[selfQuestionTopic(b)];
+    return Number(bState === COVERAGE.PARTIAL) - Number(aState === COVERAGE.PARTIAL);
+  });
+}
+
+export function getRecommendedSelfFollowUp(model, conversation = []) {
+  if (model?.skill !== "selbstvorstellung") return null;
+  return buildAllowedFollowUps(model, conversation)[0] || null;
 }
 
 /**
@@ -525,6 +590,7 @@ export function buildExaminerSystemPrompt(
   conversation = []
 ) {
   const isBild = model?.skill === "bildbeschreibung";
+  const isSelf = model?.skill === "selbstvorstellung";
   const bildPack = isBild
     ? getPlacementBildAssessmentPack(
         selectedImageContext?.catalogLevel,
@@ -548,6 +614,7 @@ export function buildExaminerSystemPrompt(
   } else {
     modelPayload.prompt = model.prompt;
   }
+  if (isSelf) modelPayload.semanticEvidence = getSelfTopicCoverage(conversation);
 
   const lines = [
     "Du bist ausschließlich der AustriaPath Placement-Prüfer für EIN Placement-Modell.",
@@ -593,6 +660,16 @@ export function buildExaminerSystemPrompt(
       "Bevorzuge genau eine hochwertige Nachfrage. Vertiefe ein bereits genanntes Thema nur, wenn dadurch neue CEFR-Evidenz entsteht; wechsle sonst zu einem unbedeckten Thema.",
       "Erlaubte followUpQuestion-Werte (geschlossen — nur diese Texte):",
       JSON.stringify(allowedFollowUps)
+    );
+  }
+
+  if (isSelf) {
+    lines.push(
+      "SELBSTVORSTELLUNG: semanticEvidence ist eine Evidenzkarte, keine Pflichtliste. Grammatik und semantische Abdeckung getrennt bewerten; verständliche fehlerhafte Formen zählen als kommunizierte Information.",
+      "Priorität: (1) eine wichtige partial-Angabe klären, (2) ein wichtiges not_covered-Thema fragen, (3) bei starken Grundlagen mit genau einer neuen Dimension vertiefen: Grund, Beispiel, Erfahrung, Zukunft, Vergleich oder Meinung.",
+      "Frage nur, wenn zusätzliche Bewertungsevidenz nützlich ist. Ein freier Frageplatz allein ist kein Grund; dann needsFollowUp=false.",
+      "Wenn die letzte Antwort klar nicht zur gestellten Frage passt und die Absicht not_covered bleibt, ist höchstens eine einfachere erlaubte Umformulierung derselben Absicht zulässig. Keine zweite Umformulierung und keine Schleife.",
+      "Ein Grund und ein Beispiel in der Antwort sperren allgemeine Warum-/Beispielfragen. Bereits genannte Kinder, Tätigkeit, Hobby oder Deutschlern-Grund sperren die jeweilige allgemeine Wiederholungsfrage."
     );
   }
 
