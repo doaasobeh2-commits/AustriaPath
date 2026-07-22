@@ -14,15 +14,21 @@ import {
   buildAllowedFollowUps,
 } from "../server/src/services/placementEvaluateService.js";
 import { getPlacementModel } from "../src/data/aiPlacementLibrary.js";
-import { getImageStepAfterSelfIntro } from "../src/data/placementLogic.js";
+import {
+  getImageStepAfterSelfIntro,
+  resolvePlacementModelFromStep,
+} from "../src/data/placementLogic.js";
 
 describe("placementImagePool — approved pools", () => {
-  it("matches curated A2 leicht / A2 mittel / B1 leicht ids exactly", () => {
+  it("matches curated pools, with B1 mittel reusing the approved B1 catalog", () => {
     expect(PLACEMENT_BILD_POOLS["A2|leicht"]).toEqual([1, 3, 5, 7]);
     expect(PLACEMENT_BILD_POOLS["A2|mittel"]).toEqual([2, 6, 8, 9, 10]);
     expect(PLACEMENT_BILD_POOLS["B1|leicht"]).toEqual([
       2, 4, 5, 6, 7, 12, 13, 20,
     ]);
+    expect(PLACEMENT_BILD_POOLS["B1|mittel"]).toEqual(
+      PLACEMENT_BILD_POOLS["B1|leicht"]
+    );
     expect(PLACEMENT_BILD_POOLS["B2|mittel"]).toEqual([3, 5, 101]);
     expect(PLACEMENT_BILD_POOLS["A2|stark"]).toBeUndefined();
   });
@@ -140,6 +146,27 @@ describe("placementImagePool — selection stickiness & rotation", () => {
       catalogId: 101,
       imagePath: "/images/b2/b2-09.jpeg",
     });
+  });
+
+  it.each([
+    ["A2", "weak"], ["A2", "medium"], ["A2", "strong"],
+    ["B1", "weak"], ["B1", "medium"], ["B1", "strong"],
+    ["B2", "weak"], ["B2", "medium"], ["B2", "strong"],
+  ])("%s start + %s self band always resolves a model and image", (start, band) => {
+    const step = getImageStepAfterSelfIntro(band, start);
+    expect(resolvePlacementModelFromStep(step)).toBeTruthy();
+    expect(selectPlacementBildImage(step, { random: () => 0 })).toBeTruthy();
+  });
+
+  it("prefers an unseen image, then falls back when all are recent", () => {
+    const step = { level: "B1", difficulty: "mittel" };
+    const recentIds = PLACEMENT_BILD_POOLS["B1|mittel"]
+      .slice(0, -1).map((id) => `B1:${id}`);
+    expect(selectPlacementBildImage(step, { recentIds, random: () => 0 }).catalogId)
+      .toBe(20);
+    const allRecent = PLACEMENT_BILD_POOLS["B1|mittel"].map((id) => `B1:${id}`);
+    expect(selectPlacementBildImage(step, { recentIds: allRecent, random: () => 0 }))
+      .toBeTruthy();
   });
 });
 

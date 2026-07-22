@@ -3,7 +3,7 @@
  * Restored from git (b16e10e → deleted 6d351d4) and kept faithful.
  *
  * PRODUCT DECISION (2026-07-21) — not historical — band → numeric:
- *   weak/schwach → 35, medium/mittel → 65, strong/stark → 90
+ *   weak/schwach → 35, medium/mittel → 65, strong/stark → 100
  * Used only inside standalone Placement Test.
  */
 
@@ -29,8 +29,8 @@ export const PLACEMENT_BAND_TO_SCORE = Object.freeze({
   schwach: 35,
   medium: 65,
   mittel: 65,
-  strong: 90,
-  stark: 90,
+  strong: 100,
+  stark: 100,
 });
 
 /**
@@ -39,18 +39,13 @@ export const PLACEMENT_BAND_TO_SCORE = Object.freeze({
  *
  * Historical target → existing modelId (closest same level+skill):
  * - B1 bildbeschreibung leicht → b1_bild_mittel (no leicht variant)
- * - A2 hoeren/lesenHoeren stark → a2_hoeren_mittel (no stark variant)
- * - B1 hoeren/lesenHoeren leicht → b1_hoeren_mittel (no leicht variant)
+ * Listening pool selection has its own same-level nearest-difficulty policy.
  * - A2 planung stark → a2_planung_mittel (no stark variant)
  * - B1 planung leicht → b1_planung_schwach (easier-than-mittel stands in for leicht)
  * Exact matches preferred when present (e.g. a2_bild_mittel, a2_bild_leicht).
  */
 export const PLACEMENT_MODEL_FALLBACKS = Object.freeze({
   "bildbeschreibung|B1|leicht": "b1_bild_mittel",
-  "hoeren|A2|stark": "a2_hoeren_mittel",
-  "lesenHoeren|A2|stark": "a2_hoeren_mittel",
-  "hoeren|B1|leicht": "b1_hoeren_mittel",
-  "lesenHoeren|B1|leicht": "b1_hoeren_mittel",
   "planung|A2|stark": "a2_planung_mittel",
   "planung|B1|leicht": "b1_planung_schwach",
 });
@@ -234,6 +229,20 @@ export function getReadingListeningStep(
   }
 
   if (
+    selectedStartLevel === "B1" &&
+    selfBand === "medium" &&
+    imageBand === "medium"
+  ) {
+    return {
+      skill: "lesenHoeren",
+      level: "B1",
+      difficulty: "mittel",
+      internalLevel: "B1",
+      reason: "Stabile mittlere B1-Evidenz → B1 Hören mittel",
+    };
+  }
+
+  if (
     (selfBand === "weak" || selfIntroResult === "schwach") &&
     (imageBand === "medium" || imageResult === "mittel")
   ) {
@@ -288,32 +297,30 @@ export function getPlanningStep(results) {
   const listenBand =
     normalizePlacementBand(lesenHoerenResult) || lesenHoerenResult;
 
-  if (
-    (selfBand === "strong" || selfIntroResult === "stark") &&
-    imageBand !== "weak" &&
-    imageResult !== "schwach" &&
-    listenBand !== "weak" &&
-    lesenHoerenResult !== "schwach"
-  ) {
+  const bands = [selfBand, imageBand, listenBand];
+  const strongCount = bands.filter((band) => band === "strong").length;
+  const mediumOrStrongCount = bands.filter(
+    (band) => band === "medium" || band === "strong"
+  ).length;
+  const weakCount = bands.filter((band) => band === "weak").length;
+
+  if (weakCount === 0 && strongCount >= 2) {
+    return {
+      skill: "planung",
+      level: "B1",
+      difficulty: "mittel",
+      internalLevel: "B1",
+      reason: "Konsistente B1-oder-höhere Evidenz → B1 Planung mittel",
+    };
+  }
+
+  if (weakCount <= 1 && mediumOrStrongCount >= 2) {
     return {
       skill: "planung",
       level: "B1",
       difficulty: "leicht",
       internalLevel: "B1-",
-      reason: "Bereit für B1 Planung leicht",
-    };
-  }
-
-  if (
-    (selfBand === "weak" || selfIntroResult === "schwach") &&
-    (imageBand === "medium" || imageResult === "mittel")
-  ) {
-    return {
-      skill: "planung",
-      level: "A2",
-      difficulty: "stark",
-      internalLevel: "A2+",
-      reason: "Mündlich uneinheitlich → A2 Planung stark",
+      reason: "Gemischte oder entstehende B1-Evidenz → B1 Planung schwach",
     };
   }
 
@@ -434,7 +441,7 @@ export function buildHistoricalPlacementResult({
     skillBands: bands,
     placementScore: score,
     scoringMethod: "placement-historical-weighted-v1",
-    bandScoreMapping: { weak: 35, medium: 65, strong: 90 },
+    bandScoreMapping: { weak: 35, medium: 65, strong: 100 },
     modelsUsed,
     strengths,
     weaknesses,

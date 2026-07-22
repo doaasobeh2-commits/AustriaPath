@@ -23,8 +23,8 @@ describe("approved band → score mapping", () => {
     expect(bandToPlacementScore("schwach")).toBe(35);
     expect(bandToPlacementScore("medium")).toBe(65);
     expect(bandToPlacementScore("mittel")).toBe(65);
-    expect(bandToPlacementScore("strong")).toBe(90);
-    expect(bandToPlacementScore("stark")).toBe(90);
+    expect(bandToPlacementScore("strong")).toBe(100);
+    expect(bandToPlacementScore("stark")).toBe(100);
     expect(PLACEMENT_BAND_TO_SCORE.weak).toBe(35);
   });
 
@@ -88,6 +88,23 @@ describe("historical routing", () => {
     });
   });
 
+  it("keeps stable B1 medium/medium evidence at B1 listening", () => {
+    expect(getReadingListeningStep("medium", "medium", "B1")).toMatchObject({
+      level: "B1",
+      difficulty: "mittel",
+    });
+  });
+
+  it.each([
+    ["weak", "medium", "B1", "A2"],
+    ["medium", "weak", "B1", "A2"],
+    ["strong", "strong", "B1", "B2"],
+    ["weak", "weak", "B2", "A2"],
+    ["medium", "medium", "B2", "B2"],
+  ])("routes %s/%s from %s start to %s listening", (self, image, start, level) => {
+    expect(getReadingListeningStep(self, image, start).level).toBe(level);
+  });
+
   it("routes a stable B2 start to B2 listening", () => {
     expect(getReadingListeningStep("medium", "strong", "B2")).toMatchObject({
       skill: "lesenHoeren",
@@ -108,18 +125,40 @@ describe("historical routing", () => {
     expect(getReadingListeningStep("weak", "medium", "B2").level).toBe("A2");
   });
 
-  it("routes strong path to B1 planung leicht", () => {
+  it("routes consistently strong evidence to B1 planung mittel", () => {
     expect(
       getPlanningStep({
         selfIntroResult: "stark",
-        imageResult: "mittel",
-        lesenHoerenResult: "mittel",
+        imageResult: "strong",
+        lesenHoerenResult: "medium",
       })
     ).toMatchObject({
       skill: "planung",
       level: "B1",
-      difficulty: "leicht",
+      difficulty: "mittel",
     });
+  });
+
+  it("routes mixed/emerging B1 evidence to B1 planung schwach", () => {
+    expect(getPlanningStep({
+      selfIntroResult: "strong", imageResult: "medium", lesenHoerenResult: "weak",
+    })).toMatchObject({ level: "B1", difficulty: "leicht" });
+  });
+
+  it("routes lower evidence to A2 planung and never to B2 discussion", () => {
+    const step = getPlanningStep({
+      selfIntroResult: "strong", imageResult: "weak", lesenHoerenResult: "weak",
+    });
+    expect(step).toMatchObject({ level: "A2", difficulty: "mittel" });
+    expect(resolvePlacementModelFromStep(step)?.id).toBe("a2_planung_mittel");
+    expect(resolvePlacementModelFromStep(step)?.id).not.toBe("b2_diskussion_mittel");
+  });
+
+  it("makes b1_planung_mittel reachable", () => {
+    const step = getPlanningStep({
+      selfIntroResult: "strong", imageResult: "strong", lesenHoerenResult: "strong",
+    });
+    expect(resolvePlacementModelFromStep(step)?.id).toBe("b1_planung_mittel");
   });
 });
 
@@ -140,15 +179,6 @@ describe("missing-model fallbacks", () => {
       difficulty: "leicht",
     });
     expect(model?.id).toBe("b1_bild_mittel");
-  });
-
-  it("resolves A2 hoeren stark via a2_hoeren_mittel", () => {
-    const model = resolvePlacementModelFromStep({
-      skill: "lesenHoeren",
-      level: "A2",
-      difficulty: "stark",
-    });
-    expect(model?.id).toBe("a2_hoeren_mittel");
   });
 
   it("resolves B1 planung leicht via b1_planung_schwach", () => {
@@ -216,29 +246,46 @@ describe("historical weighted final", () => {
     expect(getFinalInternalLevel(95)).toBe("B2-");
   });
 
-  it("weights 25/25/20/30 with approved band scores", () => {
-    // all medium: 65 → 65
-    expect(
-      calculatePlacementScore({
-        selbstvorstellung: 65,
-        bildbeschreibung: 65,
-        lesenHoeren: 65,
-        planung: 65,
-      })
-    ).toBe(65);
-    expect(getFinalInternalLevel(65)).toBe("B1-");
-
-    // strong path example
+  it.each([
+    [[35, 35, 35, 35], 35, "A2"],
+    [[65, 65, 65, 65], 65, "B1-"],
+    [[100, 100, 100, 100], 100, "B2-"],
+    [[100, 100, 100, 65], 90, "B1+"],
+    [[100, 100, 65, 100], 93, "B1+"],
+    [[100, 100, 100, 35], 81, "B1"],
+    [[100, 35, 100, 100], 84, "B1"],
+  ])("scores %j as %i / %s", (values, expectedScore, expectedLevel) => {
     const score = calculatePlacementScore({
-      selbstvorstellung: 90,
-      bildbeschreibung: 90,
-      lesenHoeren: 65,
-      planung: 90,
+      selbstvorstellung: values[0],
+      bildbeschreibung: values[1],
+      lesenHoeren: values[2],
+      planung: values[3],
     });
-    // 90*0.25 + 90*0.25 + 65*0.20 + 90*0.30 = 22.5+22.5+13+27 = 85
-    expect(score).toBe(85);
-    expect(getFinalInternalLevel(score)).toBe("B1");
+    expect(score).toBe(expectedScore);
+    expect(getFinalInternalLevel(score)).toBe(expectedLevel);
   });
+
+  it.each(["A2", "B1", "B2"])(
+    "selected start %s creates no score floor or ceiling",
+    (selectedLevel) => {
+      const weak = buildHistoricalPlacementResult({
+        selectedLevel,
+        numericScores: {
+          selbstvorstellung: 35, bildbeschreibung: 35,
+          lesenHoeren: 35, planung: 35,
+        },
+      });
+      const strong = buildHistoricalPlacementResult({
+        selectedLevel,
+        numericScores: {
+          selbstvorstellung: 100, bildbeschreibung: 100,
+          lesenHoeren: 100, planung: 100,
+        },
+      });
+      expect(weak.level).toBe("A2");
+      expect(strong.level).toBe("B2-");
+    }
+  );
 
   it("buildHistoricalPlacementResult does not use majority CEFR", () => {
     const profile = buildHistoricalPlacementResult({

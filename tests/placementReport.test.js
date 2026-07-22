@@ -65,7 +65,7 @@ describe("deterministic Placement report", () => {
     expect(report.areas.find((a) => a.skill === "lesenHoeren").performanceLabel).toBe(
       "Noch unsicher"
     );
-    expect(JSON.stringify(report)).not.toMatch(/35|65|90|bandScoreMapping/);
+    expect(JSON.stringify(report)).not.toMatch(/35|65|90|100|bandScoreMapping/);
     expect(report.studyPlan[0].focus).toBe("hoeren");
   });
 

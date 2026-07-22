@@ -115,10 +115,105 @@ function hasImageActionEvidence(conversation = []) {
   );
 }
 
+const COVERAGE = Object.freeze({
+  NOT_COVERED: "not_covered",
+  PARTIAL: "partial",
+  SUFFICIENT: "sufficient",
+});
+
+function coverageState(text, { mention, sufficient }) {
+  if (sufficient.test(text)) return COVERAGE.SUFFICIENT;
+  if (mention.test(text)) return COVERAGE.PARTIAL;
+  return COVERAGE.NOT_COVERED;
+}
+
+function selfQuestionTopic(question) {
+  const text = normalizeText(question);
+  if (/wie heissen|name/.test(text)) return "name";
+  if (/woher|herkunft|heimat/.test(text)) return "origin";
+  if (/wo wohnen|wie lange leben.*osterreich/.test(text)) return "residence";
+  if (/beruflich|arbeiten sie|arbeit oder|ausbildung/.test(text)) return "work";
+  if (/familie|kinder/.test(text)) return "family";
+  if (/hobby|freizeit|wochenende/.test(text)) return "leisure";
+  if (/zukunft|erreichen|beruflichen ziele/.test(text)) return "future";
+  if (/deutschlernen|deutsch lernen|sprache.*zukunft/.test(text)) return "german";
+  return null;
+}
+
+export function getSelfTopicCoverage(conversation = []) {
+  const text = sectionTranscript(conversation);
+  return {
+    name: coverageState(text, {
+      mention: /\b(name|heiss\w*)\b/,
+      sufficient: /\b(?:ich\s+)?(?:heisse|name)\s+(?!ist\b)[a-z]{2,}|\bmein name ist\s+[a-z]{2,}/,
+    }),
+    origin: coverageState(text, {
+      mention: /\b(komme|kommen|herkunft|heimat)\b/,
+      sufficient: /\b(?:ich\s+)?komm\w*\s+(?:aus\s+)?[a-z]{3,}|\b(?:herkunft|heimat)(?:sland)?\s+(?:ist\s+)?[a-z]{3,}/,
+    }),
+    residence: coverageState(text, {
+      mention: /\b(wohn\w*|leb\w*|wohnort)\b/,
+      sufficient: /\b(?:ich\s+)?(?:wohn\w*|leb\w*)\s+(?:seit\s+[^,.]+\s+)?(?:in\s+)?[a-z]{3,}|\bwohnort\s+(?:ist\s+)?[a-z]{3,}/,
+    }),
+    work: coverageState(text, {
+      mention: /\b(arbeit\w*|beruf\w*|job|beschaftigt|ausbildung|studier\w*)\b/,
+      sufficient: /\b(?:arbeite|arbeiten)\s+(?!manchmal\b|gelegentlich\b)(?:(?:als|bei|in|im|auf)\s+)?[^,.]+|\bvon beruf bin ich\s+[^,.]+|\b(?:bin|ist)\s+(?!nicht\b)[^,.]{2,80}\bbeschaftigt\b|\bmein beruf ist\s+[^,.]+/,
+    }),
+    family: coverageState(text, {
+      mention: /\b(familie|verheiratet|kind\w*|sohn|tochter|ehemann|ehefrau|partner)\b/,
+      sufficient: /\b(?:bin|ist)\s+verheiratet\b|\b(?:habe|hat)\s+(?:\w+\s+){0,2}(?:kind\w*|sohn|tochter)\b|\b(?:mit\s+)?(?:mein\w*\s+)?(?:ein\w*|zwei|drei|vier|\d+)?\s*(?:kind\w*|sohn|tochter)\b|\b(?:mein|meine)\s+(?:ehemann|ehefrau|partner)\s+[^,.]+/,
+    }),
+    leisure: coverageState(text, {
+      mention: /\b(hobby|hobbys|freizeit|wochenende|sport|fussball|schach)\b/,
+      sufficient: /\b(?:in meiner freizeit|am wochenende|nach der arbeit)\s+(?:\w+\s+){0,4}(?:spiele|mache|gehe|lese|treffe|trainiere|fahre)\b|\b(?:spiele|mache|lese|trainiere)\s+(?:gern|oft|regelmassig)?\s*[^,.]+/,
+    }),
+    future: coverageState(text, {
+      mention: /\b(zukunft|plan\w*|ziel\w*|spater|mochte|werde)\b/,
+      sufficient: /\b(?:spater|in zukunft)\s+(?:\w+\s+){0,3}(?:mochte|werde|will)\s+[^,.]+|\b(?:mein ziel|meine plane?)\s+(?:ist|sind)\s+[^,.]+/,
+    }),
+    german: coverageState(text, {
+      mention: /\b(deutsch|deutschkurs|sprache)\b/,
+      sufficient: /\b(?:lerne|lernen)\s+deutsch\s+(?:weil|damit|fur|um)\b|\bdeutsch\s+(?:ist|brauche ich)\s+[^,.]+/,
+    }),
+  };
+}
+
+export function getPlanningIntentCoverage(conversation = []) {
+  const text = sectionTranscript(conversation);
+  const hasDate = /\b(montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|wochenende|morgen|ubernachste|nachste woche|\d{1,2}\.\s*(?:januar|februar|marz|april|mai|juni|juli|august|september|oktober|november|dezember))\b/.test(text);
+  const hasReason = /\b(weil|denn|deshalb|daher|darum|zu teuer|zu weit|keine zeit|arbeiten muss)\b/.test(text);
+  const hasAlternative = /\b(lieber|stattdessen|alternativ|anderer vorschlag|wir konnen|konnten wir)\b/.test(text);
+  const hasRejection = /\b(nein|nicht gut|passt nicht|zu teuer|zu weit|lieber nicht|dagegen)\b/.test(text);
+  return {
+    date: hasDate ? COVERAGE.SUFFICIENT : COVERAGE.NOT_COVERED,
+    reason: hasReason ? COVERAGE.SUFFICIENT : COVERAGE.NOT_COVERED,
+    alternative: hasAlternative ? COVERAGE.SUFFICIENT : COVERAGE.NOT_COVERED,
+    rejection: hasRejection ? COVERAGE.SUFFICIENT : COVERAGE.NOT_COVERED,
+  };
+}
+
+function planningQuestionIntent(question) {
+  const text = normalizeText(question);
+  if (/\bwann\b|welcher tag|datum/.test(text)) return "date";
+  if (/anderen vorschlag|alternative/.test(text)) return "alternative";
+  return null;
+}
+
 export function isRedundantImageFollowUp(question, conversation = []) {
   const normalized = normalizeText(question);
   if (!normalized) return true;
   const dimension = imageFollowUpDimension(question);
+  const advancedDimensions = ["reasoning", "comparison", "opinion"].filter(
+    (item) => sectionHasDimensionEvidence(item, conversation)
+  ).length;
+  const advancedInterpretation = /\b(grafik|entwicklung|trend|aussage|zeigt|stellt dar|schlussfolger)\b/.test(
+    sectionTranscript(conversation)
+  );
+  if (
+    (dimension === "location" || dimension === "action" || dimension === "basic_description") &&
+    advancedInterpretation &&
+    advancedDimensions >= 2
+  ) return true;
   const alreadyAsked = (Array.isArray(conversation) ? conversation : []).some(
     (turn) => normalizeText(turn?.question || "") === normalized
   );
@@ -159,12 +254,22 @@ export function buildAllowedFollowUps(model, conversation = []) {
       .map((turn) => normalizeText(turn?.question || ""))
       .filter(Boolean)
   );
+  const selfCoverage = model?.skill === "selbstvorstellung"
+    ? getSelfTopicCoverage(conversation)
+    : {};
+  const planningCoverage = model?.skill === "planung"
+    ? getPlanningIntentCoverage(conversation)
+    : {};
 
   for (const q of model?.examinerQuestions || []) {
     const text = String(q || "").trim();
     if (!text) continue;
     const key = normalizeText(text);
     if (alreadyAsked.has(key)) continue;
+    const topic = selfQuestionTopic(text);
+    if (topic && selfCoverage[topic] === "sufficient") continue;
+    const planningIntent = planningQuestionIntent(text);
+    if (planningIntent && planningCoverage[planningIntent] === "sufficient") continue;
     if (seen.has(key)) continue;
     seen.add(key);
     allowed.push(text);
@@ -265,23 +370,6 @@ export function sanitizePlacementEvaluation(
     }
   }
 
-  // A short dialogue is part of the task, not an optional parallel flow.
-  // If the model omitted a requested early follow-up, continue with a remaining
-  // existing examiner question. Never invent question text.
-  const minimumFollowUps = model?.skill === "planung" ? 2 : 1;
-  if (
-    model?.skill !== "bildbeschreibung" &&
-    !needsFollowUp &&
-    !Boolean(raw?.needsFollowUp) &&
-    followUpCount < minimumFollowUps &&
-    followUpCount < PLACEMENT_MAX_FOLLOWUPS &&
-    allowed.length
-  ) {
-    needsFollowUp = true;
-    followUpQuestion = allowed[0];
-    followUpSource = "examinerQuestions";
-  }
-
   return {
     productType: "placement_test",
     modelId: model.id,
@@ -377,6 +465,10 @@ export function buildExaminerSystemPrompt(
       "Prüfe die GESAMTE Antwortgeschichte semantisch und frage nichts, was bereits ausdrücklich oder sinngemäß beantwortet wurde.",
       "followUpRules und fehlende requiredTopics dürfen nur helfen, eine erlaubte examinerQuestions-Frage auszuwählen.",
       "Wenn keine erlaubte Nachfrage passt: needsFollowUp=false und followUpQuestion=null.",
+      "examinerQuestions ist eine Fragenbank/Evidenzhilfe, keine abzuarbeitende Checkliste. Das kluge Auslassen einer redundanten Frage darf die Bewertung nie senken.",
+      "Ordne jedes requiredTopic semantisch als not_covered, partially_covered oder sufficiently_covered ein. Frage nie dieselbe Information mit anderer Formulierung erneut.",
+      "Bei A2: einfache Klärung oder ein konkretes Detail; kurze sinnvolle Antworten genügen. Bei B1: Gründe, Beispiele, Erfahrung sowie Vergangenheit/Zukunft und verbundene Antworten fördern. Bei B2: passende Meinung mit Begründung, Vergleich, Ursache/Folge oder Abstraktion nur wenn die bisherige Antwort das trägt.",
+      "Bevorzuge genau eine hochwertige Nachfrage. Vertiefe ein bereits genanntes Thema nur, wenn dadurch neue CEFR-Evidenz entsteht; wechsle sonst zu einem unbedeckten Thema.",
       "Erlaubte followUpQuestion-Werte (geschlossen — nur diese Texte):",
       JSON.stringify(allowedFollowUps)
     );

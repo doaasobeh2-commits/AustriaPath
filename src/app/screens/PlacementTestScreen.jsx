@@ -35,6 +35,8 @@ import {
 import {
   clearPlacementSession,
   loadPlacementSession,
+  recentPlacementContentIds,
+  recordCompletedPlacementContent,
   savePlacementSession,
 } from '../../utils/placementSession.js';
 
@@ -308,6 +310,14 @@ export default function PlacementTestScreen({ setActiveTab }) {
 
       // Persist deterministic report immediately — level/bands frozen
       savePlacementProfile(profile);
+      recordCompletedPlacementContent({
+        attemptId,
+        bild: selectedBildImage
+          ? `${selectedBildImage.catalogLevel}:${selectedBildImage.catalogId}`
+          : null,
+        listening: completedModels.find((item) => item.stage === 'lesenHoeren')?.modelId || null,
+        planning: completedModels.find((item) => item.stage === 'planung')?.modelId || null,
+      });
       clearPlacementSession(attemptId);
       setResult(profile);
       setIsBuildingReport(true);
@@ -352,7 +362,9 @@ export default function PlacementTestScreen({ setActiveTab }) {
 
     const nextModel = nextStep
       ? nextStep.skill === 'lesenHoeren'
-        ? selectPlacementListeningModel(nextStep)
+        ? selectPlacementListeningModel(nextStep, {
+            recentIds: recentPlacementContentIds('listening'),
+          })
         : resolvePlacementModelFromStep(nextStep)
       : null;
     if (!nextModel) {
@@ -363,7 +375,9 @@ export default function PlacementTestScreen({ setActiveTab }) {
     }
 
     if (nextStep.skill === 'bildbeschreibung') {
-      const img = await selectPlacementBildImageSafe(nextStep);
+      const img = await selectPlacementBildImageSafe(nextStep, {
+        recentIds: recentPlacementContentIds('bild'),
+      });
       if (!img) {
         setControlMessage(
           'Für die Bildbeschreibung konnte kein Bild geladen werden. Bitte später erneut versuchen.'

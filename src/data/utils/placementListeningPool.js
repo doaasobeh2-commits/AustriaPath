@@ -41,8 +41,38 @@ export function listPlacementListeningModels(level) {
 
 export function selectPlacementListeningModel(step, options = {}) {
   const level = step?.level;
-  const models = listPlacementListeningModels(level);
+  const requestedDifficulty = step?.difficulty;
+  let models = listPlacementListeningModels(level);
   if (!models.length) return null;
+
+  const order = ["leicht", "mittel", "stark"];
+  const requestedRank = order.indexOf(requestedDifficulty);
+  if (requestedRank >= 0) {
+    const available = [...new Set(models.map((model) => model.difficulty))];
+    available.sort((a, b) => {
+      const distance = Math.abs(order.indexOf(a) - requestedRank) - Math.abs(order.indexOf(b) - requestedRank);
+      return distance || order.indexOf(a) - order.indexOf(b);
+    });
+    const chosenDifficulty = available[0];
+    models = models.filter((model) => model.difficulty === chosenDifficulty);
+  }
+
+  const recentIds = Array.isArray(options.recentIds) ? options.recentIds : [];
+  const unseen = models.filter((model) => !recentIds.includes(model.id));
+  if (unseen.length) {
+    models = unseen;
+  } else if (recentIds.length) {
+    // History is newest-first. indexOf therefore represents each model's most
+    // recent use; the largest index is the genuinely least recently used.
+    const recency = models.map((model) => ({
+      model,
+      mostRecentIndex: recentIds.indexOf(model.id),
+    }));
+    const oldestIndex = Math.max(...recency.map((item) => item.mostRecentIndex));
+    models = recency
+      .filter((item) => item.mostRecentIndex === oldestIndex)
+      .map((item) => item.model);
+  }
 
   const random =
     typeof options.random === "function" ? options.random() : Math.random();

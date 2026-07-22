@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   clearPlacementSession,
+  loadPlacementRecentContent,
   loadPlacementSession,
+  PLACEMENT_HISTORY_LIMIT,
+  recordCompletedPlacementContent,
   savePlacementSession,
 } from "../src/utils/placementSession.js";
 
@@ -33,5 +36,18 @@ describe("Placement in-progress browser session", () => {
     savePlacementSession("attempt-2", { currentModelId: "a2_self_mittel" });
     clearPlacementSession("attempt-2");
     expect(loadPlacementSession("attempt-2")).toBeNull();
+  });
+
+  it("keeps only compact content ids for the five most recent completed attempts", () => {
+    for (let i = 0; i < PLACEMENT_HISTORY_LIMIT + 2; i += 1) {
+      recordCompletedPlacementContent({
+        attemptId: `attempt-${i}`, bild: `B1:${i}`, listening: `listen-${i}`,
+        planning: `plan-${i}`,
+      });
+    }
+    const history = loadPlacementRecentContent();
+    expect(history).toHaveLength(PLACEMENT_HISTORY_LIMIT);
+    expect(history[0].attemptId).toBe("attempt-6");
+    expect(history.some((item) => "transcript" in item)).toBe(false);
   });
 });

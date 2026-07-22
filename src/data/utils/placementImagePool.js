@@ -21,6 +21,8 @@ export const PLACEMENT_BILD_POOLS = Object.freeze({
   "A2|leicht": Object.freeze([1, 3, 5, 7]),
   "A2|mittel": Object.freeze([2, 6, 8, 9, 10]),
   "B1|leicht": Object.freeze([2, 4, 5, 6, 7, 12, 13, 20]),
+  // The same approved B1 catalog supports the routed B1/mittel model.
+  "B1|mittel": Object.freeze([2, 4, 5, 6, 7, 12, 13, 20]),
   // Existing B2 training: KI scene, sustainability scene, age-use graphic.
   "B2|mittel": Object.freeze([3, 5, 101]),
 });
@@ -92,6 +94,10 @@ export function selectPlacementBildImage(step, options = {}) {
   }
   if (!entries.length) return null;
 
+  entries = preferByRecentIds(entries, options.recentIds, (entry) =>
+    `${entry.catalogLevel}:${entry.catalogId}`
+  );
+
   const rnd =
     typeof options.random === "function" ? options.random() : Math.random();
   const index = Math.min(
@@ -135,6 +141,10 @@ export async function selectPlacementBildImageSafe(step, options = {}) {
   entries = await filterExistingBildAssets(entries);
   if (!entries.length) return null;
 
+  entries = preferByRecentIds(entries, options.recentIds, (entry) =>
+    `${entry.catalogLevel}:${entry.catalogId}`
+  );
+
   const rnd =
     typeof options.random === "function" ? options.random() : Math.random();
   const index = Math.min(
@@ -142,4 +152,15 @@ export async function selectPlacementBildImageSafe(step, options = {}) {
     Math.max(0, Math.floor(rnd * entries.length))
   );
   return entries[index];
+}
+
+function preferByRecentIds(entries, recentIds = [], getId) {
+  const recent = Array.isArray(recentIds) ? recentIds : [];
+  const unseen = entries.filter((entry) => !recent.includes(getId(entry)));
+  if (unseen.length) return unseen;
+  for (let i = recent.length - 1; i >= 0; i -= 1) {
+    const leastRecent = entries.filter((entry) => getId(entry) === recent[i]);
+    if (leastRecent.length) return leastRecent;
+  }
+  return entries;
 }

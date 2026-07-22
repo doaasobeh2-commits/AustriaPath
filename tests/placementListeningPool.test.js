@@ -47,15 +47,56 @@ describe("Placement listening pools", () => {
     ]);
   });
 
-  it("rotates by random position and is stable for a fixed session choice", () => {
-    const step = { skill: "lesenHoeren", level: "B1", difficulty: "mittel" };
-    const first = selectPlacementListeningModel(step, { random: () => 0 });
-    const middle = selectPlacementListeningModel(step, { random: () => 0.5 });
-    const last = selectPlacementListeningModel(step, { random: () => 0.999 });
-    expect(new Set([first.id, middle.id, last.id]).size).toBe(3);
-    expect(selectPlacementListeningModel(step, { random: () => 0.5 })).toBe(
-      middle
+  it.each([
+    ["leicht", "b1_hoeren_supermarkt"],
+    ["mittel", "b1_hoeren_bahnhof"],
+    ["stark", "b1_hoeren_arzttermin"],
+  ])("B1 %s selects the exact requested difficulty", (difficulty, id) => {
+    expect(selectPlacementListeningModel(
+      { level: "B1", difficulty }, { random: () => 0.999 }
+    ).id).toBe(id);
+  });
+
+  it("uses deterministic nearest same-level difficulty when exact is absent", () => {
+    const selected = selectPlacementListeningModel(
+      { level: "A2", difficulty: "stark" }, { random: () => 0 }
     );
+    expect(selected.level).toBe("A2");
+    expect(selected.difficulty).toBe("mittel");
+  });
+
+  it("random choice among eligible models never crosses the requested level", () => {
+    for (const random of [0, 0.5, 0.999]) {
+      expect(selectPlacementListeningModel(
+        { level: "B2", difficulty: "mittel" }, { random: () => random }
+      ).level).toBe("B2");
+    }
+  });
+
+  it("prefers unseen eligible content and falls back when every option is recent", () => {
+    const step = { level: "B2", difficulty: "mittel" };
+    const ids = listPlacementListeningModels("B2")
+      .filter((model) => model.difficulty === "mittel").map((model) => model.id);
+    expect(selectPlacementListeningModel(step, {
+      recentIds: ids.slice(0, -1), random: () => 0,
+    }).id).toBe(ids.at(-1));
+    expect(selectPlacementListeningModel(step, {
+      recentIds: ids, random: () => 0,
+    })).toBeTruthy();
+  });
+
+  it("uses each model's most recent occurrence for true LRU with duplicates", () => {
+    const step = { level: "A2", difficulty: "mittel" };
+    const selected = selectPlacementListeningModel(step, {
+      // Newest first: mittel was just used; Arzt was used less recently.
+      recentIds: [
+        "a2_hoeren_mittel",
+        "a2_hoeren_arzt_apotheke",
+        "a2_hoeren_mittel",
+      ],
+      random: () => 0,
+    });
+    expect(selected.id).toBe("a2_hoeren_arzt_apotheke");
   });
 
   it("returns null instead of crossing levels for an unavailable pool", () => {
