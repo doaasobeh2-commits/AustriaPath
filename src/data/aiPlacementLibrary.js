@@ -6,6 +6,7 @@ function makePlacementListeningModel({
   difficulty = 'mittel',
   title,
   audioText,
+  audioUrl,
   listeningQuestions,
   source,
 }) {
@@ -18,6 +19,7 @@ function makePlacementListeningModel({
     title,
     prompt: 'Der Schüler hört einen kurzen vorhandenen Trainingstext und beantwortet drei Verständnisfragen.',
     audioText,
+    audioUrl,
     listeningQuestions,
     requiredTopics: listeningQuestions.map((question) => question.question),
     examinerQuestions: [],
@@ -50,17 +52,23 @@ export const aiPlacementLibrary = [
       'Wohnort',
       'Arbeit oder Kurs',
       'Familie',
-      'Freizeit'
+      'Freizeit',
+      'Deutschlernen'
     ],
     examinerQuestions: [
       'Wie heißen Sie?',
       'Woher kommen Sie?',
-      'Wo wohnen Sie jetzt?',
-      'Arbeiten Sie oder besuchen Sie einen Kurs?',
-      'Erzählen Sie etwas über Ihre Familie.',
-      'Was machen Sie am Wochenende?',
-      'Was sind Ihre Hobbys?',
-      'Warum lernen Sie Deutsch?'
+      'Wo wohnen Sie?',
+      'Arbeiten Sie oder gehen Sie in einen Kurs?',
+      'Was arbeiten Sie?',
+      'Was machen Sie bei der Arbeit?',
+      'Haben Sie Familie oder Kinder?',
+      'Was machen Sie gern zusammen?',
+      'Was machen Sie gern in Ihrer Freizeit?',
+      'Wie oft machen Sie das?',
+      'Mit wem machen Sie das?',
+      'Warum lernen Sie Deutsch?',
+      'Seit wann lernen Sie Deutsch?'
     ],
     followUpRules: [
       'Wenn Familie erwähnt wird -> nach Kindern fragen',
@@ -370,13 +378,19 @@ export const aiPlacementLibrary = [
       'Zukunftspläne'
     ],
     examinerQuestions: [
-      'Was machen Sie beruflich?',
+      'Was arbeiten Sie jetzt?',
+      'Was machen Sie dort genau?',
+      'Wie finden Sie Ihre Arbeit? Begründen Sie bitte.',
       'Warum lernen Sie Deutsch?',
-      'Wie sieht ein normaler Tag bei Ihnen aus?',
+      'Was ist für Sie beim Deutschlernen schwierig?',
+      'Was hilft Ihnen beim Lernen?',
+      'Was machen Sie normalerweise an einem Tag?',
       'Was machen Sie gern in Ihrer Freizeit?',
-      'Welche Pläne haben Sie für die Zukunft?',
-      'Was möchten Sie in Österreich erreichen?',
-      'Wie lange leben Sie schon in Österreich?'
+      'Wie lange leben Sie schon in Österreich?',
+      'Was war am Anfang in Österreich schwierig für Sie?',
+      'Was möchten Sie in Zukunft in Österreich machen?',
+      'Warum möchten Sie das?',
+      'Können Sie ein Beispiel nennen?'
     ],
     followUpRules: [
       'Wenn Arbeit erwähnt wird -> nach Details fragen',
@@ -703,11 +717,17 @@ export const aiPlacementLibrary = [
       'Meinung'
     ],
     examinerQuestions: [
-      'Welche beruflichen Ziele haben Sie?',
-      'Welche Herausforderungen hatten Sie beim Deutschlernen?',
-      'Was bedeutet Integration für Sie persönlich?',
-      'Welche Erfahrungen haben Sie in Österreich gemacht?',
-      'Welche Rolle spielt Sprache für Ihre Zukunft?'
+      'Was möchten Sie beruflich in Zukunft machen?',
+      'Welche Arbeit möchten Sie später machen?',
+      'Warum möchten Sie das?',
+      'Was ist für Sie beim Deutschlernen schwierig?',
+      'Was hilft Ihnen dabei?',
+      'Was haben Sie in Österreich erlebt?',
+      'Was ist wichtig, damit man in Österreich gut leben und dazugehören kann?',
+      'Warum denken Sie so?',
+      'Können Sie ein Beispiel nennen?',
+      'Wie ist das in Ihrem Heimatland?',
+      'Warum ist Deutsch für Ihre Zukunft wichtig?'
     ],
     followUpRules: [
       'Wenn Meinung fehlt -> nach Meinung fragen',
@@ -988,6 +1008,108 @@ export const aiPlacementLibrary = [
   },
 
   makePlacementListeningModel({
+    id: 'placement_listening_02',
+    level: 'A2',
+    title: 'Der fertige Befund',
+    source: 'AustriaPath Listening Clips Listening_02.mp3',
+    audioUrl: '/audio/placement/listening/Listening_02.mp3',
+    audioText: 'Guten Tag, Frau Gerber. Hier spricht Frau Schuster von der Ordination Dr. Irene Maurer. Ich rufe an, weil Ihr Befund schon fertig ist. Sie haben uns ja erzählt, dass Sie Ihren Befund dringend brauchen. Morgen ist unsere Ordination geschlossen und dann kommt ja das lange Wochenende. Sie können also schon heute Ihren Befund abholen. Kommen Sie doch einfach ab 14 Uhr in die Ordination, dann müssen Sie nicht bis zum nächsten Montag auf den Befund warten. Auf Wiederhören.',
+    listeningQuestions: [
+      { id: 'listening-02-main', question: 'Warum ruft Frau Schuster an?', questionType: 'Hauptaussage', options: ['Frau Gerber soll einen neuen Untersuchungstermin vereinbaren.', 'Frau Gerbers Befund kann bereits abgeholt werden.', 'Die Ordination benötigt noch Unterlagen von Frau Gerber.'], correctOption: 'Frau Gerbers Befund kann bereits abgeholt werden.' },
+      { id: 'listening-02-time', question: 'Wann kann Frau Gerber den Befund abholen?', questionType: 'Detail', options: ['Morgen vor 14 Uhr', 'Am nächsten Montag', 'Heute ab 14 Uhr'], correctOption: 'Heute ab 14 Uhr' },
+      { id: 'listening-02-reason', question: 'Warum empfiehlt Frau Schuster, noch heute zu kommen?', questionType: 'Grund/Integration', options: ['Morgen ist die Ordination geschlossen, und danach folgt ein langes Wochenende.', 'Frau Gerber hat für heute bereits einen Termin in der Ordination.', 'Der Befund muss vor dem Wochenende noch einmal geändert werden.'], correctOption: 'Morgen ist die Ordination geschlossen, und danach folgt ein langes Wochenende.' }
+    ]
+  }),
+
+  makePlacementListeningModel({
+    id: 'placement_listening_04',
+    level: 'A2',
+    title: 'Das gefundene Handy',
+    source: 'AustriaPath Listening Clips Listening_04.mp3',
+    audioUrl: '/audio/placement/listening/Listening_04.mp3',
+    audioText: 'Liebe Kundinnen und Kunden, wir bitten um Ihre Aufmerksamkeit. In der Gemüseabteilung wurde ein Handy in einem roten Lederetui gefunden. Das Handy wurde an der Information im Eingangsbereich abgegeben. Achtung, ich wiederhole: Der Besitzer oder die Besitzerin eines verlorenen Handys in einem roten Lederetui soll sich bitte an der Information im Eingangsbereich melden. Das Handy wurde gefunden und dort abgegeben. Vielen Dank für Ihre Aufmerksamkeit.',
+    listeningQuestions: [
+      { id: 'listening-04-main', question: 'Worum geht es in der Durchsage?', questionType: 'Hauptaussage', options: ['Die Gemüseabteilung wird früher geschlossen.', 'An der Information wird ein rotes Etui verkauft.', 'Ein gefundenes Handy wartet auf seine Besitzerin oder seinen Besitzer.'], correctOption: 'Ein gefundenes Handy wartet auf seine Besitzerin oder seinen Besitzer.' },
+      { id: 'listening-04-place', question: 'Wo wurde das Handy gefunden?', questionType: 'Detail', options: ['In der Gemüseabteilung', 'An der Information', 'Im Eingangsbereich'], correctOption: 'In der Gemüseabteilung' },
+      { id: 'listening-04-action', question: 'Was soll die Besitzerin oder der Besitzer tun?', questionType: 'Absicht/Handlung', options: ['Bei der Gemüseabteilung nach dem Handy fragen', 'Sich an der Information im Eingangsbereich melden', 'Bis zum Ende der Öffnungszeit am Eingang warten'], correctOption: 'Sich an der Information im Eingangsbereich melden' }
+    ]
+  }),
+
+  makePlacementListeningModel({
+    id: 'placement_listening_10',
+    level: 'A2',
+    title: 'Kinotipps für heute Abend',
+    source: 'AustriaPath Listening Clips Listening_10.mp3',
+    audioUrl: '/audio/placement/listening/Listening_10.mp3',
+    audioText: 'Und hier noch ein paar Kinotipps für heute Abend. Im Hollywood-Kino steht heute um 20 Uhr der Actionfilm Die Zähne des Löwen am Programm. Im Zentralkino sehen Sie heute um 22 Uhr den Thriller Die dunkle Nacht. Und für die Lachmuskeln gibt es im Kino Panoptikum um 21 Uhr die Komödie Ein Urlaub mit Hindernissen.',
+    listeningQuestions: [
+      { id: 'listening-10-comedy', question: 'Welcher Film ist für jemanden gedacht, der lachen möchte?', questionType: 'Einfache Schlussfolgerung', options: ['Die Zähne des Löwen', 'Ein Urlaub mit Hindernissen', 'Die dunkle Nacht'], correctOption: 'Ein Urlaub mit Hindernissen' },
+      { id: 'listening-10-time', question: 'Wann beginnt der Thriller?', questionType: 'Detail', options: ['Um 20 Uhr', 'Um 21 Uhr', 'Um 22 Uhr'], correctOption: 'Um 22 Uhr' },
+      { id: 'listening-10-integration', question: 'Eine Person möchte um 21 Uhr eine Komödie sehen. Welches Kino passt?', questionType: 'Integration zweier Details', options: ['Das Kino Panoptikum', 'Das Hollywood-Kino', 'Das Zentralkino'], correctOption: 'Das Kino Panoptikum' }
+    ]
+  }),
+
+  makePlacementListeningModel({
+    id: 'placement_listening_06',
+    level: 'B1',
+    title: 'Verkehrslage auf drei Autobahnen',
+    source: 'AustriaPath Listening Clips Listening_06.mp3',
+    audioUrl: '/audio/placement/listening/Listening_06.mp3',
+    audioText: 'Und hier noch die aktuellen Verkehrsmeldungen. A2 Südautobahn: Aufgrund eines Unfalls im Bereich Siebenstein gibt es bereits zwei Kilometer Stau in beiden Fahrtrichtungen. Wir bitten Sie, großräumig auszuweichen. Achtung, A1 Westautobahn Richtung Salzburg: Wegen Bauarbeiten im Bereich Amstetten ist der linke Fahrstreifen weiterhin gesperrt. Bitte halten Sie sich rechts und fahren Sie langsam. A10 Tauern Autobahn: Der Stau hat sich inzwischen aufgelöst, Sie kommen gut voran. Wir wünschen Ihnen gute Fahrt.',
+    listeningQuestions: [
+      { id: 'listening-06-avoid', question: 'Wo wird empfohlen, die betroffene Strecke möglichst zu umfahren?', questionType: 'Detail/Handlungsabsicht', options: ['Auf der A1 bei Amstetten', 'Auf der A10', 'Auf der A2 bei Siebenstein'], correctOption: 'Auf der A2 bei Siebenstein' },
+      { id: 'listening-06-reason', question: 'Warum ist auf der A1 der linke Fahrstreifen gesperrt?', questionType: 'Grund/Ursache', options: ['Wegen Bauarbeiten', 'Wegen eines Unfalls', 'Wegen eines bereits aufgelösten Staus'], correctOption: 'Wegen Bauarbeiten' },
+      { id: 'listening-06-action', question: 'Welche Anweisung gilt für Fahrer auf der A1?', questionType: 'Detailintegration', options: ['Die Autobahn verlassen und eine Umleitung nehmen', 'Rechts bleiben und langsam fahren', 'Auf den linken Fahrstreifen wechseln'], correctOption: 'Rechts bleiben und langsam fahren' },
+      { id: 'listening-06-inference', question: 'Wo ist derzeit mit der besten Verkehrslage zu rechnen?', questionType: 'Schlussfolgerung', options: ['Auf der A2, weil der Stau nur zwei Kilometer lang ist', 'Auf der A1, weil noch ein Fahrstreifen offen ist', 'Auf der A10, weil sich der Stau aufgelöst hat'], correctOption: 'Auf der A10, weil sich der Stau aufgelöst hat' }
+    ]
+  }),
+
+  makePlacementListeningModel({
+    id: 'placement_listening_11',
+    level: 'B1',
+    title: 'Die Zeitung der Nachbarn',
+    source: 'AustriaPath Listening Clips Listening_11.mp3',
+    audioUrl: '/audio/placement/listening/Listening_11.mp3',
+    audioText: 'Grüß Gott, Frau Huber. Wie gut, dass ich Sie endlich treffe. Ah, Herr Meier, grüß Gott. Was gibt es denn? Ist etwas passiert? Nein, es ist alles in Ordnung. Aber meine Frau und ich haben eine große Bitte an Sie. Wir bekommen ja täglich die Zeitung zugestellt, fahren aber morgen für vier Tage in den Urlaub und sind nicht zu Hause. Würden Sie für uns an diesen vier Tagen die Zeitung vor unserer Wohnungstür wegnehmen? Aber selbstverständlich. Das mache ich doch gerne. Wir sind doch gute Nachbarn. Da gehört sich das. Vielen Dank, Frau Huber. Wir möchten nämlich nicht, dass die Zeitungen vor unserer Wohnungstür liegen bleiben. Es sollen ja nicht gleich alle wissen, dass wir nicht zu Hause sind. Ja, schon klar. Ich werde die Zeitungen von der Tür wegnehmen. Sie können sie dann bei mir abholen, wenn Sie wieder da sind. Vielen Dank.',
+    listeningQuestions: [
+      { id: 'listening-11-main', question: 'Worum bittet Herr Meier seine Nachbarin?', questionType: 'Hauptaussage', options: ['Sie soll seine Zeitung für vier Tage abbestellen.', 'Sie soll die gelieferten Zeitungen vor seiner Wohnungstür wegnehmen.', 'Sie soll während des Urlaubs regelmäßig seine Wohnung kontrollieren.'], correctOption: 'Sie soll die gelieferten Zeitungen vor seiner Wohnungstür wegnehmen.' },
+      { id: 'listening-11-intent', question: 'Warum sollen die Zeitungen nicht vor der Tür liegen bleiben?', questionType: 'Absicht/Schlussfolgerung', options: ['Die Zeitungen könnten im Hausflur andere Bewohner stören.', 'Herr Meier möchte sie nach dem Urlaub nicht mehr lesen.', 'Niemand soll erkennen, dass die Wohnung mehrere Tage leer ist.'], correctOption: 'Niemand soll erkennen, dass die Wohnung mehrere Tage leer ist.' },
+      { id: 'listening-11-attitude', question: 'Wie reagiert Frau Huber?', questionType: 'Sprecherhaltung', options: ['Sie stimmt freundlich und ohne Vorbehalt zu.', 'Sie stimmt zu, obwohl sie die Bitte unangemessen findet.', 'Sie möchte zuerst wissen, ob Herr Meier sie bezahlt.'], correctOption: 'Sie stimmt freundlich und ohne Vorbehalt zu.' },
+      { id: 'listening-11-after', question: 'Was geschieht mit den Zeitungen nach Herrn Meiers Rückkehr?', questionType: 'Praktische Schlussfolgerung', options: ['Frau Huber schickt sie an den Zeitungsverlag zurück.', 'Herr Meier kann sie bei Frau Huber abholen.', 'Herr Meier erhält neue Exemplare vom Zusteller.'], correctOption: 'Herr Meier kann sie bei Frau Huber abholen.' }
+    ]
+  }),
+
+  makePlacementListeningModel({
+    id: 'placement_listening_12',
+    level: 'B1',
+    title: 'Ein neues Sofa',
+    source: 'AustriaPath Listening Clips Listening_12.mp3',
+    audioUrl: '/audio/placement/listening/Listening_12.mp3',
+    audioText: 'Guten Tag, kann ich Ihnen helfen? Suchen Sie etwas Bestimmtes? Ja, gerne. Ich bin umgezogen und brauche neue Möbel. Jetzt suche ich für mein Wohnzimmer ein neues Sofa. Haben Sie Sofas? Können Sie mir welche zeigen? Ja, selbstverständlich, gerne. Wir haben eine große Auswahl. Was haben Sie sich denn vorgestellt? Das Sofa soll jedenfalls groß und bequem sein. Am besten so circa zwei Meter lang und mindestens einen Meter breit. Und es soll hell sein, am besten weiß oder beige, damit es gut zu den anderen Möbeln passt. Ich glaube, wir haben ein Sofa, das Ihnen gefällt. Ein großes, gemütliches Sofa, zwei Meter lang und über einen Meter breit. Es ist hell und wirklich sehr bequem. Das klingt sehr interessant. Das scheint ja genau das zu sein, wonach ich gesucht habe. Und aus welchem Material ist der Bezug? Sie können wählen, Leder oder echte Baumwolle, beides in bester Qualität. Toll. Bitte zeigen Sie mir das Sofa.',
+    listeningQuestions: [
+      { id: 'listening-12-reason', question: 'Warum sucht die Kundin neue Möbel?', questionType: 'Grund/Ursache', options: ['Sie möchte ihr Wohnzimmer für Gäste vergrößern.', 'Ihr bisheriges Sofa ist nicht mehr bequem.', 'Sie ist in eine andere Wohnung gezogen.'], correctOption: 'Sie ist in eine andere Wohnung gezogen.' },
+      { id: 'listening-12-wishes', question: 'Welche Kombination entspricht den wichtigsten Wünschen der Kundin?', questionType: 'Integration mehrerer Details', options: ['Kompakt, dunkel und leicht zu transportieren', 'Groß, bequem und in einer hellen Farbe', 'Rund zwei Meter breit und mit dunklem Leder bezogen'], correctOption: 'Groß, bequem und in einer hellen Farbe' },
+      { id: 'listening-12-interest', question: 'Warum hält die Kundin das vorgeschlagene Sofa für interessant?', questionType: 'Schlussfolgerung', options: ['Es entspricht bei Größe, Farbe und Komfort weitgehend ihren Vorstellungen.', 'Es kann sofort und ohne zusätzliche Kosten geliefert werden.', 'Es ist kleiner als geplant, passt dafür aber besser zu ihren Möbeln.'], correctOption: 'Es entspricht bei Größe, Farbe und Komfort weitgehend ihren Vorstellungen.' },
+      { id: 'listening-12-choice', question: 'Welche Entscheidung muss die Kundin beim Bezug noch treffen?', questionType: 'Detail/Absicht', options: ['Ob sie Weiß oder Beige bevorzugt', 'Ob das Sofa zwei Meter oder drei Meter lang sein soll', 'Ob sie Leder oder echte Baumwolle möchte'], correctOption: 'Ob sie Leder oder echte Baumwolle möchte' }
+    ]
+  }),
+
+  makePlacementListeningModel({
+    id: 'placement_listening_14',
+    level: 'B1',
+    title: 'Gemeinsam Englisch lernen',
+    source: 'AustriaPath Listening Clips Listening_14.mp3',
+    audioUrl: '/audio/placement/listening/Listening_14.mp3',
+    audioText: 'Hallo Maria, wir wollten ja am Wochenende gemeinsam Englisch lernen. Hast du Zeit? Hallo Tobias, ja klar. Ich habe nicht darauf vergessen und freue mich schon. Ich könnte zum Beispiel um 10 Uhr bei dir sein. Passt das für dich? Ähm, na ja, ehrlich gesagt ist mir 10 Uhr zu früh, weil ich am Samstagvormittag noch etwas erledigen muss. Wie wäre es aber zum Beispiel ab 12 Uhr bei mir? Wir könnten vorher noch gemeinsam Mittag essen und dann lernen wir. Okay, wir dürfen aber nichts Fettes oder Schweres essen. Du weißt, ein voller Bauch studiert nicht gern. Ja, da hast du recht. Also ich kaufe Obst und Gemüse und wir trinken nur Tee oder Wasser. Perfekt, so machen wir es. Soll ich die Bücher und die CD mitnehmen? Nimm bitte jedenfalls die CD mit. Die Bücher brauchst du nicht mitzunehmen, die habe ich ja eh bei mir zu Hause.',
+    listeningQuestions: [
+      { id: 'listening-14-reason', question: 'Warum lehnt Maria den ersten Zeitvorschlag ab?', questionType: 'Grund/Ursache', options: ['Sie hat am Samstagvormittag noch etwas zu erledigen.', 'Sie möchte vor dem Treffen noch Englisch lernen.', 'Sie kann Tobias erst am Abend bei sich empfangen.'], correctOption: 'Sie hat am Samstagvormittag noch etwas zu erledigen.' },
+      { id: 'listening-14-plan', question: 'Auf welchen Plan einigen sich Maria und Tobias?', questionType: 'Integration mehrerer Details', options: ['Sie treffen sich um 10 Uhr bei Tobias und lernen vor dem Essen.', 'Sie essen getrennt und beginnen um 12 Uhr in der Bibliothek.', 'Sie treffen sich ab 12 Uhr bei Maria, essen gemeinsam und lernen danach.'], correctOption: 'Sie treffen sich ab 12 Uhr bei Maria, essen gemeinsam und lernen danach.' },
+      { id: 'listening-14-food', question: 'Warum möchten sie nichts Fettes oder Schweres essen?', questionType: 'Einfache Schlussfolgerung', options: ['Sie haben nur Obst und Gemüse im Haus.', 'Eine schwere Mahlzeit könnte ihre Konzentration beim Lernen beeinträchtigen.', 'Tobias darf vor dem Englischlernen keine warme Mahlzeit essen.'], correctOption: 'Eine schwere Mahlzeit könnte ihre Konzentration beim Lernen beeinträchtigen.' },
+      { id: 'listening-14-bring', question: 'Was soll Tobias zum Treffen mitbringen?', questionType: 'Detail', options: ['Die CD, aber nicht die Bücher', 'Die Bücher, aber nicht die CD', 'Weder die Bücher noch die CD'], correctOption: 'Die CD, aber nicht die Bücher' }
+    ]
+  }),
+
+  makePlacementListeningModel({
     id: 'a2_hoeren_arzt_apotheke',
     level: 'A2',
     title: 'A2 Hören – Arzt und Apotheke',
@@ -1097,6 +1219,44 @@ export const aiPlacementLibrary = [
     ]
   })
 ];
+
+// Pedagogically approved B1+ clips. The Placement router has no reviewed B1+
+// level, so these records are intentionally kept outside aiPlacementLibrary
+// and cannot be selected by any A2, B1, or B2 runtime route.
+export const stagedPlacementListeningB1Plus = Object.freeze([
+  Object.freeze({
+    id: 'placement_listening_19',
+    active: false,
+    classification: 'B1+',
+    skill: 'hoeren',
+    title: 'Rückenschmerzen richtig vorbeugen',
+    source: 'AustriaPath Listening Clips Listening_19.mp3',
+    audioUrl: '/audio/placement/listening/Listening_19.mp3',
+    audioText: 'Also Rückenschmerzen kenne ich nicht. Vielleicht kommt das daher, dass ich sehr viel im Fitnesscenter trainiere und starke Rückenmuskeln habe. Die Muskeln tragen meinen Körper und meine Wirbelsäule muss nicht das ganze Körpergewicht alleine tragen. So bleibt die Wirbelsäule länger gesund und ich bekomme keine Rückenschmerzen. Und besonders wichtig ist auch das richtige Heben. Wenn ich etwas Schweres vom Boden aufheben möchte, zum Beispiel eine Kiste mit schweren Büchern, dann mache ich das so. Ich stehe über der Kiste, gehe senkrecht in die Knie, lasse meinen Rücken gerade und hebe die Kiste gerade senkrecht auf. Das schont meinen Rücken.',
+    listeningQuestions: Object.freeze([
+      Object.freeze({ id: 'listening-19-reason', question: 'Wie erklärt der Sprecher, dass er keine Rückenschmerzen hat?', questionType: 'Grund/Ursache', options: Object.freeze(['Er hebt bei der Arbeit keine schweren Gegenstände.', 'Seine trainierten Muskeln entlasten seine Wirbelsäule.', 'Er lässt seinen Rücken regelmäßig ärztlich untersuchen.']), correctOption: 'Seine trainierten Muskeln entlasten seine Wirbelsäule.' }),
+      Object.freeze({ id: 'listening-19-integration', question: 'Welche gemeinsame Idee verbindet Muskeltraining und richtiges Heben?', questionType: 'Hauptaussage/Integration', options: Object.freeze(['Beide können dazu beitragen, die Wirbelsäule zu entlasten.', 'Beide sind nur bei bereits bestehenden Schmerzen sinnvoll.', 'Beide ersetzen eine medizinische Behandlung des Rückens.']), correctOption: 'Beide können dazu beitragen, die Wirbelsäule zu entlasten.' }),
+      Object.freeze({ id: 'listening-19-lifting', question: 'Wie hebt der Sprecher eine schwere Kiste?', questionType: 'Detailintegration', options: Object.freeze(['Er beugt den Rücken nach vorne und hält die Beine gerade.', 'Er zieht die Kiste zunächst näher zu sich und hebt sie seitlich an.', 'Er geht in die Knie und hält den Rücken gerade.']), correctOption: 'Er geht in die Knie und hält den Rücken gerade.' }),
+      Object.freeze({ id: 'listening-19-intent', question: 'Welche praktische Absicht hat der Sprecher mit seiner Erklärung?', questionType: 'Absicht/Schlussfolgerung', options: Object.freeze(['Er möchte erklären, warum schweres Heben grundsätzlich vermieden werden sollte.', 'Er zeigt zwei Möglichkeiten, Rückenproblemen vorzubeugen.', 'Er möchte beweisen, dass Rückenschmerzen immer durch schwache Muskeln entstehen.']), correctOption: 'Er zeigt zwei Möglichkeiten, Rückenproblemen vorzubeugen.' })
+    ])
+  }),
+  Object.freeze({
+    id: 'placement_listening_20',
+    active: false,
+    classification: 'B1+',
+    skill: 'hoeren',
+    title: 'Rückenschmerzen bei Jugendlichen',
+    source: 'AustriaPath Listening Clips Listening_20.mp3',
+    audioUrl: '/audio/placement/listening/Listening_20.mp3',
+    audioText: 'Ich arbeite als Turnlehrerin an einem Gymnasium und habe selbst zum Glück noch keine Beschwerden mit meinem Rücken. Aber ich mache mir große Sorgen um die Gesundheit meiner Schülerinnen. Viele Jugendliche klagen bereits jetzt schon sehr oft über Rückenschmerzen. Ist es nicht schlimm, dass viele meiner Schülerinnen schon mit 16 oder 17 Jahren Rückenschmerzen haben? Sie sind doch noch so jung. Ein besonderes Problem ist, dass sie oft sehr viel Zeit hinter dem Computer verbringen und dabei sehr viel sitzen. Deshalb zeige ich meinen Schülerinnen im Turnunterricht spezielle Übungen, die gut für ihren Rücken sind.',
+    listeningQuestions: Object.freeze([
+      Object.freeze({ id: 'listening-20-concern', question: 'Was beunruhigt die Lehrerin besonders?', questionType: 'Sprecherhaltung', options: Object.freeze(['Im Turnunterricht bleibt zu wenig Zeit für Rückenübungen.', 'Ihre Schülerinnen möchten lieber am Computer arbeiten als Sport machen.', 'Schon sehr junge Schülerinnen leiden häufig unter Rückenschmerzen.']), correctOption: 'Schon sehr junge Schülerinnen leiden häufig unter Rückenschmerzen.' }),
+      Object.freeze({ id: 'listening-20-cause', question: 'Welchen Zusammenhang stellt die Lehrerin her?', questionType: 'Grund/Ursache', options: Object.freeze(['Die Schülerinnen haben Rückenschmerzen, weil der Turnunterricht zu anstrengend ist.', 'Viel Zeit am Computer führt zu langem Sitzen und kann den Rücken belasten.', 'Die Jugendlichen sitzen viel, weil sie wegen ihrer Schmerzen keinen Sport machen können.']), correctOption: 'Viel Zeit am Computer führt zu langem Sitzen und kann den Rücken belasten.' }),
+      Object.freeze({ id: 'listening-20-action', question: 'Wie reagiert die Lehrerin auf das Problem?', questionType: 'Absicht/Handlung', options: Object.freeze(['Sie zeigt ihren Schülerinnen Übungen, die den Rücken unterstützen.', 'Sie empfiehlt allen betroffenen Schülerinnen einen Schulwechsel.', 'Sie reduziert die körperliche Bewegung im Turnunterricht.']), correctOption: 'Sie zeigt ihren Schülerinnen Übungen, die den Rücken unterstützen.' }),
+      Object.freeze({ id: 'listening-20-attitude', question: 'Was lässt sich über die Haltung der Lehrerin schließen?', questionType: 'Schlussfolgerung/Integration', options: Object.freeze(['Sie hält Rückenschmerzen im Jugendalter für normal und vorübergehend.', 'Sie sieht die Behandlung ausschließlich als Aufgabe von Ärzten.', 'Sie nimmt das Problem ernst und möchte präventiv handeln.']), correctOption: 'Sie nimmt das Problem ernst und möchte präventiv handeln.' })
+    ])
+  })
+]);
 
 export function getPlacementModelsByLevel(level) {
   return aiPlacementLibrary.filter((item) => item.level === level);

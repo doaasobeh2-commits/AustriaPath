@@ -86,6 +86,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
   const [bildImageBroken, setBildImageBroken] = useState(false);
   const [retryAnswer, setRetryAnswer] = useState(null);
   const recognitionRef = useRef(null);
+  const listeningAudioRef = useRef(null);
   const transcriptRef = useRef('');
   const finalTranscriptRef = useRef('');
   const submitAfterStopRef = useRef(false);
@@ -113,6 +114,11 @@ export default function PlacementTestScreen({ setActiveTab }) {
   };
 
   const stopAudio = () => {
+    if (listeningAudioRef.current) {
+      listeningAudioRef.current.pause();
+      listeningAudioRef.current.currentTime = 0;
+      listeningAudioRef.current = null;
+    }
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
@@ -580,16 +586,37 @@ export default function PlacementTestScreen({ setActiveTab }) {
 
   const playHoerenAudio = () => {
     setControlMessage('');
+    const audioUrl = currentModel?.audioUrl;
     const text = currentModel?.audioText;
-    if (!text) {
+    if (!audioUrl && !text) {
       setControlMessage('Kein Hörtext für diese Aufgabe hinterlegt.');
       return;
     }
-    if (typeof window === 'undefined' || !window.speechSynthesis) {
+    if (typeof window === 'undefined') {
       setControlMessage('Audio-Wiedergabe wird in diesem Browser nicht unterstützt.');
       return;
     }
     stopAudio();
+    if (audioUrl) {
+      const audio = new Audio(audioUrl);
+      listeningAudioRef.current = audio;
+      audio.addEventListener('ended', () => {
+        if (listeningAudioRef.current === audio) listeningAudioRef.current = null;
+      }, { once: true });
+      audio.addEventListener('error', () => {
+        if (listeningAudioRef.current === audio) listeningAudioRef.current = null;
+        setControlMessage('Der Hörtext konnte nicht abgespielt werden.');
+      }, { once: true });
+      void audio.play().catch(() => {
+        if (listeningAudioRef.current === audio) listeningAudioRef.current = null;
+        setControlMessage('Der Hörtext konnte nicht abgespielt werden.');
+      });
+      return;
+    }
+    if (!window.speechSynthesis) {
+      setControlMessage('Audio-Wiedergabe wird in diesem Browser nicht unterstützt.');
+      return;
+    }
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'de-DE';
     utterance.rate = 0.9;

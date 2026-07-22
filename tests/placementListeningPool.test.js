@@ -1,105 +1,136 @@
 /** Placement-only listening pool selection tests. */
+import { existsSync, statSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import {
+  getPlacementModel,
+  stagedPlacementListeningB1Plus,
+} from "../src/data/aiPlacementLibrary.js";
 import {
   PLACEMENT_LISTENING_POOLS,
   listPlacementListeningModels,
   selectPlacementListeningModel,
 } from "../src/data/utils/placementListeningPool.js";
 
+const APPROVED = Object.freeze({
+  A2: ["placement_listening_02", "placement_listening_04", "placement_listening_10"],
+  B1: ["placement_listening_06", "placement_listening_11", "placement_listening_12", "placement_listening_14"],
+  B2: ["b2_hoeren_buerotermin", "b2_hoeren_bewerbung", "b2_hoeren_digitalisierung"],
+});
+
+const ANSWER_INDEXES = Object.freeze({
+  placement_listening_02: [1, 2, 0],
+  placement_listening_04: [2, 0, 1],
+  placement_listening_10: [1, 2, 0],
+  placement_listening_06: [2, 0, 1, 2],
+  placement_listening_11: [1, 2, 0, 1],
+  placement_listening_12: [2, 1, 0, 2],
+  placement_listening_14: [0, 2, 1, 0],
+});
+
 describe("Placement listening pools", () => {
-  it("contains the approved number of variants per CEFR level", () => {
-    expect(PLACEMENT_LISTENING_POOLS.A2).toHaveLength(2);
-    expect(PLACEMENT_LISTENING_POOLS.B1).toHaveLength(3);
-    expect(PLACEMENT_LISTENING_POOLS.B2).toHaveLength(3);
+  it("contains exactly the approved active IDs for A2 and B1", () => {
+    expect(PLACEMENT_LISTENING_POOLS.A2).toEqual(APPROVED.A2);
+    expect(PLACEMENT_LISTENING_POOLS.B1).toEqual(APPROVED.B1);
+    expect(PLACEMENT_LISTENING_POOLS.B2).toEqual(APPROVED.B2);
   });
 
   it.each(["A2", "B1", "B2"])(
-    "%s models contain one short clip and 2-3 objective questions",
+    "%s models remain strictly isolated and contain 2-4 objective questions",
     (level) => {
       const models = listPlacementListeningModels(level);
-      expect(models).toHaveLength(PLACEMENT_LISTENING_POOLS[level].length);
+      expect(models.map((model) => model.id)).toEqual(APPROVED[level]);
       for (const model of models) {
         expect(model.level).toBe(level);
         expect(model.skill).toBe("hoeren");
         expect(model.audioText.length).toBeGreaterThan(30);
         expect(model.listeningQuestions.length).toBeGreaterThanOrEqual(2);
-        expect(model.listeningQuestions.length).toBeLessThanOrEqual(3);
+        expect(model.listeningQuestions.length).toBeLessThanOrEqual(4);
         for (const question of model.listeningQuestions) {
+          expect(question.options).toHaveLength(3);
           expect(question.options).toContain(question.correctOption);
         }
       }
     }
   );
 
-  it("reuses the selected B1 training tasks", () => {
-    expect(listPlacementListeningModels("B1").map((model) => model.title)).toEqual([
-      "B1 Hören – Supermarkt-Durchsage",
-      "B1 Hören – Bahnhofsdurchsage",
-      "B1 Hören – Arzttermin verschieben",
-    ]);
-  });
-
-  it("reuses the selected B2 training excerpts", () => {
-    expect(listPlacementListeningModels("B2").map((model) => model.title)).toEqual([
-      "B2 Hören – Büro und Terminplanung",
-      "B2 Hören – Bewerbung und Arbeitswelt",
-      "B2 Hören – Digitalisierung und Online-Meeting",
-    ]);
-  });
-
-  it.each([
-    ["leicht", "b1_hoeren_supermarkt"],
-    ["mittel", "b1_hoeren_bahnhof"],
-    ["stark", "b1_hoeren_arzttermin"],
-  ])("B1 %s selects the exact requested difficulty", (difficulty, id) => {
-    expect(selectPlacementListeningModel(
-      { level: "B1", difficulty }, { random: () => 0.999 }
-    ).id).toBe(id);
-  });
-
-  it("uses deterministic nearest same-level difficulty when exact is absent", () => {
-    const selected = selectPlacementListeningModel(
-      { level: "A2", difficulty: "stark" }, { random: () => 0 }
-    );
-    expect(selected.level).toBe("A2");
-    expect(selected.difficulty).toBe("mittel");
-  });
-
-  it("random choice among eligible models never crosses the requested level", () => {
-    for (const random of [0, 0.5, 0.999]) {
-      expect(selectPlacementListeningModel(
-        { level: "B2", difficulty: "mittel" }, { random: () => random }
-      ).level).toBe("B2");
+  it("never exposes an A2 model through B1 or B2 selection", () => {
+    for (const level of ["B1", "B2"]) {
+      for (const random of [0, 0.25, 0.5, 0.75, 0.999]) {
+        expect(APPROVED.A2).not.toContain(
+          selectPlacementListeningModel({ level, difficulty: "mittel" }, { random: () => random }).id
+        );
+      }
     }
   });
 
-  it("prefers unseen eligible content and falls back when every option is recent", () => {
-    const step = { level: "B2", difficulty: "mittel" };
-    const ids = listPlacementListeningModels("B2")
-      .filter((model) => model.difficulty === "mittel").map((model) => model.id);
-    expect(selectPlacementListeningModel(step, {
-      recentIds: ids.slice(0, -1), random: () => 0,
-    }).id).toBe(ids.at(-1));
-    expect(selectPlacementListeningModel(step, {
-      recentIds: ids, random: () => 0,
-    })).toBeTruthy();
+  it("never exposes a B1 model through A2 or B2 selection", () => {
+    for (const level of ["A2", "B2"]) {
+      for (const random of [0, 0.25, 0.5, 0.75, 0.999]) {
+        expect(APPROVED.B1).not.toContain(
+          selectPlacementListeningModel({ level, difficulty: "mittel" }, { random: () => random }).id
+        );
+      }
+    }
   });
 
-  it("uses each model's most recent occurrence for true LRU with duplicates", () => {
-    const step = { level: "A2", difficulty: "mittel" };
-    const selected = selectPlacementListeningModel(step, {
-      // Newest first: mittel was just used; Arzt was used less recently.
-      recentIds: [
-        "a2_hoeren_mittel",
-        "a2_hoeren_arzt_apotheke",
-        "a2_hoeren_mittel",
-      ],
-      random: () => 0,
-    });
-    expect(selected.id).toBe("a2_hoeren_arzt_apotheke");
+  it("keeps Listening_19 and Listening_20 staged, inactive, and outside every runtime pool", () => {
+    expect(stagedPlacementListeningB1Plus.map((model) => model.id)).toEqual([
+      "placement_listening_19",
+      "placement_listening_20",
+    ]);
+    for (const model of stagedPlacementListeningB1Plus) {
+      expect(model.active).toBe(false);
+      expect(model.classification).toBe("B1+");
+      expect(getPlacementModel(model.id)).toBeUndefined();
+      expect(Object.values(PLACEMENT_LISTENING_POOLS).flat()).not.toContain(model.id);
+    }
+    expect(listPlacementListeningModels("B2").map((model) => model.id))
+      .not.toEqual(expect.arrayContaining(["placement_listening_19", "placement_listening_20"]));
+  });
+
+  it("preserves the approved answer keys and question-type metadata", () => {
+    for (const [id, expectedIndexes] of Object.entries(ANSWER_INDEXES)) {
+      const model = getPlacementModel(id);
+      expect(model.listeningQuestions.map((question) => question.options.indexOf(question.correctOption)))
+        .toEqual(expectedIndexes);
+      expect(model.listeningQuestions.every((question) => Boolean(question.questionType))).toBe(true);
+    }
+  });
+
+  it("uses the real approved static audio assets", () => {
+    for (const id of [...APPROVED.A2, ...APPROVED.B1]) {
+      const model = getPlacementModel(id);
+      const asset = fileURLToPath(new URL(`../public${model.audioUrl}`, import.meta.url));
+      expect(existsSync(asset)).toBe(true);
+      expect(statSync(asset).size).toBeGreaterThan(0);
+    }
+  });
+
+  it.each(["A2", "B1"])("avoids duplicate %s clips until its pool is exhausted", (level) => {
+    const recentIds = [];
+    for (let index = 0; index < APPROVED[level].length; index += 1) {
+      const selected = selectPlacementListeningModel(
+        { level, difficulty: "mittel" },
+        { recentIds, random: () => 0 }
+      );
+      expect(recentIds).not.toContain(selected.id);
+      recentIds.unshift(selected.id);
+    }
+    expect(new Set(recentIds)).toEqual(new Set(APPROVED[level]));
+  });
+
+  it("falls back within the same level after every same-level option is recent", () => {
+    const selected = selectPlacementListeningModel(
+      { level: "A2", difficulty: "stark" },
+      { recentIds: [...APPROVED.A2], random: () => 0 }
+    );
+    expect(selected.level).toBe("A2");
+    expect(APPROVED.A2).toContain(selected.id);
   });
 
   it("returns null instead of crossing levels for an unavailable pool", () => {
+    expect(selectPlacementListeningModel({ level: "B1+" })).toBeNull();
     expect(selectPlacementListeningModel({ level: "C1" })).toBeNull();
   });
 });

@@ -9,13 +9,15 @@ import { getPlacementModel } from "../aiPlacementLibrary.js";
 
 export const PLACEMENT_LISTENING_POOLS = Object.freeze({
   A2: Object.freeze([
-    "a2_hoeren_mittel",
-    "a2_hoeren_arzt_apotheke",
+    "placement_listening_02",
+    "placement_listening_04",
+    "placement_listening_10",
   ]),
   B1: Object.freeze([
-    "b1_hoeren_supermarkt",
-    "b1_hoeren_bahnhof",
-    "b1_hoeren_arzttermin",
+    "placement_listening_06",
+    "placement_listening_11",
+    "placement_listening_12",
+    "placement_listening_14",
   ]),
   B2: Object.freeze([
     "b2_hoeren_buerotermin",
@@ -35,7 +37,7 @@ export function listPlacementListeningModels(level) {
         model.audioText &&
         Array.isArray(model.listeningQuestions) &&
         model.listeningQuestions.length >= 2 &&
-        model.listeningQuestions.length <= 3
+        model.listeningQuestions.length <= 4
     );
 }
 
