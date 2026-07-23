@@ -23,14 +23,15 @@ describe("closed Placement Planning packs", () => {
     expect(getPlacementPlanningPacksByLevel("B2")).toHaveLength(2);
   });
 
-  it("maps every frozen manifest item exactly once to an existing MP3", () => {
+  it("maps every frozen manifest item to an existing MP3 (closing variants may reuse audio)", () => {
     const manifest = JSON.parse(fs.readFileSync(
       path.resolve("review-only/planning-audio-generation-manifest.json"), "utf8"
     ));
     const moves = placementPlanningPacks.flatMap((pack) => pack.moves);
-    expect(moves).toHaveLength(70);
-    expect(new Set(moves.map((move) => move.filename)).size).toBe(70);
-    expect(new Set(moves.map((move) => move.filename))).toEqual(
+    expect(moves.length).toBeGreaterThanOrEqual(70);
+    const uniqueFilenames = new Set(moves.map((move) => move.filename));
+    expect(uniqueFilenames.size).toBe(70);
+    expect(uniqueFilenames).toEqual(
       new Set(manifest.items.map((item) => item.filename))
     );
     for (const move of moves) {

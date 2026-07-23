@@ -418,8 +418,9 @@ describe("placementEvaluateService — sanitize", () => {
     );
 
     expect(result.needsFollowUp).toBe(true);
-    expect(result.followUpQuestionId).toBe("A2_BANK_04");
-    expect(result.followUpQuestion).toBe("Was macht der Mann vielleicht bei der Bank?");
+    // Prefer uncovered intents (conversation) over clarifying PARTIAL possible_action.
+    expect(result.followUpQuestionId).toBe("A2_BANK_02");
+    expect(result.followUpQuestion).toBe("Mit wem spricht der Mann?");
   });
 
   it("asks no Bild follow-up when every proposed candidate is redundant", () => {

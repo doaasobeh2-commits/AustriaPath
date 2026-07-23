@@ -105,19 +105,20 @@ function normalizeText(value = "") {
 function mapListeningQuestionToFocus(question = "") {
   const text = normalizeText(question);
   if (!text) return "Details aus Hörtexten erkennen";
-  if (/\bwo\b|ort|gefunden|gelegen|befind/.test(text)) {
-    return "Ortsangaben gezielt verstehen";
+  // Intent-first: reason/time/place before superficial person words like "Frau".
+  if (/\bwarum\b|\bweshalb\b|grund|weil|empfiehlt/.test(text)) {
+    return "Gründe im Hörtext erkennen";
   }
   if (/\bwann\b|uhr|zeit|tag|datum|montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag/.test(text)) {
     return "Zeitangaben gezielt verstehen";
   }
-  if (/\bwer\b|wen\b|wessen\b|person|name|frau|mann|freund/.test(text)) {
+  if (/\bwo\b|ort|gefunden|gelegen|befind/.test(text)) {
+    return "Ortsangaben gezielt verstehen";
+  }
+  if (/\bwer\b|wen\b|wessen\b|\bperson\b|\bname\b/.test(text)) {
     return "Personenangaben gezielt verstehen";
   }
-  if (/\bwarum\b|weshalb|grund|weil/.test(text)) {
-    return "Gründe im Hörtext erkennen";
-  }
-  if (/\bwas\b|welche|wie viel|wieviele|wie lange/.test(text)) {
+  if (/\bwas\b|welche|wie viel|wieviele|wie lange|worum/.test(text)) {
     return "Details aus Hörtexten erkennen";
   }
   return "Details aus Hörtexten erkennen";

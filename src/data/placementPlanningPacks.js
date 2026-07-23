@@ -50,14 +50,19 @@ const E = {
   implementation: evidence("implementation", "Umsetzung und Verantwortlichkeiten", true, ["(?:umsetzen|verantwortlich|ubernimmt|zeitplan|uberprufen)"]),
 };
 
-const pack = (scenarioId, level, title, task, evidenceIds, main, branch) => Object.freeze({
-  scenarioId, id: scenarioId, service: "placement", skill: "planung", level,
-  difficulty: scenarioId.endsWith("schwach") ? "schwach" : "mittel", title,
-  studentPreview: task, learnerTask: task,
-  evidenceUnits: Object.freeze(evidenceIds.map((id) => E[id])),
-  mainMoves: Object.freeze(main), branchMoves: Object.freeze(branch),
-  moves: Object.freeze([...main, ...branch]), finalMoveId: main.at(-1).id,
-});
+const pack = (scenarioId, level, title, task, evidenceIds, main, branch) => {
+  const closings = main.filter((m) => m.closing);
+  return Object.freeze({
+    scenarioId, id: scenarioId, service: "placement", skill: "planung", level,
+    difficulty: scenarioId.endsWith("schwach") ? "schwach" : "mittel", title,
+    studentPreview: task, learnerTask: task,
+    evidenceUnits: Object.freeze(evidenceIds.map((id) => E[id])),
+    mainMoves: Object.freeze(main), branchMoves: Object.freeze(branch),
+    moves: Object.freeze([...main, ...branch]),
+    // Prefer the primary/combined closing when multiple covered-aware closings exist.
+    finalMoveId: (closings.find((m) => m.closingProfile === "combined") || closings[0] || main.at(-1))?.id,
+  });
+};
 
 export const placementPlanningPacks = Object.freeze([
   pack("a2_planung_mittel", "A2", "A2 Planung – Geburtstagsfeier planen", "Sie möchten mit einem Freund eine Geburtstagsfeier organisieren. Planen Sie gemeinsam den Termin, den Ort, die Gäste sowie Essen und Getränke. Treffen Sie am Ende eine Entscheidung.", ["date_time","place","guests","food_drinks","simple_reason","reaction","alternative","final_agreement"], [
@@ -88,7 +93,12 @@ export const placementPlanningPacks = Object.freeze([
     move("move-tasks","main",3,"a2_einzug_03_aufgaben.mp3","Welche Aufgaben können Sie übernehmen?",["tasks"],["responsibilities"],15,6,{skipWhenCovered:true}),
     move("move-transport","main",4,"a2_einzug_04_transport.mp3","Wie transportieren wir die schweren Sachen?",["transport_items"],["costs"],15,6,{skipWhenCovered:true}),
     move("move-food","main",5,"a2_einzug_05_pause.mp3","Ich schlage vor, dass wir Pizza und Getränke bestellen. Was meinen Sie?",["reaction","break_food"],["costs","alternative"],15,9,{mandatory:true,replacementMoveId:"move-car-problem"}),
-    move("move-close","main",6,"a2_einzug_06_abschluss.mp3","Also, wann kommen wir und wer macht was?",["final_agreement"],["date_time","tasks"],15,6,{mandatory:true,closing:true}),
+    // Covered-aware closed closings (deterministic).
+    // Displayed text MUST match the reused MP3 transcript exactly.
+    move("move-close","main",6,"a2_einzug_06_abschluss.mp3","Also, wann kommen wir und wer macht was?",["final_agreement"],["date_time","tasks"],15,6,{mandatory:true,closing:true,closingProfile:"combined"}),
+    move("move-close-time","main",7,"a2_einzug_01_termin.mp3","Wann können wir unserem Freund beim Einzug helfen?",["final_agreement"],["date_time"],15,6,{mandatory:true,closing:true,closingProfile:"time_only"}),
+    move("move-close-tasks","main",8,"a2_einzug_03_aufgaben.mp3","Welche Aufgaben können Sie übernehmen?",["final_agreement"],["tasks"],15,6,{mandatory:true,closing:true,closingProfile:"tasks_only"}),
+    move("move-close-summary","main",9,"a2_picknick_06_abschluss.mp3","Gut, was ist jetzt unser gemeinsamer Plan?",["final_agreement"],[],15,6,{mandatory:true,closing:true,closingProfile:"summary"}),
   ],[
     move("move-duration","branch",1,"a2_einzug_b01_dauer.mp3","Wie lange können Sie helfen?",["date_time"],[],15,5),
     move("move-car-problem","branch",2,"a2_einzug_b02_auto_problem.mp3","Wir haben kein großes Auto. Was können wir machen?",["alternative","transport_items"],[],15,7),
@@ -184,6 +194,33 @@ export function buildPlanningEvidenceLedger(packOrId, conversation = []) {
   }));
 }
 
+export function selectCoveredAwareClosingMove(packOrId, conversation = []) {
+  const pack = typeof packOrId === "string" ? getPlacementPlanningPack(packOrId) : packOrId;
+  if (!pack) return null;
+  const asked = new Set(conversation.map((t) => t?.moveId).filter(Boolean));
+  const ledger = buildPlanningEvidenceLedger(pack, conversation);
+  const closings = pack.mainMoves.filter((m) => m.closing && !asked.has(m.id));
+  if (!closings.length) return null;
+  if (closings.length === 1 && !closings[0].closingProfile) return closings[0];
+
+  const dateCovered = ledger.date_time?.finalState === "covered";
+  const tasksCovered = ledger.tasks?.finalState === "covered";
+  const profile =
+    dateCovered && tasksCovered
+      ? "summary"
+      : dateCovered && !tasksCovered
+        ? "tasks_only"
+        : !dateCovered && tasksCovered
+          ? "time_only"
+          : "combined";
+
+  return (
+    closings.find((m) => m.closingProfile === profile) ||
+    closings.find((m) => m.closingProfile === "combined") ||
+    closings[0]
+  );
+}
+
 export function selectNextPlanningMove(packOrId, conversation = [], proposed = null) {
   const pack=typeof packOrId === "string" ? getPlacementPlanningPack(packOrId) : packOrId;
   if(!pack) return null;
@@ -191,15 +228,18 @@ export function selectNextPlanningMove(packOrId, conversation = [], proposed = n
   const ledger=buildPlanningEvidenceLedger(pack,conversation);
   const eligible=(m)=>{
     if(asked.has(m.id)) return false;
+    if(m.closing) return false;
     const covered=m.targets.length>0 && m.targets.every((id)=>ledger[id]?.finalState==="covered");
     if(m.skipWhenCovered && covered) return false;
     if(m.replacementMoveId && covered && asked.has(m.replacementMoveId)) return false;
     return true;
   };
-  const closing=pack.mainMoves.find((m)=>m.closing);
   const nonClosingRemaining=pack.mainMoves.filter((m)=>!m.closing && eligible(m));
   let allowed=[...nonClosingRemaining];
-  if(!allowed.length && !asked.has(closing.id)) allowed=[closing];
+  if(!allowed.length) {
+    const closing = selectCoveredAwareClosingMove(pack, conversation);
+    if (closing) allowed = [closing];
+  }
   const proposedMove=typeof proposed === "string" ? getPlacementPlanningMove(pack,proposed) : null;
   if(proposedMove && allowed.some((m)=>m.id===proposedMove.id)) return proposedMove;
   const next=allowed[0] || null;

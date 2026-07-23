@@ -532,9 +532,19 @@ function buildRecommendations(level, skillBands, evidenceSummary) {
   }
 
   const relative = buildRelativeStrengthItems(skillBands, evidenceSummary);
-  if (relative.length) {
+  const maintainedAreaLabels = [
+    ...new Set(
+      relative
+        .filter((item) => {
+          const band = normalizeBand(skillBands[item.skill]);
+          return band === "medium" || band === "strong";
+        })
+        .map((item) => item.label)
+    ),
+  ];
+  if (maintainedAreaLabels.length) {
     add(
-      `Stärken beibehalten: ${[...new Set(relative.map((r) => r.label))].slice(0, 3).join(", ")} — kurz wiederholen, nicht vernachlässigen.`
+      `Stärken beibehalten: ${maintainedAreaLabels.slice(0, 3).join(", ")} — kurz wiederholen, nicht vernachlässigen.`
     );
   }
 

@@ -1010,6 +1010,7 @@ export const aiPlacementLibrary = [
   makePlacementListeningModel({
     id: 'placement_listening_02',
     level: 'A2',
+    difficulty: 'stark',
     title: 'Der fertige Befund',
     source: 'AustriaPath Listening Clips Listening_02.mp3',
     audioUrl: '/audio/placement/listening/Listening_02.mp3',
@@ -1024,6 +1025,7 @@ export const aiPlacementLibrary = [
   makePlacementListeningModel({
     id: 'placement_listening_04',
     level: 'A2',
+    difficulty: 'mittel',
     title: 'Das gefundene Handy',
     source: 'AustriaPath Listening Clips Listening_04.mp3',
     audioUrl: '/audio/placement/listening/Listening_04.mp3',
@@ -1038,6 +1040,7 @@ export const aiPlacementLibrary = [
   makePlacementListeningModel({
     id: 'placement_listening_10',
     level: 'A2',
+    difficulty: 'leicht',
     title: 'Kinotipps für heute Abend',
     source: 'AustriaPath Listening Clips Listening_10.mp3',
     audioUrl: '/audio/placement/listening/Listening_10.mp3',

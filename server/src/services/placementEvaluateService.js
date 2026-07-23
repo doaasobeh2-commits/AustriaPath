@@ -170,7 +170,7 @@ export function getBildEvidenceCoverage(pack, conversation = []) {
   return result;
 }
 
-export function getEligibleBildFollowUps(pack, conversation = [], semanticCovered = []) {
+export function getEligibleBildFollowUps(pack, conversation = [], semanticCovered = [], options = {}) {
   if (!pack) return [];
   const coverage = getBildEvidenceCoverage(pack, conversation);
   const alreadyAskedTexts = new Set(
@@ -194,7 +194,13 @@ export function getEligibleBildFollowUps(pack, conversation = [], semanticCovere
     (pack.referenceEvidence || []).map((item) => [item.id, item.priority ?? 9])
   );
 
-  return pack.followUpBank
+  // Prefer genuinely uncovered intents over clarifying PARTIAL ones when the
+  // productive band is medium+ (or unknown). Weak bands may still clarify PARTIAL.
+  const productiveBand = String(options.productiveBand || "").toLowerCase();
+  const preferUncoveredOverPartial =
+    productiveBand !== "weak" && productiveBand !== "schwach";
+
+  let eligible = pack.followUpBank
     .filter((question) => !alreadyAskedTexts.has(normalizeText(question.question)))
     .filter((question) => !askedIntents.has(question.intent))
     .filter((question) => !providerCovered.has(normalizeText(question.intent)))
@@ -202,10 +208,24 @@ export function getEligibleBildFollowUps(pack, conversation = [], semanticCovere
     .filter((question) => (question.prerequisites || []).every(
       (intent) => coverage[intent] === COVERAGE.SUFFICIENT
     ))
-    .map((question, index) => ({ ...question, index, evidenceState: coverage[question.intent] }))
+    .map((question, index) => ({ ...question, index, evidenceState: coverage[question.intent] }));
+
+  const hasUncovered = eligible.some((q) => q.evidenceState === COVERAGE.NOT_COVERED);
+  if (preferUncoveredOverPartial && hasUncovered) {
+    eligible = eligible.filter((q) => q.evidenceState === COVERAGE.NOT_COVERED);
+  }
+
+  return eligible
     .sort((a, b) => {
-      const partialDelta = Number(b.evidenceState === COVERAGE.PARTIAL) - Number(a.evidenceState === COVERAGE.PARTIAL);
-      if (partialDelta) return partialDelta;
+      if (!preferUncoveredOverPartial) {
+        const partialDelta = Number(b.evidenceState === COVERAGE.PARTIAL) - Number(a.evidenceState === COVERAGE.PARTIAL);
+        if (partialDelta) return partialDelta;
+      } else {
+        const uncoveredDelta =
+          Number(a.evidenceState === COVERAGE.NOT_COVERED) -
+          Number(b.evidenceState === COVERAGE.NOT_COVERED);
+        if (uncoveredDelta) return -uncoveredDelta;
+      }
       const priorityDelta = (evidencePriority.get(a.intent) ?? 9) - (evidencePriority.get(b.intent) ?? 9);
       return priorityDelta || a.index - b.index;
     })
@@ -476,12 +496,6 @@ export function sanitizePlacementEvaluation(
         selectedImageContext?.catalogId
       )
     : null;
-  const eligibleBildQuestions = getEligibleBildFollowUps(
-    bildPack, conversation, raw?.coveredTopics
-  );
-  const allowed = model?.skill === "bildbeschreibung"
-    ? eligibleBildQuestions.map((item) => item.question)
-    : buildAllowedFollowUps(model, conversation);
   const communicativeBand = BANDS.has(raw?.communicativeBand)
     ? raw.communicativeBand
     : null;
@@ -509,6 +523,16 @@ export function sanitizePlacementEvaluation(
       502
     );
   }
+
+  const eligibleBildQuestions = getEligibleBildFollowUps(
+    bildPack,
+    conversation,
+    raw?.coveredTopics,
+    { productiveBand: band }
+  );
+  const allowed = model?.skill === "bildbeschreibung"
+    ? eligibleBildQuestions.map((item) => item.question)
+    : buildAllowedFollowUps(model, conversation);
 
   const validBildTopicIds = bildPack
     ? new Set(bildPack.referenceEvidence.map((item) => item.id))
@@ -961,7 +985,9 @@ export async function evaluatePlacementTurn({
     ? getPlacementBildAssessmentPack(imageContext.catalogLevel, imageContext.catalogId)
     : null;
   const allowedFollowUps = imagePack
-    ? getEligibleBildFollowUps(imagePack, fullConversation)
+    ? getEligibleBildFollowUps(imagePack, fullConversation, [], {
+        productiveBand: "medium",
+      })
     : buildAllowedFollowUps(model, fullConversation);
   const system = buildExaminerSystemPrompt(
     model,

@@ -107,17 +107,40 @@ describe("Placement listening pools", () => {
     }
   });
 
-  it.each(["A2", "B1"])("avoids duplicate %s clips until its pool is exhausted", (level) => {
+  it.each(["A2", "B1"])("avoids duplicate %s clips until its difficulty slice is exhausted", (level) => {
     const recentIds = [];
-    for (let index = 0; index < APPROVED[level].length; index += 1) {
+    const mittelPool = listPlacementListeningModels(level).filter(
+      (model) => model.difficulty === "mittel"
+    );
+    const iterations = Math.max(1, mittelPool.length);
+    for (let index = 0; index < iterations; index += 1) {
       const selected = selectPlacementListeningModel(
         { level, difficulty: "mittel" },
         { recentIds, random: () => 0 }
       );
       expect(recentIds).not.toContain(selected.id);
+      expect(selected.difficulty).toBe("mittel");
       recentIds.unshift(selected.id);
     }
-    expect(new Set(recentIds)).toEqual(new Set(APPROVED[level]));
+    expect(new Set(recentIds)).toEqual(new Set(mittelPool.map((model) => model.id)));
+  });
+
+  it("does not serve hard-A2 Befund on default A2-mittel selection", () => {
+    for (const random of [0, 0.25, 0.5, 0.75, 0.999]) {
+      const selected = selectPlacementListeningModel(
+        { level: "A2", difficulty: "mittel" },
+        { random: () => random }
+      );
+      expect(selected.id).not.toBe("placement_listening_02");
+      expect(selected.difficulty).toBe("mittel");
+    }
+    expect(getPlacementModel("placement_listening_02").difficulty).toBe("stark");
+    expect(
+      selectPlacementListeningModel(
+        { level: "A2", difficulty: "stark" },
+        { random: () => 0 }
+      ).id
+    ).toBe("placement_listening_02");
   });
 
   it("falls back within the same level after every same-level option is recent", () => {
