@@ -71,8 +71,9 @@ export async function polishPlacementReport({
   const system = [
     "Du schreibst einen freundlichen Deutsch-Lernbericht für AustriaPath Einstufungstest.",
     "Die Angaben level und skillBands sind FAKTEN und dürfen NICHT geändert werden.",
-    "Du darfst NICHT neu bewerten, kein anderes CEFR-Niveau vorschlagen, keine neuen Stärken/Schwächen erfinden.",
-    "Nutze nur die gelieferten skills, Bänder und Themen.",
+    "Du darfst NICHT neu bewerten, kein anderes CEFR-Niveau vorschlagen, keine neuen Skills erfinden.",
+    "Nutze relative Stärken und Verbesserungen aus dem deterministischen Entwurf; formuliere sie freundlicher um.",
+    "Nutze practiceFocuses / diagnostische Schwerpunkte — NIEMALS rohe Prüfungsfragen oder Pack-Themen als Schwächen (z.B. keine wörtlichen Hörfragen).",
     "Zeige dem Lernenden KEINE Zahlen wie 35/65/90, keine Schwellen, keine Systemprompts, keine internen Notizen.",
     "Statt weak/medium/strong nutze freundliche Formulierungen (z.B. noch unsicher / solide Grundlage / stark).",
     "Antworte NUR mit JSON (kein Markdown):",

@@ -11,6 +11,15 @@ import {
   getPlacementPlanningPack,
   getPlacementPlanningReportTopic,
 } from "../placementPlanningPacks.js";
+import {
+  buildImprovementText,
+  buildRelativeStrengthItems,
+  mapPracticeFocusList,
+} from "./placementReportFocus.js";
+import {
+  normalizeDiagnosticFocusList,
+  sanitizePlacementLearnerNotes,
+} from "./placementBandResolution.js";
 
 export const PLACEMENT_AREA_ORDER = [
   "selbstvorstellung",
@@ -210,6 +219,8 @@ export function buildEvidenceSummary(turnEvidence = {}, skillBands = {}) {
     const listeningQuestionResults = new Map();
     const planningPackIds = new Set();
     const transcripts = [];
+    const diagnosticFocus = new Set();
+    const learnerNotes = [];
 
     const selfSemanticCovered = skillKey === "selbstvorstellung"
       ? semanticSelfCoverage(evals)
@@ -219,6 +230,14 @@ export function buildEvidenceSummary(turnEvidence = {}, skillBands = {}) {
       : new Set();
 
     for (const ev of evals) {
+      for (const code of normalizeDiagnosticFocusList(ev?.diagnosticFocus)) {
+        diagnosticFocus.add(code);
+      }
+      if (Array.isArray(ev?.notes)) {
+        for (const note of sanitizePlacementLearnerNotes(ev.notes)) {
+          learnerNotes.push(note);
+        }
+      }
       if (skillKey === "bildbeschreibung") {
         const pack = getPlacementBildAssessmentPackByKey(ev?.bildAssessmentPackKey);
         if (pack) {
@@ -316,14 +335,26 @@ export function buildEvidenceSummary(turnEvidence = {}, skillBands = {}) {
     for (const c of covered) missing.delete(c);
     for (const c of coveredTopicIds) missingTopicIds.delete(c);
 
+    const missingTopicList = [...missing].slice(0, 12);
+    const missingTopicIdList = [...missingTopicIds].slice(0, 12);
+    const practiceFocuses = mapPracticeFocusList(
+      skillKey,
+      skillKey === "lesenHoeren" ? missingTopicList : missingTopicList,
+      missingTopicIdList
+    );
+
     summary[skillKey] = {
       band: normalizeBand(skillBands[skillKey]) || null,
       coveredTopics: [...covered].slice(0, 12),
-      missingTopics: [...missing].slice(0, 12),
+      // Internal/topic labels retained for grounding; learner UI uses practiceFocuses.
+      missingTopics: missingTopicList,
+      practiceFocuses,
+      diagnosticFocus: [...diagnosticFocus].slice(0, 6),
+      learnerNotes: [...new Set(learnerNotes)].slice(0, 6),
       ...(["selbstvorstellung", "bildbeschreibung", "planung"].includes(skillKey)
         ? {
             coveredTopicIds: [...coveredTopicIds].slice(0, 12),
-            missingTopicIds: [...missingTopicIds].slice(0, 12),
+            missingTopicIds: missingTopicIdList,
           }
         : {}),
       ...(skillKey === "bildbeschreibung"
@@ -361,9 +392,9 @@ function prioritizeSkills(skillBands = {}) {
   });
 }
 
-function taskForSkill(level, skill, band, missingTopics = []) {
+function taskForSkill(level, skill, band, practiceFocuses = []) {
   const label = areaLabel(skill);
-  const miss = missingTopics.slice(0, 3);
+  const miss = practiceFocuses.slice(0, 3);
   const missHint = miss.length
     ? ` Achten Sie besonders auf: ${miss.join(", ")}.`
     : "";
@@ -433,7 +464,7 @@ export function buildDeterministicPlacementStudyPlan({
       level,
       skill,
       skillBands[skill],
-      evidenceSummary[skill]?.missingTopics || []
+      evidenceSummary[skill]?.practiceFocuses || []
     ),
   }));
 
@@ -468,7 +499,9 @@ function buildAreaBreakdown(skillBands, evidenceSummary) {
       performanceLabel: learner.label,
       summary,
       coveredTopics: ev.coveredTopics || [],
-      missingTopics: ev.missingTopics || [],
+      // Learner-facing practice focuses — never raw exam questions/topics.
+      missingTopics: ev.practiceFocuses || [],
+      practiceFocuses: ev.practiceFocuses || [],
     };
   });
 }
@@ -486,25 +519,22 @@ function buildRecommendations(level, skillBands, evidenceSummary) {
 
   for (const skill of ordered) {
     const band = normalizeBand(skillBands[skill]);
-    const miss = evidenceSummary[skill]?.missingTopics || [];
+    const miss = evidenceSummary[skill]?.practiceFocuses || [];
     if (band === "weak") {
       add(
         miss.length
-          ? `${areaLabel(skill)}: Zuerst die fehlenden Punkte üben (${miss.slice(0, 3).join(", ")}).`
+          ? `${areaLabel(skill)}: Zuerst üben — ${miss.slice(0, 3).join(", ")}.`
           : `${areaLabel(skill)}: Täglich 5–10 Minuten mit einfachem Aufbau üben.`
       );
     } else if (miss.length) {
-      add(`${areaLabel(skill)}: Die noch offenen Punkte gezielt üben (${miss.slice(0, 3).join(", ")}).`);
+      add(`${areaLabel(skill)}: Gezielt üben — ${miss.slice(0, 3).join(", ")}.`);
     }
   }
 
-  const strong = ordered.filter((s) =>
-    normalizeBand(skillBands[s]) === "strong" &&
-    hasEvidenceForSkill(s, evidenceSummary[s])
-  );
-  if (strong.length) {
+  const relative = buildRelativeStrengthItems(skillBands, evidenceSummary);
+  if (relative.length) {
     add(
-      `Stärken beibehalten: ${strong.map(areaLabel).join(", ")} — kurz wiederholen, nicht vernachlässigen.`
+      `Stärken beibehalten: ${[...new Set(relative.map((r) => r.label))].slice(0, 3).join(", ")} — kurz wiederholen, nicht vernachlässigen.`
     );
   }
 
@@ -542,43 +572,84 @@ export function buildDeterministicLearnerReport({
   evidenceSummary = {},
 }) {
   const areas = buildAreaBreakdown(skillBands, evidenceSummary);
-  const studyPlan = buildDeterministicPlacementStudyPlan({
-    level,
-    skillBands,
-    evidenceSummary,
-  });
-  const evidenceStrengths = strengths.filter((skill) =>
-    normalizeBand(skillBands[skill]) === "strong" &&
-    hasEvidenceForSkill(skill, evidenceSummary[skill])
-  );
+  const relativeStrengths = buildRelativeStrengthItems(skillBands, evidenceSummary);
   const improvementSkills = [...new Set([
     ...weaknesses,
-    ...PLACEMENT_AREA_ORDER.filter((skill) =>
-      (evidenceSummary[skill]?.missingTopics || []).length > 0
-    ),
+    ...PLACEMENT_AREA_ORDER.filter((skill) => {
+      const ev = evidenceSummary[skill] || {};
+      return (
+        (ev.practiceFocuses || []).length > 0 ||
+        (ev.missingTopics || []).length > 0 ||
+        (ev.diagnosticFocus || []).length > 0 ||
+        normalizeBand(skillBands[skill]) === "weak"
+      );
+    }),
   ])];
+
+  const focusesFor = (skill) => {
+    const ev = evidenceSummary[skill] || {};
+    if ((ev.practiceFocuses || []).length) return ev.practiceFocuses;
+    return mapPracticeFocusList(
+      skill,
+      ev.missingTopics || [],
+      ev.missingTopicIds || []
+    );
+  };
 
   return {
     level,
     levelExplanation:
       LEVEL_EXPLANATIONS[level] ||
       `Ihr Ergebnis ist ${level}. Trainieren Sie gezielt die Bereiche mit dem größten Übungsbedarf.`,
-    areas,
-    strengths: evidenceStrengths.map((s) => ({
-      skill: s,
-      label: areaLabel(s),
-      text: `${areaLabel(s)} war in diesem Test eine Stärke.`,
+    areas: areas.map((area) => ({
+      ...area,
+      missingTopics: area.practiceFocuses?.length
+        ? area.practiceFocuses
+        : focusesFor(area.skill),
+      practiceFocuses: area.practiceFocuses?.length
+        ? area.practiceFocuses
+        : focusesFor(area.skill),
     })),
-    improvements: improvementSkills.map((s) => ({
-      skill: s,
-      label: areaLabel(s),
-      text: weaknesses.includes(s)
-        ? `${areaLabel(s)} sollte priorisiert geübt werden.`
-        : `${areaLabel(s)} ist insgesamt tragfähig; einzelne Punkte können noch gezielt verbessert werden.`,
-      missingTopics: evidenceSummary[s]?.missingTopics || [],
-    })),
-    recommendations: buildRecommendations(level, skillBands, evidenceSummary),
-    studyPlan,
+    strengths: relativeStrengths,
+    improvements: improvementSkills.map((s) => {
+      const ev = evidenceSummary[s] || {};
+      const practiceFocuses = focusesFor(s);
+      return {
+        skill: s,
+        label: areaLabel(s),
+        text: buildImprovementText(s, {
+          isWeak: weaknesses.includes(s),
+          practiceFocuses,
+          diagnosticFocus: ev.diagnosticFocus || [],
+        }),
+        missingTopics: practiceFocuses,
+      };
+    }),
+    recommendations: buildRecommendations(level, skillBands, {
+      ...evidenceSummary,
+      ...Object.fromEntries(
+        PLACEMENT_AREA_ORDER.map((skill) => [
+          skill,
+          {
+            ...(evidenceSummary[skill] || {}),
+            practiceFocuses: focusesFor(skill),
+          },
+        ])
+      ),
+    }),
+    studyPlan: buildDeterministicPlacementStudyPlan({
+      level,
+      skillBands,
+      evidenceSummary: Object.fromEntries(
+        PLACEMENT_AREA_ORDER.map((skill) => [
+          skill,
+          {
+            ...(evidenceSummary[skill] || {}),
+            practiceFocuses: focusesFor(skill),
+          },
+        ])
+      ),
+    }),
     transcripts: PLACEMENT_AREA_ORDER.flatMap((skill) =>
       (evidenceSummary[skill]?.transcripts || []).map((turn) => ({
         skill,
@@ -655,13 +726,21 @@ export function applyPolishedLearnerReport(profile, polished) {
         ? polished.levelExplanation.trim()
         : base.levelExplanation,
     areas: Array.isArray(polished.areas) && polished.areas.length
-      ? polishAreas(base.areas, polished.areas, profile.skillBands)
+      ? polishAreas(base.areas, polished.areas)
       : base.areas,
     strengths: Array.isArray(polished.strengths) && polished.strengths.length
-      ? polishList(base.strengths, polished.strengths, profile.strengths)
+      ? polishList(
+          base.strengths,
+          polished.strengths,
+          (base.strengths || []).map((s) => s.skill)
+        )
       : base.strengths,
     improvements: Array.isArray(polished.improvements) && polished.improvements.length
-      ? polishList(base.improvements, polished.improvements, profile.weaknesses)
+      ? polishList(
+          base.improvements,
+          polished.improvements,
+          (base.improvements || []).map((s) => s.skill)
+        )
       : base.improvements,
     recommendations: mergeGroundedRecommendations(
       base.recommendations,
@@ -675,7 +754,14 @@ export function applyPolishedLearnerReport(profile, polished) {
               item.focus || item.skill || base.studyPlan?.[i]?.focus
             ),
             skill: item.skill || base.studyPlan?.[i]?.skill,
-            task: String(item.task || base.studyPlan?.[i]?.task || "").trim(),
+            task: (() => {
+              const polishedTask = String(item.task || "").trim();
+              const baseTask = String(base.studyPlan?.[i]?.task || "").trim();
+              if (!polishedTask) return baseTask;
+              // Never let polish reintroduce raw exam questions into the plan.
+              if (/\?/.test(polishedTask)) return baseTask;
+              return polishedTask.slice(0, 400);
+            })(),
           }))
         : base.studyPlan,
   };
@@ -689,17 +775,15 @@ export function applyPolishedLearnerReport(profile, polished) {
   };
 }
 
-function mergeGroundedRecommendations(baseRecommendations = [], polishedRecommendations = []) {
+function mergeGroundedRecommendations(baseRecommendations = []) {
+  // Recommendations stay deterministic (skill-facing). Polish must not inject
+  // listening story prose or raw exam questions.
   return baseRecommendations.map(String).filter(Boolean).slice(0, 8);
 }
 
-function polishAreas(baseAreas = [], polishedAreas = [], skillBands = {}) {
-  const bySkill = new Map(polishedAreas.map((a) => [a.skill, a]));
-  return baseAreas.map((area) => {
-    const p = bySkill.get(area.skill);
-    if (!p) return area;
-    return area;
-  });
+function polishAreas(baseAreas = []) {
+  // Area summaries stay grounded in bands + listening model titles.
+  return baseAreas;
 }
 
 function polishList(baseList = [], polishedList = [], allowedSkills = []) {
@@ -709,8 +793,11 @@ function polishList(baseList = [], polishedList = [], allowedSkills = []) {
   );
   return baseList.map((item) => {
     const p = bySkill.get(item.skill);
-    if (!p) return item;
-    return item;
+    if (!p || typeof p.text !== "string" || !p.text.trim()) return item;
+    return {
+      ...item,
+      text: p.text.trim().slice(0, 240),
+    };
   });
 }
 
@@ -720,13 +807,20 @@ export function buildPlacementReportAiInput(profile) {
     productType: "placement_test",
     level: profile.level,
     skillBands: profile.skillBands,
-    strengths: profile.strengths,
-    weaknesses: profile.weaknesses,
+    strengths: (profile.learnerReport?.strengths || []).map((s) => s.skill),
+    weaknesses: [
+      ...new Set([
+        ...(profile.weaknesses || []),
+        ...(profile.learnerReport?.improvements || []).map((s) => s.skill),
+      ]),
+    ],
     focusAreas: profile.focusAreas,
     evidenceSummary: profile.evidenceSummary,
     deterministicReport: {
       levelExplanation: profile.learnerReport?.levelExplanation,
       areas: profile.learnerReport?.areas,
+      strengths: profile.learnerReport?.strengths,
+      improvements: profile.learnerReport?.improvements,
       recommendations: profile.learnerReport?.recommendations,
       studyPlan: profile.learnerReport?.studyPlan,
     },

@@ -16,11 +16,21 @@ import {
 import { AppError } from "../middleware/errorHandler.js";
 import { env } from "../config/env.js";
 import { withAuthorizedPlacementUsage } from "./placementEntitlementService.js";
+import {
+  normalizeDiagnosticFocusList,
+  resolvePlacementProductiveBand,
+  sanitizePlacementLearnerNotes,
+} from "../../../src/data/utils/placementBandResolution.js";
 
 export const PLACEMENT_MAX_FOLLOWUPS = 2;
 export const PLACEMENT_EVAL_METHOD = "placement-ai-turn-v1";
 
 const BANDS = new Set(["weak", "medium", "strong"]);
+const PRODUCTIVE_SKILLS = new Set([
+  "selbstvorstellung",
+  "bildbeschreibung",
+  "planung",
+]);
 const FOLLOW_UP_SOURCES = new Set([
   "followUpRules",
   "examinerQuestions",
@@ -472,14 +482,33 @@ export function sanitizePlacementEvaluation(
   const allowed = model?.skill === "bildbeschreibung"
     ? eligibleBildQuestions.map((item) => item.question)
     : buildAllowedFollowUps(model, conversation);
-  if (!BANDS.has(raw?.band)) {
+  const communicativeBand = BANDS.has(raw?.communicativeBand)
+    ? raw.communicativeBand
+    : null;
+  const accuracyBand = BANDS.has(raw?.accuracyBand) ? raw.accuracyBand : null;
+  const proposedBand = BANDS.has(raw?.band) ? raw.band : null;
+
+  // Productive stages: require either a valid proposed band or both dimensions.
+  // Listening is never scored here.
+  let band = null;
+  if (PRODUCTIVE_SKILLS.has(model?.skill)) {
+    band = resolvePlacementProductiveBand({
+      communicativeBand,
+      accuracyBand,
+      proposedBand,
+      modelLevel: model?.level,
+    });
+  } else if (proposedBand) {
+    band = proposedBand;
+  }
+
+  if (!band) {
     throw new AppError(
       "AI_INVALID_RESPONSE",
       "KI-Antwort enthält keine gültige Bewertung.",
       502
     );
   }
-  const band = raw.band;
 
   const validBildTopicIds = bildPack
     ? new Set(bildPack.referenceEvidence.map((item) => item.id))
@@ -497,9 +526,8 @@ export function sanitizePlacementEvaluation(
   };
   const coveredTopics = sanitizeTopics(raw?.coveredTopics);
   const missingTopics = sanitizeTopics(raw?.missingTopics);
-  const notes = Array.isArray(raw?.notes)
-    ? raw.notes.map((t) => String(t)).filter(Boolean).slice(0, 8)
-    : [];
+  const notes = sanitizePlacementLearnerNotes(raw?.notes);
+  const diagnosticFocus = normalizeDiagnosticFocusList(raw?.diagnosticFocus);
 
   let needsFollowUp = Boolean(raw?.needsFollowUp);
   let followUpQuestion = null;
@@ -578,6 +606,13 @@ export function sanitizePlacementEvaluation(
     skill: model.skill,
     modelLevel: model.level,
     band,
+    ...(PRODUCTIVE_SKILLS.has(model.skill)
+      ? {
+          communicativeBand: communicativeBand || null,
+          accuracyBand: accuracyBand || null,
+          diagnosticFocus,
+        }
+      : {}),
     coveredTopics: planningTopics?.coveredTopics || coveredTopics,
     missingTopics: planningTopics?.missingTopics || missingTopics,
     needsFollowUp,
@@ -673,6 +708,7 @@ export function buildExaminerSystemPrompt(
     };
   }
 
+  const productive = PRODUCTIVE_SKILLS.has(model?.skill);
   const lines = [
     "Du bist ausschließlich der AustriaPath Placement-Prüfer für EIN Placement-Modell.",
     "Du bewertest nur die aktuelle Lernenden-Antwort gegen die bereitgestellten Modellfelder.",
@@ -681,11 +717,34 @@ export function buildExaminerSystemPrompt(
     "Du darfst KEINE neuen Szenarien oder nicht belegten Bilddetails erfinden.",
     "selectedLevel / Startniveau darf die Bewertung NICHT beeinflussen — nur die Antwort und die Modellfelder.",
     "Antworte NUR mit einem JSON-Objekt (kein Markdown), Schema:",
-    '{"band":"weak|medium|strong","coveredTopics":[],"missingTopics":[],"needsFollowUp":boolean,"followUpQuestionId":string|null,"followUpQuestion":string|null,"followUpCandidates":[],"followUpSource":"examinerQuestions|followUpRules|missingTopic"|null,"notes":[]}',
-    isBild
-      ? "band: weak/medium/strong nur anhand der Antwort und der evidenceStates des ausgewählten Assessment-Packs."
-      : "band: weak/medium/strong nur anhand der Antwort vs requiredTopics und benchmarkMarkers.",
+    productive
+      ? '{"communicativeBand":"weak|medium|strong","accuracyBand":"weak|medium|strong","band":"weak|medium|strong","coveredTopics":[],"missingTopics":[],"diagnosticFocus":[],"needsFollowUp":boolean,"followUpQuestionId":string|null,"followUpQuestion":string|null,"followUpCandidates":[],"followUpSource":"examinerQuestions|followUpRules|missingTopic"|null,"notes":[]}'
+      : '{"band":"weak|medium|strong","coveredTopics":[],"missingTopics":[],"needsFollowUp":boolean,"followUpQuestionId":string|null,"followUpQuestion":string|null,"followUpCandidates":[],"followUpSource":"examinerQuestions|followUpRules|missingTopic"|null,"notes":[]}',
   ];
+
+  if (productive) {
+    lines.push(
+      "Trenne ZWINGEND zwei Dimensionen:",
+      "communicativeBand = inhaltliche/kommunikative Aufgabenerfüllung (Verständlichkeit, Themenabdeckung, Reaktion).",
+      "accuracyBand = sprachliche Qualität (Grammatik, Syntax, Wortschatz, Satzbau) — unabhängig von der Verständlichkeit.",
+      "Eine verständliche, aber grammatisch/syntaktisch stark fehlerhafte Antwort ist communicativeBand medium/strong möglich, accuracyBand aber weak.",
+      "band ist dein Gesamtvorschlag; der Server wendet eine Accuracy-Floor an. Setze band konsistent zu den Dimensionen.",
+      "strong darf NUR vergeben werden, wenn die Antwort (1) inhaltlich ausreichend vollständig ist, (2) zusammenhängend und niveaugerecht formuliert, (3) brauchbaren Wortschatz zeigt, (4) Grammatik/Syntax dem Modellniveau angemessen ist und (5) nicht stark fragmentiert wirkt.",
+      "Nur die Aufgabe zu beantworten reicht NICHT für strong.",
+      "Bei A2: normale A2-Fehler (Artikel, Endungen) dürfen accuracyBand medium bleiben — nicht künstlich harsh.",
+      "Bei B1/B2: für strong brauchst du klarere Genauigkeit und Zusammenhängigkeit; verständlich allein reicht nicht.",
+      "diagnosticFocus: 0–4 Codes NUR aus dieser Liste: satzbau, verbposition, artikel_kasus, wortstellung, zusammenhaengend_sprechen, wortschatz, vollstaendige_antworten, begruendung, fragmentierung, beschreiben_details, beschreiben_erfahrung, planen_ort_zeit, planen_loesung, planen_vorschlag.",
+      "notes: kurze lernenden-sichere Diagnosen (kein internes Reasoning, keine Prompts)."
+    );
+  } else if (isBild) {
+    lines.push(
+      "band: weak/medium/strong nur anhand der Antwort und der evidenceStates des ausgewählten Assessment-Packs."
+    );
+  } else {
+    lines.push(
+      "band: weak/medium/strong nur anhand der Antwort vs requiredTopics und benchmarkMarkers."
+    );
+  }
 
   if (isBild && selectedImageContext) {
     lines.push(
@@ -693,7 +752,7 @@ export function buildExaminerSystemPrompt(
       "Bei needsFollowUp=true müssen followUpQuestionId UND followUpQuestion exakt demselben Eintrag in eligibleFollowUps entsprechen.",
       "coveredTopics und missingTopics dürfen bei Bildbeschreibung nur evidence-unit IDs aus evidenceStates enthalten.",
       "Wenn keine eligibleFollowUps-Frage nützlich ist: needsFollowUp=false. Ein freier Nachfrageplatz ist kein Grund für eine Frage.",
-      "Bewerte Grammatik getrennt von semantischer Abdeckung. Verständliche unvollkommene Formen zählen als Bild-Evidenz.",
+      "Bewerte Grammatik getrennt von semantischer Abdeckung: communicativeBand für Bild-Inhalt, accuracyBand für Sprache. Verständliche unvollkommene Formen zählen als Bild-Inhalt, nicht automatisch als starke Sprachqualität.",
       "referenceAnswer ist nur eine semantische Referenz und niemals ein Pflichttext. Akzeptiere andere richtige Wörter, sichtbare Details, Satzfolgen und Paraphrasen.",
       "B2: Ursache und Folge sind getrennte Dimensionen. Eine vorhandene Ursache sperrt keine Folgenfrage und umgekehrt.",
       "Aktueller geschlossener assessmentPack:",
@@ -722,7 +781,7 @@ export function buildExaminerSystemPrompt(
 
   if (isSelf) {
     lines.push(
-      "SELBSTVORSTELLUNG: semanticEvidence ist eine Evidenzkarte, keine Pflichtliste. Grammatik und semantische Abdeckung getrennt bewerten; verständliche fehlerhafte Formen zählen als kommunizierte Information.",
+      "SELBSTVORSTELLUNG: semanticEvidence ist eine Evidenzkarte, keine Pflichtliste. communicativeBand = inhaltliche Abdeckung; accuracyBand = Sprachqualität. Verständliche fehlerhafte Formen zählen als kommunizierte Information, senken aber accuracyBand.",
       "Priorität: (1) eine wichtige partial-Angabe klären, (2) ein wichtiges not_covered-Thema fragen, (3) bei starken Grundlagen mit genau einer neuen Dimension vertiefen: Grund, Beispiel, Erfahrung, Zukunft, Vergleich oder Meinung.",
       "Frage nur, wenn zusätzliche Bewertungsevidenz nützlich ist. Ein freier Frageplatz allein ist kein Grund; dann needsFollowUp=false.",
       "Wenn die letzte Antwort klar nicht zur gestellten Frage passt und die Absicht not_covered bleibt, ist höchstens eine einfachere erlaubte Umformulierung derselben Absicht zulässig. Keine zweite Umformulierung und keine Schleife.",
@@ -732,10 +791,11 @@ export function buildExaminerSystemPrompt(
   if (planningPack) {
     lines.push(
       "PLANUNG IST GESCHLOSSEN. nextMoveId darf nur eine ID aus planningPack.allowedNextMoves sein; erfinde niemals Fragetext oder Themen-IDs.",
-      "Bewerte kommunikative Wirksamkeit, Interaktion, Vorschläge/Reaktionen, Gründe/Alternativen, Kohärenz, Sprache und niveaugerechtes Problemlösen über die gesamte Unterhaltung.",
+      "communicativeBand: Wirksamkeit, Interaktion, Vorschläge/Reaktionen, Gründe/Alternativen, Kohärenz und Aufgabenlösung.",
+      "accuracyBand: sprachliche Qualität über die gesamte Unterhaltung.",
       "Faktische Themenabdeckung wird serverseitig aus dem geschlossenen Evidence-Ledger bestimmt. coveredTopics/missingTopics des Providers werden für Planung ignoriert.",
       "Eine Antwort kann mehrere Evidenzdimensionen abdecken. Off-topic-Inhalt erfüllt das aktuelle Frageziel nicht.",
-      "Bei der Abschlussfrage ist die Bewertung eine konsolidierte Gesamtbewertung der vollständigen Planung."
+      "Bei der Abschlussfrage: Dimensionen und band als Gesamtbild der gesamten Planung (nicht nur der letzten Antwort)."
     );
   }
 

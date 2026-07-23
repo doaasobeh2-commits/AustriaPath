@@ -68,8 +68,8 @@ export function bandToPlacementScore(band) {
 
 /**
  * Final skill band from all validated evaluations in the skill conversation.
- * Each turn contributes equally. Invalid/missing bands are ignored and an
- * entirely invalid evidence set fails closed with null.
+ * Each turn contributes equally (including Planung — closing turn does not dominate).
+ * Invalid/missing bands are ignored and an entirely invalid evidence set fails closed with null.
  * @param {Array<{ band?: string, needsFollowUp?: boolean }>|undefined} evaluations
  */
 export function getFinalBandFromTurnEvidence(evaluations = []) {

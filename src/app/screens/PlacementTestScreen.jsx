@@ -506,9 +506,8 @@ export default function PlacementTestScreen({ setActiveTab }) {
     if (!currentModel || isEvaluating || isBuildingReport) return;
 
     const evaluations = turnEvidence[evidenceKey] || [];
-    const band = skill === 'planung' && isPlanningEvaluationComplete(evaluations.at(-1))
-      ? evaluations.at(-1)?.band
-      : getFinalBandFromTurnEvidence(evaluations);
+    // Always aggregate the full stage; Planung must not let the closing turn dominate.
+    const band = getFinalBandFromTurnEvidence(evaluations);
     const score = bandToPlacementScore(band);
     const qaMode = isAdminQaMode();
     const last = evaluations[evaluations.length - 1];

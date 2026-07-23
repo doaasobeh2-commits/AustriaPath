@@ -69,7 +69,7 @@ describe("deterministic Placement report", () => {
     expect(report.studyPlan[0].focus).toBe("hoeren");
   });
 
-  it("sanitizes evidence and drops notes", () => {
+  it("keeps internal notes out of learner-facing summary while allowing safe diagnostics", () => {
     const summary = buildEvidenceSummary(
       {
         hoeren: [
@@ -80,11 +80,20 @@ describe("deterministic Placement report", () => {
             band: "weak",
           },
         ],
+        selbstvorstellung: [
+          {
+            coveredTopics: ["name"],
+            notes: ["Satzbau noch unsicher."],
+            diagnosticFocus: ["satzbau"],
+            band: "medium",
+          },
+        ],
       },
       bands
     );
     expect(summary.lesenHoeren.coveredTopics).toContain("Ort");
-    expect(JSON.stringify(summary)).not.toMatch(/SECRET/);
+    expect(JSON.stringify(summary.lesenHoeren)).not.toMatch(/SECRET/);
+    expect(summary.selbstvorstellung.learnerNotes).toContain("Satzbau noch unsicher.");
   });
 
   it("maps validated Koffergeschäft topic IDs to learner labels", () => {
@@ -232,7 +241,7 @@ describe("deterministic Placement report", () => {
     expect(JSON.stringify(summary.lesenHoeren)).not.toMatch(/Müller|Becker|Berlin|Zug/);
   });
 
-  it("requires evidence for strengths and reports limited missing evidence as improvement", () => {
+  it("builds relative strengths and skill-facing improvements from evidence", () => {
     const report = buildDeterministicLearnerReport({
       level: "B1",
       skillBands: {
@@ -248,6 +257,7 @@ describe("deterministic Placement report", () => {
         bildbeschreibung: {
           coveredTopics: ["Ort"],
           missingTopics: ["Persönliche Reiseerfahrung"],
+          missingTopicIds: ["travel_preference"],
           bildAssessmentPackKeys: ["A2:6"],
           coveredTopicIds: ["place"],
         },
@@ -261,12 +271,18 @@ describe("deterministic Placement report", () => {
       },
     });
 
-    expect(report.strengths.map((item) => item.skill)).toEqual(["planung"]);
+    expect(report.strengths.map((item) => item.skill)).toEqual(
+      expect.arrayContaining(["bildbeschreibung", "planung"])
+    );
     expect(report.improvements).toEqual(expect.arrayContaining([
       expect.objectContaining({ skill: "bildbeschreibung" }),
     ]));
     expect(report.improvements[0].text).not.toMatch(/keine.*schwäche/i);
-    expect(report.recommendations.join(" ")).toContain("Persönliche Reiseerfahrung");
+    expect(report.improvements.find((i) => i.skill === "bildbeschreibung")?.text).not.toMatch(
+      /tragfähig/i
+    );
+    expect(report.recommendations.join(" ")).not.toContain("Persönliche Reiseerfahrung");
+    expect(report.recommendations.join(" ")).toMatch(/Erfahrungen|zusammenhängend/i);
   });
 
   it("maps lesenHoeren to hoeren for Weekly Plan", () => {

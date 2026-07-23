@@ -56,6 +56,8 @@ describe("Placement recording regression", () => {
     expect(handleWeiter).toContain("Bitte schließen Sie zuerst das Planungsgespräch erfolgreich ab");
     expect(handleWeiter.indexOf("!isPlanningEvaluationComplete(last)"))
       .toBeLessThan(handleWeiter.indexOf("finishSkillAndAdvance"));
+    expect(handleWeiter).toContain("getFinalBandFromTurnEvidence(evaluations)");
+    expect(handleWeiter).not.toContain("evaluations.at(-1)?.band");
     expect(handleWeiter).toContain("if (!qaSkip && (!band || score == null))");
     expect(handleWeiter).toContain("Bitte senden Sie zuerst eine ausgewertete Antwort");
     expect(handleWeiter).toContain("if (!qaSkip && last?.needsFollowUp && activeFollowUp)");
