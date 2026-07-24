@@ -6,14 +6,24 @@ const move = (id, kind, order, filename, text, targets, additional, responseSeco
   Object.freeze({ id, kind, order, filename, text, audioUrl: `${AUDIO_ROOT}/${filename}`, targets, additional, responseSeconds, maxAudioDurationSeconds, ...options });
 const E = {
   date_time: evidence("date_time", "Termin und Uhrzeit", true, ["(?:montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|wochenende|morgen)", "(?:um|gegen) \\d{1,2}(?::\\d{2})? uhr"], ["(?:spater|fruher|nachmittag|abend)"]),
-  place: evidence("place", "Ort", true, ["(?:im|in der|in einem|bei|auf dem) (?:restaurant|park|garten|lokal|kursraum|wohnung|hotel|zentrum|hof|saal|cafe)"]),
+  place: evidence("place", "Ort", true, [
+    "(?:im|in der|in einem|bei|auf dem) (?:restaurant|park|garten|lokal|kursraum|wohnung|hotel|zentrum|hof|saal|cafe)",
+    "(?:zu hause|zuhause|daheim)",
+    "bei (?:mir|uns)(?: zu hause| zuhause)?",
+    "in (?:meiner|unserer) wohnung",
+  ]),
   guests: evidence("guests", "Gäste", true, ["(?:freund|familie|kolleg|nachbar|kursteilnehmer|gast|gaste|personen)"]),
   food_drinks: evidence("food_drinks", "Essen und Getränke", true, ["(?:essen|trinken|pizza|brot|kuchen|salat|obst|gemuse|saft|wasser|kaffee|fruhstuck)"]),
   simple_reason: evidence("simple_reason", "Einfacher Grund", false, ["(?:weil|denn|deshalb|darum)"]),
   reaction: evidence("reaction", "Auf einen Vorschlag reagieren", false, ["(?:ja|nein|einverstanden|gute idee|finde ich|passt|lieber|nicht gut)"]),
   alternative: evidence("alternative", "Einen anderen Vorschlag machen", false, ["(?:stattdessen|alternativ|lieber|wir konnten|wir konnen auch|anderer vorschlag)"]),
   final_agreement: evidence("final_agreement", "Gemeinsame Entscheidung", true, ["(?:wir einigen uns|wir haben vereinbart|also machen wir|unser plan|endgultig)"]),
-  meeting_place: evidence("meeting_place", "Treffpunkt", true, ["(?:treffen wir uns|treffpunkt|am bahnhof|vor dem|bei der haltestelle)"]),
+  meeting_place: evidence("meeting_place", "Treffpunkt", true, [
+    "(?:treffen wir uns|treffpunkt|am bahnhof|vor dem|bei der haltestelle)",
+    "(?:zu hause|zuhause|daheim)",
+    "bei (?:mir|uns)(?: zu hause| zuhause)?",
+    "in (?:meiner|unserer) wohnung",
+  ]),
   items: evidence("items", "Benötigte Dinge", true, ["(?:decke|teller|becher|besteck|ball|tasche|schirm|sonnenschutz)"]),
   weather_alternative: evidence("weather_alternative", "Alternative bei schlechtem Wetter", false, ["(?:bei regen|wenn es regnet|schlechtes wetter).*(?:innen|cafe|verschieben|absagen)"]),
   tasks: evidence("tasks", "Aufgaben", true, ["(?:ich ubernehme|ich trage|ich packe|ich helfe|aufgabe|macht|organisiert)"]),
@@ -180,25 +190,43 @@ export function selectPlacementPlanningPack(step, { recentIds = [] } = {}) {
 
 const normalized = (v) => String(v||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/ß/g,"ss").replace(/\s+/g," ").trim();
 const matches = (text, patterns=[]) => patterns.some((p)=>new RegExp(p,"i").test(text));
-export function buildPlanningEvidenceLedger(packOrId, conversation = []) {
+export function buildPlanningEvidenceLedger(packOrId, conversation = [], extraConfirmedIds = []) {
   const pack=typeof packOrId === "string" ? getPlacementPlanningPack(packOrId) : packOrId;
   if(!pack) return {};
   const fullText=normalized(conversation.map((t)=>t?.transcript||"").join(" "));
   const tested=new Set();
   for(const turn of conversation){ const m=getPlacementPlanningMove(pack,turn?.moveId); for(const id of m?.targets||[]) tested.add(id); }
+  // Bounded semantic fallback (information topics only): ids the provider
+  // already validly confirmed (this turn or a prior persisted turn) count as
+  // covered even when the closed regex patterns miss the exact wording.
+  // Only ids that exist on this pack's own evidenceUnits can ever match —
+  // nothing here can invent a topic or a move. Restricted further to ids
+  // that back a skipWhenCovered move: those are the only moves whose entire
+  // purpose is collecting a plain information topic that may legitimately
+  // be skipped once covered. Ids that back mandatory reaction/proposal/
+  // problem beats (never skipWhenCovered) must NEVER be satisfied this way,
+  // since those moves elicit a live communicative reaction to a prompt that
+  // — by definition — cannot already have happened before it was asked.
+  const informationalTopicIds=new Set(
+    pack.mainMoves.filter((m)=>m.skipWhenCovered).flatMap((m)=>m.targets||[])
+  );
+  const semanticConfirmed=new Set([
+    ...conversation.flatMap((t)=>Array.isArray(t?.semanticEvidenceConfirmed) ? t.semanticEvidenceConfirmed : []),
+    ...(Array.isArray(extraConfirmedIds) ? extraConfirmedIds : []),
+  ].filter((id)=>informationalTopicIds.has(id)));
   return Object.fromEntries(pack.evidenceUnits.map((unit)=>{
-    const sufficient=matches(fullText,unit.patterns);
+    const sufficient=matches(fullText,unit.patterns) || semanticConfirmed.has(unit.id);
     const partial=!sufficient && matches(fullText,unit.partialPatterns);
     const assessed=unit.requiredByTask || tested.has(unit.id) || sufficient || partial;
     return [unit.id,{ id:unit.id,label:unit.label,requiredByTask:unit.requiredByTask,tested:tested.has(unit.id),internalState:sufficient?"covered":partial?"partial":"not_covered",finalState:sufficient?"covered":assessed?"tested_but_weak_or_incomplete":"not_assessed" }];
   }));
 }
 
-export function selectCoveredAwareClosingMove(packOrId, conversation = []) {
+export function selectCoveredAwareClosingMove(packOrId, conversation = [], extraConfirmedIds = []) {
   const pack = typeof packOrId === "string" ? getPlacementPlanningPack(packOrId) : packOrId;
   if (!pack) return null;
   const asked = new Set(conversation.map((t) => t?.moveId).filter(Boolean));
-  const ledger = buildPlanningEvidenceLedger(pack, conversation);
+  const ledger = buildPlanningEvidenceLedger(pack, conversation, extraConfirmedIds);
   const closings = pack.mainMoves.filter((m) => m.closing && !asked.has(m.id));
   if (!closings.length) return null;
   if (closings.length === 1 && !closings[0].closingProfile) return closings[0];
@@ -221,11 +249,11 @@ export function selectCoveredAwareClosingMove(packOrId, conversation = []) {
   );
 }
 
-export function selectNextPlanningMove(packOrId, conversation = [], proposed = null) {
+export function selectNextPlanningMove(packOrId, conversation = [], proposed = null, extraConfirmedIds = []) {
   const pack=typeof packOrId === "string" ? getPlacementPlanningPack(packOrId) : packOrId;
   if(!pack) return null;
   const asked=new Set(conversation.map((t)=>t?.moveId).filter(Boolean));
-  const ledger=buildPlanningEvidenceLedger(pack,conversation);
+  const ledger=buildPlanningEvidenceLedger(pack,conversation,extraConfirmedIds);
   const eligible=(m)=>{
     if(asked.has(m.id)) return false;
     if(m.closing) return false;
@@ -237,11 +265,22 @@ export function selectNextPlanningMove(packOrId, conversation = [], proposed = n
   const nonClosingRemaining=pack.mainMoves.filter((m)=>!m.closing && eligible(m));
   let allowed=[...nonClosingRemaining];
   if(!allowed.length) {
-    const closing = selectCoveredAwareClosingMove(pack, conversation);
+    const closing = selectCoveredAwareClosingMove(pack, conversation, extraConfirmedIds);
     if (closing) allowed = [closing];
   }
+  // Mandatory scripted beats (reactions/proposals/problems) are a fixed part
+  // of the design and must always occur in their scripted order. Provider
+  // choice may only skip AHEAD among plain information-gathering moves — it
+  // may never jump past a mandatory move that has not been asked yet.
+  const firstOutstandingMandatoryOrder = nonClosingRemaining
+    .filter((m) => m.mandatory)
+    .reduce((min, m) => (min === null || m.order < min ? m.order : min), null);
   const proposedMove=typeof proposed === "string" ? getPlacementPlanningMove(pack,proposed) : null;
-  if(proposedMove && allowed.some((m)=>m.id===proposedMove.id)) return proposedMove;
+  if(
+    proposedMove &&
+    allowed.some((m)=>m.id===proposedMove.id) &&
+    (firstOutstandingMandatoryOrder === null || proposedMove.order <= firstOutstandingMandatoryOrder)
+  ) return proposedMove;
   const next=allowed[0] || null;
   if(next?.replacementMoveId && next.targets.every((id)=>ledger[id]?.finalState==="covered")) {
     const replacement=getPlacementPlanningMove(pack,next.replacementMoveId);

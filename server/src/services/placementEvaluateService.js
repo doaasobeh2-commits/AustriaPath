@@ -193,6 +193,15 @@ export function getEligibleBildFollowUps(pack, conversation = [], semanticCovere
   const evidencePriority = new Map(
     (pack.referenceEvidence || []).map((item) => [item.id, item.priority ?? 9])
   );
+  // Redundancy/dimension protection: once a question of a given generic
+  // dimension (location, action, reasoning, comparison, experience, opinion,
+  // basic description) has actually been asked, a differently-worded
+  // question targeting the same dimension must not reappear.
+  const askedDimensions = new Set(
+    (Array.isArray(conversation) ? conversation : [])
+      .map((turn) => imageFollowUpDimension(turn?.question || ""))
+      .filter((dimension) => dimension && dimension !== "other")
+  );
 
   // Prefer genuinely uncovered intents over clarifying PARTIAL ones when the
   // productive band is medium+ (or unknown). Weak bands may still clarify PARTIAL.
@@ -203,6 +212,7 @@ export function getEligibleBildFollowUps(pack, conversation = [], semanticCovere
   let eligible = pack.followUpBank
     .filter((question) => !alreadyAskedTexts.has(normalizeText(question.question)))
     .filter((question) => !askedIntents.has(question.intent))
+    .filter((question) => !askedDimensions.has(imageFollowUpDimension(question.question)))
     .filter((question) => !providerCovered.has(normalizeText(question.intent)))
     .filter((question) => coverage[question.intent] !== COVERAGE.SUFFICIENT)
     .filter((question) => (question.prerequisites || []).every(
@@ -301,6 +311,31 @@ export function getSelfTopicCoverage(conversation = []) {
   };
 }
 
+/**
+ * Closed, bounded vocabulary of Selbstvorstellung topic codes (mirrors the
+ * keys returned by getSelfTopicCoverage). Used only to validate the model's
+ * own per-turn "semanticTopicsConfirmed" claim — never free text, never used
+ * to invent a question.
+ */
+const SELF_TOPIC_IDS = Object.freeze(new Set(Object.keys(getSelfTopicCoverage([]))));
+
+/**
+ * Bounded semantic safeguard (Selbstvorstellung): validates the model's own
+ * closed-vocabulary claim that a topic was clearly communicated this turn,
+ * even when regex evidence missed it (unanticipated phrasing/vocabulary).
+ * Never accepts free text and never grows beyond SELF_TOPIC_IDS.
+ */
+function sanitizeSelfTopicsConfirmed(list) {
+  if (!Array.isArray(list)) return [];
+  return [
+    ...new Set(
+      list
+        .map((value) => String(value || "").trim().toLowerCase())
+        .filter((id) => SELF_TOPIC_IDS.has(id))
+    ),
+  ].slice(0, 8);
+}
+
 export function getPlanningIntentCoverage(conversation = []) {
   const text = sectionTranscript(conversation);
   const hasDate = /\b(montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|wochenende|morgen|ubernachste|nachste woche|\d{1,2}\.\s*(?:januar|februar|marz|april|mai|juni|juli|august|september|oktober|november|dezember))\b/.test(text);
@@ -385,6 +420,19 @@ export function buildAllowedFollowUps(model, conversation = []) {
   const selfCoverage = model?.skill === "selbstvorstellung"
     ? getSelfTopicCoverage(conversation)
     : {};
+  // Bounded semantic safeguard: topics the model itself already confirmed
+  // (closed vocabulary, persisted from prior turns) count as sufficient even
+  // when this turn's regex evidence misses the wording. Never widens beyond
+  // SELF_TOPIC_IDS and never enables a non-existent examinerQuestions entry.
+  const semanticConfirmedTopics = model?.skill === "selbstvorstellung"
+    ? new Set(
+        (Array.isArray(conversation) ? conversation : [])
+          .flatMap((turn) => (Array.isArray(turn?.selfTopicsConfirmed) ? turn.selfTopicsConfirmed : []))
+          .filter((id) => SELF_TOPIC_IDS.has(id))
+      )
+    : new Set();
+  const isSelfTopicSufficient = (topicId) =>
+    Boolean(topicId) && (selfCoverage[topicId] === COVERAGE.SUFFICIENT || semanticConfirmedTopics.has(topicId));
   const askedSelfIntents = new Set(
     (Array.isArray(conversation) ? conversation : [])
       .map((turn) => selfQuestionTopic(turn?.question || ""))
@@ -408,7 +456,7 @@ export function buildAllowedFollowUps(model, conversation = []) {
     const key = normalizeText(text);
     if (alreadyAsked.has(key)) continue;
     const topic = selfQuestionTopic(text);
-    if (topic && selfCoverage[topic] === "sufficient") continue;
+    if (topic && isSelfTopicSufficient(topic)) continue;
     const isSafeProfessionalRephrase =
       topic === "professional_goal" &&
       key === normalizeText("Welche Arbeit möchten Sie später machen?") &&
@@ -423,15 +471,15 @@ export function buildAllowedFollowUps(model, conversation = []) {
       if (!isSafeProfessionalRephrase) continue;
     }
     if (model?.skill === "selbstvorstellung" && topic) {
-      if (topic === "work_details" && selfCoverage.work !== COVERAGE.SUFFICIENT) continue;
-      if (topic === "family_detail" && selfCoverage.family !== COVERAGE.SUFFICIENT) continue;
-      if (topic === "hobby_detail" && selfCoverage.leisure !== COVERAGE.SUFFICIENT) continue;
-      if (topic === "german_duration" && selfCoverage.german_learning !== COVERAGE.SUFFICIENT) continue;
-      if (topic === "work_opinion" && selfCoverage.work !== COVERAGE.SUFFICIENT) continue;
-      if (topic === "learning_strategy" && selfCoverage.german_learning !== COVERAGE.SUFFICIENT) continue;
-      if (topic === "reason" && ![selfCoverage.future_plan, selfCoverage.professional_goal, selfCoverage.integration_opinion, selfCoverage.opinion].includes(COVERAGE.SUFFICIENT)) continue;
-      if (topic === "example" && ![selfCoverage.reason, selfCoverage.opinion, selfCoverage.past_experience].includes(COVERAGE.SUFFICIENT)) continue;
-      if (topic === "comparison" && ![selfCoverage.opinion, selfCoverage.integration_opinion, selfCoverage.past_experience].includes(COVERAGE.SUFFICIENT)) continue;
+      if (topic === "work_details" && !isSelfTopicSufficient("work")) continue;
+      if (topic === "family_detail" && !isSelfTopicSufficient("family")) continue;
+      if (topic === "hobby_detail" && !isSelfTopicSufficient("leisure")) continue;
+      if (topic === "german_duration" && !isSelfTopicSufficient("german_learning")) continue;
+      if (topic === "work_opinion" && !isSelfTopicSufficient("work")) continue;
+      if (topic === "learning_strategy" && !isSelfTopicSufficient("german_learning")) continue;
+      if (topic === "reason" && !["future_plan", "professional_goal", "integration_opinion", "opinion"].some(isSelfTopicSufficient)) continue;
+      if (topic === "example" && !["reason", "opinion", "past_experience"].some(isSelfTopicSufficient)) continue;
+      if (topic === "comparison" && !["opinion", "integration_opinion", "past_experience"].some(isSelfTopicSufficient)) continue;
     }
     const planningIntent = planningQuestionIntent(text);
     if (planningIntent && planningCoverage[planningIntent] === "sufficient") continue;
@@ -524,10 +572,18 @@ export function sanitizePlacementEvaluation(
     );
   }
 
+  // Cross-turn semantic coverage: a topic the model validly recognized as
+  // covered on an earlier turn must remain covered when computing eligible
+  // follow-ups now, not just for the single turn it was first reported on.
+  const historicalBildCovered = bildPack
+    ? (Array.isArray(conversation) ? conversation : []).flatMap((turn) =>
+        Array.isArray(turn?.coveredTopics) ? turn.coveredTopics : []
+      )
+    : [];
   const eligibleBildQuestions = getEligibleBildFollowUps(
     bildPack,
     conversation,
-    raw?.coveredTopics,
+    [...(Array.isArray(raw?.coveredTopics) ? raw.coveredTopics : []), ...historicalBildCovered],
     { productiveBand: band }
   );
   const allowed = model?.skill === "bildbeschreibung"
@@ -552,17 +608,39 @@ export function sanitizePlacementEvaluation(
   const missingTopics = sanitizeTopics(raw?.missingTopics);
   const notes = sanitizePlacementLearnerNotes(raw?.notes);
   const diagnosticFocus = normalizeDiagnosticFocusList(raw?.diagnosticFocus);
+  // Bounded semantic safeguard (Selbstvorstellung only): closed-vocabulary
+  // claim, never merged into the report-facing coveredTopics/missingTopics.
+  const selfTopicsConfirmed = model?.skill === "selbstvorstellung"
+    ? sanitizeSelfTopicsConfirmed(raw?.semanticTopicsConfirmed)
+    : [];
 
   let needsFollowUp = Boolean(raw?.needsFollowUp);
   let followUpQuestion = null;
   let followUpQuestionId = null;
   let followUpSource = null;
+  // Bounded semantic fallback (Planung, information topics only): closed
+  // vocabulary validated against this scenario's own evidenceUnits ids.
+  // Never lets the provider invent or reorder moves outside the scripted set
+  // — it only ever influences whether an INFORMATION target is already
+  // considered covered, feeding the same deterministic ledger/skip logic
+  // that already governs the closed move sequence.
+  let semanticEvidenceConfirmed = [];
 
   if (!planningPack && followUpCount >= PLACEMENT_MAX_FOLLOWUPS) {
     needsFollowUp = false;
   }
 
   if (planningPack) {
+    const validPlanningEvidenceIds = new Set(
+      (planningPack.evidenceUnits || []).map((unit) => unit.id)
+    );
+    semanticEvidenceConfirmed = [
+      ...new Set(
+        (Array.isArray(raw?.semanticEvidenceConfirmed) ? raw.semanticEvidenceConfirmed : [])
+          .map((value) => String(value || "").trim())
+          .filter((id) => validPlanningEvidenceIds.has(id))
+      ),
+    ].slice(0, 20);
     const currentMove = getPlacementPlanningMove(
       planningPack,
       conversation.at(-1)?.moveId
@@ -572,7 +650,7 @@ export function sanitizePlacementEvaluation(
     ).trim();
     const nextMove = currentMove?.closing
       ? null
-      : selectNextPlanningMove(planningPack, conversation, providerMoveId);
+      : selectNextPlanningMove(planningPack, conversation, providerMoveId, semanticEvidenceConfirmed);
     needsFollowUp = Boolean(nextMove);
     followUpQuestion = nextMove?.text || null;
     followUpQuestionId = nextMove?.id || null;
@@ -619,7 +697,7 @@ export function sanitizePlacementEvaluation(
   }
 
   const planningLedger = planningPack
-    ? buildPlanningEvidenceLedger(planningPack, conversation)
+    ? buildPlanningEvidenceLedger(planningPack, conversation, semanticEvidenceConfirmed)
     : null;
   const planningTopics = planningPack
     ? planningTopicsFromLedger(planningPack, planningLedger)
@@ -649,10 +727,12 @@ export function sanitizePlacementEvaluation(
       planningPackId: planningPack.scenarioId,
       planningEvidenceLedger: planningLedger,
       planningComplete: Boolean(getPlacementPlanningMove(planningPack, conversation.at(-1)?.moveId)?.closing),
+      semanticEvidenceConfirmed,
     } : {}),
     ...(model.skill === "bildbeschreibung" && bildPack
       ? { bildAssessmentPackKey: bildPack.key }
       : {}),
+    ...(model.skill === "selbstvorstellung" ? { selfTopicsConfirmed } : {}),
   };
 }
 
@@ -742,7 +822,7 @@ export function buildExaminerSystemPrompt(
     "selectedLevel / Startniveau darf die Bewertung NICHT beeinflussen — nur die Antwort und die Modellfelder.",
     "Antworte NUR mit einem JSON-Objekt (kein Markdown), Schema:",
     productive
-      ? '{"communicativeBand":"weak|medium|strong","accuracyBand":"weak|medium|strong","band":"weak|medium|strong","coveredTopics":[],"missingTopics":[],"diagnosticFocus":[],"needsFollowUp":boolean,"followUpQuestionId":string|null,"followUpQuestion":string|null,"followUpCandidates":[],"followUpSource":"examinerQuestions|followUpRules|missingTopic"|null,"notes":[]}'
+      ? '{"communicativeBand":"weak|medium|strong","accuracyBand":"weak|medium|strong","band":"weak|medium|strong","coveredTopics":[],"missingTopics":[],"diagnosticFocus":[],"semanticTopicsConfirmed":[],"semanticEvidenceConfirmed":[],"needsFollowUp":boolean,"followUpQuestionId":string|null,"followUpQuestion":string|null,"followUpCandidates":[],"followUpSource":"examinerQuestions|followUpRules|missingTopic"|null,"notes":[]}'
       : '{"band":"weak|medium|strong","coveredTopics":[],"missingTopics":[],"needsFollowUp":boolean,"followUpQuestionId":string|null,"followUpQuestion":string|null,"followUpCandidates":[],"followUpSource":"examinerQuestions|followUpRules|missingTopic"|null,"notes":[]}',
   ];
 
@@ -809,7 +889,10 @@ export function buildExaminerSystemPrompt(
       "Priorität: (1) eine wichtige partial-Angabe klären, (2) ein wichtiges not_covered-Thema fragen, (3) bei starken Grundlagen mit genau einer neuen Dimension vertiefen: Grund, Beispiel, Erfahrung, Zukunft, Vergleich oder Meinung.",
       "Frage nur, wenn zusätzliche Bewertungsevidenz nützlich ist. Ein freier Frageplatz allein ist kein Grund; dann needsFollowUp=false.",
       "Wenn die letzte Antwort klar nicht zur gestellten Frage passt und die Absicht not_covered bleibt, ist höchstens eine einfachere erlaubte Umformulierung derselben Absicht zulässig. Keine zweite Umformulierung und keine Schleife.",
-      "Ein Grund und ein Beispiel in der Antwort sperren allgemeine Warum-/Beispielfragen. Bereits genannte Kinder, Tätigkeit, Hobby oder Deutschlern-Grund sperren die jeweilige allgemeine Wiederholungsfrage."
+      "Ein Grund und ein Beispiel in der Antwort sperren allgemeine Warum-/Beispielfragen. Bereits genannte Kinder, Tätigkeit, Hobby oder Deutschlern-Grund sperren die jeweilige allgemeine Wiederholungsfrage.",
+      "semanticTopicsConfirmed: 0–8 Codes NUR aus dieser geschlossenen Liste, wenn das GESAMTE bisherige Gespräch dieses Thema eindeutig sprachlich kommuniziert hat — auch bei unerwarteter Formulierung, Grammatikfehlern oder Wortschatz, den semanticEvidence (noch) nicht erkennt: " +
+        [...SELF_TOPIC_IDS].join(", ") + ".",
+      "Setze semanticTopicsConfirmed NIE für ein Thema, das nur vage oder unklar angedeutet wurde."
     );
   }
   if (planningPack) {
@@ -819,7 +902,9 @@ export function buildExaminerSystemPrompt(
       "accuracyBand: sprachliche Qualität über die gesamte Unterhaltung.",
       "Faktische Themenabdeckung wird serverseitig aus dem geschlossenen Evidence-Ledger bestimmt. coveredTopics/missingTopics des Providers werden für Planung ignoriert.",
       "Eine Antwort kann mehrere Evidenzdimensionen abdecken. Off-topic-Inhalt erfüllt das aktuelle Frageziel nicht.",
-      "Bei der Abschlussfrage: Dimensionen und band als Gesamtbild der gesamten Planung (nicht nur der letzten Antwort)."
+      "Bei der Abschlussfrage: Dimensionen und band als Gesamtbild der gesamten Planung (nicht nur der letzten Antwort).",
+      "semanticEvidenceConfirmed: 0–6 IDs NUR aus evidenceLedger, wenn die Antwort ein reines INFORMATIONS-Thema (Ort, Zeit, Personen o.ä. — NICHT Reaktion/Vorschlag/Problem-Pflichtmoves) eindeutig sprachlich mitgeteilt hat, auch wenn evidenceLedger es (noch) nicht als covered zeigt. Erfinde niemals eine ID, die dort nicht existiert.",
+      "Reaktions-/Vorschlags-/Problem-Pflichtmoves sind ein fester, geskripteter Ablauf und werden durch semanticEvidenceConfirmed NIEMALS übersprungen oder ersetzt."
     );
   }
 
@@ -964,6 +1049,10 @@ export async function evaluatePlacementTurn({
 
   const count = Math.max(0, Number(followUpCount) || 0);
   const conversationLimit = model.skill === "planung" ? 12 : 6;
+  const sanitizeBoundedIdList = (value) =>
+    Array.isArray(value)
+      ? [...new Set(value.map((v) => String(v || "").trim()).filter(Boolean))].slice(0, 20)
+      : [];
   const safeConversation = (Array.isArray(conversation) ? conversation : [])
     .slice(-conversationLimit)
     .map((turn) => ({
@@ -971,6 +1060,12 @@ export async function evaluatePlacementTurn({
       transcript: String(turn?.transcript || "").trim().slice(0, 3000),
       inputMode: turn?.inputMode === "voice_transcript" ? "voice_transcript" : "typed",
       moveId: String(turn?.moveId || "").trim().slice(0, 120) || null,
+      // Cross-turn semantic coverage carried from a prior turn's own
+      // evaluation. Re-validated against each skill's closed vocabulary
+      // wherever it is consumed — never trusted as free-form here.
+      coveredTopics: sanitizeBoundedIdList(turn?.coveredTopics),
+      selfTopicsConfirmed: sanitizeBoundedIdList(turn?.selfTopicsConfirmed),
+      semanticEvidenceConfirmed: sanitizeBoundedIdList(turn?.semanticEvidenceConfirmed),
     }))
     .filter((turn) => turn.transcript);
   const currentTurn = {
@@ -984,8 +1079,11 @@ export async function evaluatePlacementTurn({
   const imagePack = imageContext
     ? getPlacementBildAssessmentPack(imageContext.catalogLevel, imageContext.catalogId)
     : null;
+  const priorSemanticCovered = imagePack
+    ? safeConversation.flatMap((turn) => turn.coveredTopics)
+    : [];
   const allowedFollowUps = imagePack
-    ? getEligibleBildFollowUps(imagePack, fullConversation, [], {
+    ? getEligibleBildFollowUps(imagePack, fullConversation, priorSemanticCovered, {
         productiveBand: "medium",
       })
     : buildAllowedFollowUps(model, fullConversation);

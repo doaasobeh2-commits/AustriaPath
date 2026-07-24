@@ -153,6 +153,97 @@ describe("closed Placement Planning packs", () => {
     expect(isPlanningRecordingAllowed({ phase: "responding", examinerAudioActive: false })).toBe(true);
   });
 
+  it("recognizes 'bei mir zu Hause' as satisfying place (Phase 1 paraphrase broadening)", () => {
+    const ledger = buildPlanningEvidenceLedger("a2_planung_mittel", [{
+      moveId: "birthday-place", transcript: "Wir feiern bei mir zu Hause.",
+    }]);
+    expect(ledger.place.finalState).toBe("covered");
+  });
+
+  it.each([
+    ["Wir treffen uns bei uns zu Hause.", "meeting_place"],
+    ["Kommt einfach in unserer Wohnung vorbei.", "meeting_place"],
+    ["Ich bin dann einfach daheim.", "meeting_place"],
+  ])("recognizes the natural meeting_place paraphrase: %s", (transcript, evidenceId) => {
+    const ledger = buildPlanningEvidenceLedger("a2_planung_picknick", [{ transcript }]);
+    expect(ledger[evidenceId].finalState).toBe("covered");
+  });
+
+  it.each([
+    ["Wir könnten auch bei mir feiern.", "place"],
+    ["Am liebsten zuhause, das ist am einfachsten.", "place"],
+  ])("recognizes the natural place paraphrase: %s", (transcript, evidenceId) => {
+    const ledger = buildPlanningEvidenceLedger("a2_planung_mittel", [{ transcript }]);
+    expect(ledger[evidenceId].finalState).toBe("covered");
+  });
+
+  it("bounded semantic fallback lets an unanticipated informational answer skip the corresponding move", () => {
+    const conversation = [
+      { moveId: "birthday-time", transcript: "Am Samstag um 18 Uhr." },
+      { moveId: "birthday-place", transcript: "Wir feiern bei mir zu Hause." },
+    ];
+    // Regex alone does not recognize "ein paar Leute, die wir gut kennen" as guests.
+    const baseline = buildPlanningEvidenceLedger("a2_planung_mittel", conversation);
+    expect(baseline.guests.finalState).not.toBe("covered");
+    expect(selectNextPlanningMove("a2_planung_mittel", conversation).id).toBe("birthday-guests");
+
+    // The provider validly recognized "guests" as covered from this same
+    // unanticipated phrasing; the deterministic skip logic must honor it —
+    // this never invents or reorders moves, it only marks an information
+    // target already covered.
+    const next = selectNextPlanningMove("a2_planung_mittel", conversation, null, ["guests"]);
+    expect(next.id).not.toBe("birthday-guests");
+  });
+
+  it("persists a semantically confirmed informational topic carried on a prior turn's own field", () => {
+    const conversation = [
+      { moveId: "birthday-time", transcript: "Am Samstag um 18 Uhr." },
+      {
+        moveId: "birthday-place",
+        transcript: "Wir feiern bei mir zu Hause.",
+        semanticEvidenceConfirmed: ["guests"],
+      },
+    ];
+    expect(selectNextPlanningMove("a2_planung_mittel", conversation).id).not.toBe("birthday-guests");
+  });
+
+  it("keeps the mandatory reaction move eligible even if its evidence id is (invalidly) marked semantically confirmed", () => {
+    const conversation = [
+      { moveId: "birthday-time", transcript: "Am Samstag um 18 Uhr." },
+      { moveId: "birthday-place", transcript: "Bei mir zu Hause." },
+      { moveId: "birthday-guests", transcript: "Meine Familie." },
+      { moveId: "birthday-food", transcript: "Kuchen und Saft." },
+    ];
+    // "reaction" is a mandatory move's own evidence id, not a regular
+    // information topic — marking it "confirmed" must never fabricate the
+    // scripted reaction beat's completion since it is not skipWhenCovered.
+    const next = selectNextPlanningMove("a2_planung_mittel", conversation, null, ["reaction"]);
+    expect(next.id).toBe("birthday-reaction");
+  });
+
+  it("never lets a provider-proposed move skip past an earlier outstanding mandatory move", () => {
+    const conversation = [
+      { moveId: "visit-arrival", transcript: "Der Zug kommt Freitagabend an, ich hole unseren Gast ab." },
+    ];
+    // visit-preference (mandatory, order 6) has not been asked yet; a
+    // provider attempt to jump straight to visit-delay (also mandatory,
+    // order 7) would skip it and must be rejected.
+    const guarded = selectNextPlanningMove("b1_planung_besuch", conversation, "visit-delay");
+    expect(guarded.id).not.toBe("visit-delay");
+    expect(guarded.id).toBe("visit-hotel");
+  });
+
+  it("still permits skipping ahead among plain information moves that sit before the next mandatory move", () => {
+    const conversation = [
+      { moveId: "visit-arrival", transcript: "Der Zug kommt Freitagabend an, ich hole unseren Gast ab." },
+    ];
+    // visit-budget (order 5) is a plain information move that sits before
+    // the next outstanding mandatory move (visit-preference, order 6) —
+    // provider choice may still legitimately skip ahead to it.
+    const guided = selectNextPlanningMove("b1_planung_besuch", conversation, "visit-budget");
+    expect(guided.id).toBe("visit-budget");
+  });
+
   it("resolves report labels only from the selected pack without contradictions", () => {
     const summary = buildEvidenceSummary({
       planung: [{

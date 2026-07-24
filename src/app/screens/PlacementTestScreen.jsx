@@ -61,6 +61,15 @@ const STAGE_LISTEN = 2;
 const STAGE_PLAN = 3;
 const STAGE_COUNT = 4;
 
+/**
+ * Every new Placement attempt always starts from the weak/A2 path. The
+ * learner-facing level picker is context only (see UI copy below) — it must
+ * never bias the starting model or the routing that runs before any real
+ * evidence has been collected. Movement upward happens only through
+ * demonstrated performance via the existing adaptive routing functions.
+ */
+const CONSERVATIVE_START_LEVEL = 'A2';
+
 export default function PlacementTestScreen({ setActiveTab }) {
   const [selectedLevel, setSelectedLevel] = useState('A2');
   const [started, setStarted] = useState(false);
@@ -300,7 +309,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
 
   const startTest = async () => {
     if (isStarting) return;
-    const startModel = getPlacementStartModel(selectedLevel);
+    const startModel = getPlacementStartModel(CONSERVATIVE_START_LEVEL);
     if (!startModel) {
       setControlMessage('Placement-Startmodell fehlt.');
       return;
@@ -435,9 +444,9 @@ export default function PlacementTestScreen({ setActiveTab }) {
 
     let nextStep = null;
     if (stageIndex === STAGE_SELF) {
-      nextStep = getImageStepAfterSelfIntro(selfBand, selectedLevel);
+      nextStep = getImageStepAfterSelfIntro(selfBand, CONSERVATIVE_START_LEVEL);
     } else if (stageIndex === STAGE_IMAGE) {
-      nextStep = getReadingListeningStep(selfBand, imageBand, selectedLevel);
+      nextStep = getReadingListeningStep(selfBand, imageBand, CONSERVATIVE_START_LEVEL);
     } else if (stageIndex === STAGE_LISTEN) {
       nextStep = getPlanningStep({
         selfIntroResult: selfBand,
@@ -819,6 +828,13 @@ export default function PlacementTestScreen({ setActiveTab }) {
             transcript: turn.transcript,
             inputMode: turn.inputMode,
             moveId: turn.moveId || null,
+            // Bounded, closed-vocabulary semantic signals from this turn's own
+            // prior evaluation — echoed back so the server can recognize
+            // meaning already communicated across turns, even when this
+            // turn's regex wording doesn't match. Re-validated server-side.
+            coveredTopics: turn.coveredTopics || [],
+            selfTopicsConfirmed: turn.selfTopicsConfirmed || [],
+            semanticEvidenceConfirmed: turn.semanticEvidenceConfirmed || [],
           })),
       };
 

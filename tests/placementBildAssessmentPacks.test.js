@@ -270,6 +270,49 @@ describe("image-specific suppression and B2 dimensions", () => {
   });
 });
 
+describe("Phase 1: cross-turn semantic coverage and dimension redundancy", () => {
+  it("carries a provider-confirmed semantic topic from an earlier turn into a later turn's eligible follow-ups", () => {
+    const pack = getPlacementBildAssessmentPack("A2", 6);
+    const conversation = [
+      // Turn 1: the evaluator validly recognized "travel_preference" as
+      // covered from unanticipated phrasing that the closed regex never
+      // anticipated ("reise gern" / "reisen gern" / "mag reisen").
+      {
+        transcript: "Reisen mag ich total gern, vor allem mit dem Zug.",
+        coveredTopics: ["travel_preference"],
+      },
+    ];
+    expect(getBildEvidenceCoverage(pack, conversation).travel_preference).not.toBe("sufficient");
+
+    const priorSemanticCovered = conversation.flatMap((turn) => turn.coveredTopics || []);
+    const eligible = getEligibleBildFollowUps(pack, conversation, priorSemanticCovered);
+    expect(eligible.map((item) => item.id)).not.toContain("A2_KOFFER_05");
+
+    // The same cross-turn signal must also survive sanitizePlacementEvaluation
+    // on the next turn (this is what the live evaluate-turn path threads
+    // through), not just a direct getEligibleBildFollowUps call.
+    const nextTurnResult = sanitizePlacementEvaluation(
+      { band: "medium", needsFollowUp: true, followUpQuestionId: "A2_KOFFER_05", followUpQuestion: "Reisen Sie gern?" },
+      getPlacementModel("a2_bild_mittel"),
+      0,
+      conversation,
+      imageFor(pack)
+    );
+    expect(nextTurnResult.followUpQuestionId).not.toBe("A2_KOFFER_05");
+  });
+
+  it("blocks a same-dimension follow-up even when the earlier question used different wording", () => {
+    const pack = getPlacementBildAssessmentPack("A2", 2);
+    const conversation = [
+      // A differently-worded location question was already asked (a
+      // paraphrase, not the exact in-pack text of A2_BUCH_01).
+      { question: "Wo befinden sich die Personen im Bild?", transcript: "Im Buchladen." },
+    ];
+    const eligible = getEligibleBildFollowUps(pack, conversation);
+    expect(eligible.map((item) => item.id)).not.toContain("A2_BUCH_01");
+  });
+});
+
 describe("Bild follow-up limit, semantic references, and rich answers", () => {
   it("returns zero follow-ups when no eligible question remains", () => {
     const pack = getPlacementBildAssessmentPack("A2", 2);

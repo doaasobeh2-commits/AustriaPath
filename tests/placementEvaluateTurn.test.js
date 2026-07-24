@@ -288,6 +288,60 @@ describe("placementEvaluateService — Self semantic evidence matrix", () => {
   });
 });
 
+describe("Phase 1: bounded semantic safeguard (Selbstvorstellung)", () => {
+  it("suppresses the closed follow-up once a prior turn confirms the topic despite unanticipated phrasing", () => {
+    const model = getPlacementModel("a2_self_mittel");
+    const conversation = [{
+      // Deliberately avoids every family/child/marriage keyword the regex
+      // anticipates, so regex evidence alone would still call this unanswered.
+      transcript: "Zuhause warten kleine Menschen auf mich, die ich jeden Tag ins Bett bringe.",
+      selfTopicsConfirmed: ["family"],
+    }];
+    expect(getSelfTopicCoverage(conversation).family).not.toBe("sufficient");
+    const allowed = buildAllowedFollowUps(model, conversation);
+    expect(allowed).not.toContain("Haben Sie Familie oder Kinder?");
+  });
+
+  it("never invents a question — an out-of-vocabulary semanticTopicsConfirmed claim is ignored", () => {
+    const model = getPlacementModel("a2_self_mittel");
+    const conversation = [{
+      transcript: "Ich bin ganz zufrieden mit meinem Leben.",
+      selfTopicsConfirmed: ["not_a_real_topic", "family"],
+    }];
+    const allowed = buildAllowedFollowUps(model, conversation);
+    // The bogus id is silently dropped; the valid one ("family") still applies.
+    expect(allowed).not.toContain("Haben Sie Familie oder Kinder?");
+    // The rest of the closed list is unaffected by the invalid entry.
+    expect(allowed).toContain("Wie heißen Sie?");
+  });
+
+  it("applies the same bounded safeguard to a B1 topic (work) with unanticipated phrasing", () => {
+    const model = getPlacementModel("b1_self_mittel");
+    const conversation = [{
+      transcript: "Momentan bin ich in der Firma meines Onkels tätig, jeden Tag mit vielen verschiedenen Aufgaben.",
+      selfTopicsConfirmed: ["work"],
+    }];
+    expect(getSelfTopicCoverage(conversation).work).not.toBe("sufficient");
+    const allowed = buildAllowedFollowUps(model, conversation);
+    expect(allowed).not.toContain("Was arbeiten Sie jetzt?");
+  });
+
+  it("validates and persists semanticTopicsConfirmed through sanitizePlacementEvaluation (closed vocabulary only)", () => {
+    const model = getPlacementModel("a2_self_mittel");
+    const result = sanitizePlacementEvaluation(
+      {
+        band: "medium",
+        needsFollowUp: false,
+        semanticTopicsConfirmed: ["family", "not_a_real_topic", "family"],
+      },
+      model,
+      0,
+      []
+    );
+    expect(result.selfTopicsConfirmed).toEqual(["family"]);
+  });
+});
+
 describe("placementEvaluateService — sanitize", () => {
   const model = getPlacementModel("a2_self_mittel");
 
@@ -322,6 +376,7 @@ describe("placementEvaluateService — sanitize", () => {
       followUpSource: "missingTopic",
       notes: ["kurze Antwort"],
       evaluationMethod: PLACEMENT_EVAL_METHOD,
+      selfTopicsConfirmed: [],
     });
   });
 
