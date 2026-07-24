@@ -429,6 +429,18 @@ export function placementTurnIdempotencyKey({
   return `turn:${stageIndex}:${followUpCount}`;
 }
 
+/** Learner-facing copy when evaluate-turn rejects an answer as too short. */
+export const PLACEMENT_ANSWER_TOO_SHORT_MESSAGE =
+  "Ihre Antwort ist zu kurz. Bitte antworten Sie etwas ausführlicher.";
+
+/** True for the pre-evaluation 400 VALIDATION_ERROR the client must recover locally. */
+export function isPlacementAnswerTooShortValidationError(err) {
+  if (!err || err.code !== "VALIDATION_ERROR") return false;
+  return /antwort ist zu kurz|antwort fehlt für die auswertung/i.test(
+    String(err.message || "")
+  );
+}
+
 export function isPlanningEvaluationComplete(evaluation) {
   return evaluation?.planningComplete === true;
 }

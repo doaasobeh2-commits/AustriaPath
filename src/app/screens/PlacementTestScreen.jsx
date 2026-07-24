@@ -11,6 +11,8 @@ import {
   scorePlacementListeningAnswers,
   scoreKeyForModelSkill,
   placementTurnIdempotencyKey,
+  isPlacementAnswerTooShortValidationError,
+  PLACEMENT_ANSWER_TOO_SHORT_MESSAGE,
   isPlanningEvaluationComplete,
   claimPlacementReportFinalization,
   releasePlacementReportFinalization,
@@ -104,6 +106,8 @@ export default function PlacementTestScreen({ setActiveTab }) {
   const [selectedBildImage, setSelectedBildImage] = useState(null);
   const [bildImageBroken, setBildImageBroken] = useState(false);
   const [retryAnswer, setRetryAnswer] = useState(null);
+  /** True while the learner must revise a locally rejected too-short answer. */
+  const [answerTooShortBlocked, setAnswerTooShortBlocked] = useState(false);
   const [planningMoveId, setPlanningMoveId] = useState(null);
   const [planningPhase, setPlanningPhase] = useState('idle');
   const [planningCountdown, setPlanningCountdown] = useState(15);
@@ -566,6 +570,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
       return;
     }
     setControlMessage('');
+    setAnswerTooShortBlocked(false);
     if (!SpeechRecognitionCtor) {
       setTypedFallbackAllowed(true);
       setControlMessage(
@@ -798,6 +803,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
     if (!currentModel?.id || isEvaluating) return;
 
     setIsEvaluating(true);
+    setAnswerTooShortBlocked(false);
     if (currentModel.skill === 'planung') setPlanningPhase('evaluating');
     setControlMessage('Antwort wird ausgewertet…');
     submitAfterStopRef.current = false;
@@ -911,6 +917,15 @@ export default function PlacementTestScreen({ setActiveTab }) {
         setControlMessage('Antwort erfasst. Klicken Sie auf Weiter, um fortzufahren.');
       }
     } catch (err) {
+      if (!isAdminQaMode() && isPlacementAnswerTooShortValidationError(err)) {
+        setRetryAnswer(null);
+        setAnswerTooShortBlocked(true);
+        setAnswerSubmitted(false);
+        if (currentModel.skill === 'planung') setPlanningPhase('responding');
+        setControlMessage(PLACEMENT_ANSWER_TOO_SHORT_MESSAGE);
+        return;
+      }
+
       const msg =
         err instanceof ApiError
           ? err.message
@@ -1324,9 +1339,11 @@ export default function PlacementTestScreen({ setActiveTab }) {
 
         {isVoiceSkill && typedFallbackAllowed && (skill !== 'planung' || planningPhase === 'responding') ? (
           <>
-            <p style={fallbackHintStyle}>
-              Die Spracherkennung ist nicht verfügbar. Sie können diese Antwort stattdessen tippen.
-            </p>
+            {!answerTooShortBlocked ? (
+              <p style={fallbackHintStyle}>
+                Die Spracherkennung ist nicht verfügbar. Sie können diese Antwort stattdessen tippen.
+              </p>
+            ) : null}
             <label style={labelStyle}>Ihre getippte Antwort</label>
             <textarea
               style={textareaStyle}
@@ -1335,6 +1352,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
               onChange={(e) => {
                 setAnswerText(e.target.value);
                 setAnswerSubmitted(false);
+                setAnswerTooShortBlocked(false);
               }}
               placeholder="Tippen Sie Ihre Antwort…"
               disabled={isEvaluating}
