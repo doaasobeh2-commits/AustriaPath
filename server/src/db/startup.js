@@ -5,10 +5,12 @@
 import { initDb, runMigrations } from "./client.js";
 import { seedRuleRegistryIfEmpty } from "./seed.js";
 import { runTrialAccessMigration } from "./trialAccessMigration.js";
+import { runPlacementDiagnosticsMigration } from "./placementDiagnosticsMigration.js";
 
 export async function prepareDatabase() {
   await initDb();
   await runMigrations();
   await runTrialAccessMigration();
+  await runPlacementDiagnosticsMigration();
   await seedRuleRegistryIfEmpty();
 }

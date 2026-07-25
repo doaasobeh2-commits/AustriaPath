@@ -19,6 +19,7 @@ import ruleRegistryAdminRoutes from "./routes/admin/ruleRegistry.routes.js";
 import usersRoutes from "./routes/users.routes.js";
 import bootstrapRoutes from "./routes/bootstrap.routes.js";
 import adminUsersRoutes from "./routes/admin/users.routes.js";
+import placementDiagnosticsRoutes from "./routes/admin/placementDiagnostics.routes.js";
 import migrationRoutes from "./routes/migration.routes.js";
 import messagesRoutes from "./routes/messages.routes.js";
 
@@ -53,6 +54,7 @@ export function createApp() {
   app.use("/messages", messagesRoutes);
   app.use("/internal", bootstrapRoutes);
   app.use("/admin/users", adminUsersRoutes);
+  app.use("/admin/placement-diagnostics", placementDiagnosticsRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

@@ -13,10 +13,34 @@ import {
 } from "../src/data/utils/placementListeningPool.js";
 
 const APPROVED = Object.freeze({
-  A2: ["placement_listening_02", "placement_listening_04", "placement_listening_10"],
-  B1: ["placement_listening_06", "placement_listening_11", "placement_listening_12", "placement_listening_14"],
-  B2: ["b2_hoeren_buerotermin", "b2_hoeren_bewerbung", "b2_hoeren_digitalisierung"],
+  A2: [
+    "placement_listening_02",
+    "placement_listening_04",
+    "placement_listening_10",
+    "placement_listening_a2_support",
+  ],
+  B1: [
+    "placement_listening_b1_bridge",
+    "placement_listening_06",
+    "placement_listening_11",
+    "placement_listening_12",
+    "placement_listening_14",
+  ],
+  B2: [
+    "b2_hoeren_buerotermin",
+    "b2_hoeren_bewerbung",
+    "b2_hoeren_digitalisierung",
+  ],
 });
+
+const LIVE_A2 = ["placement_listening_04", "placement_listening_10", "placement_listening_a2_support"];
+const LIVE_B1 = [
+  "placement_listening_b1_bridge",
+  "placement_listening_06",
+  "placement_listening_11",
+  "placement_listening_12",
+  "placement_listening_14",
+];
 
 const ANSWER_INDEXES = Object.freeze({
   placement_listening_02: [1, 2, 0],
@@ -35,17 +59,21 @@ describe("Placement listening pools", () => {
     expect(PLACEMENT_LISTENING_POOLS.B2).toEqual(APPROVED.B2);
   });
 
-  it.each(["A2", "B1", "B2"])(
-    "%s models remain strictly isolated and contain 2-4 objective questions",
+  it.each(["A2", "B1"])(
+    "%s live models remain strictly isolated and contain 2-4 objective questions",
     (level) => {
       const models = listPlacementListeningModels(level);
-      expect(models.map((model) => model.id)).toEqual(APPROVED[level]);
+      const liveIds = level === "A2" ? LIVE_A2 : LIVE_B1;
+      expect(models.map((model) => model.id)).toEqual(liveIds);
       for (const model of models) {
         expect(model.level).toBe(level);
         expect(model.skill).toBe("hoeren");
         expect(model.audioText.length).toBeGreaterThan(30);
         expect(model.listeningQuestions.length).toBeGreaterThanOrEqual(2);
         expect(model.listeningQuestions.length).toBeLessThanOrEqual(4);
+        if (model.id !== "placement_listening_b1_bridge" && model.placementTier !== "support") {
+          expect(model.audioUrl).toBeTruthy();
+        }
         for (const question of model.listeningQuestions) {
           expect(question.options).toHaveLength(3);
           expect(question.options).toContain(question.correctOption);
@@ -54,23 +82,35 @@ describe("Placement listening pools", () => {
     }
   );
 
-  it("never exposes an A2 model through B1 or B2 selection", () => {
-    for (const level of ["B1", "B2"]) {
-      for (const random of [0, 0.25, 0.5, 0.75, 0.999]) {
-        expect(APPROVED.A2).not.toContain(
-          selectPlacementListeningModel({ level, difficulty: "mittel" }, { random: () => random }).id
-        );
-      }
+  it("keeps B2 models in the library but excludes them from live runtime selection", () => {
+    expect(listPlacementListeningModels("B2")).toEqual([]);
+    expect(selectPlacementListeningModel({ level: "B2", difficulty: "mittel" })).toBeNull();
+    for (const id of APPROVED.B2) {
+      expect(getPlacementModel(id)).toBeTruthy();
     }
   });
 
-  it("never exposes a B1 model through A2 or B2 selection", () => {
-    for (const level of ["A2", "B2"]) {
-      for (const random of [0, 0.25, 0.5, 0.75, 0.999]) {
-        expect(APPROVED.B1).not.toContain(
-          selectPlacementListeningModel({ level, difficulty: "mittel" }, { random: () => random }).id
-        );
-      }
+  it("never exposes an A2 model through B1 or B2 selection", () => {
+    for (const random of [0, 0.25, 0.5, 0.75, 0.999]) {
+      const b1Selected = selectPlacementListeningModel(
+        { level: "B1", difficulty: "mittel" },
+        { random: () => random }
+      );
+      expect(b1Selected).toBeTruthy();
+      expect(APPROVED.A2).not.toContain(b1Selected.id);
+    }
+    for (const random of [0, 0.25, 0.5, 0.75, 0.999]) {
+      expect(
+        selectPlacementListeningModel({ level: "B2", difficulty: "mittel" }, { random: () => random })
+      ).toBeNull();
+    }
+  });
+
+  it("never exposes a B1 model through A2 live selection", () => {
+    for (const random of [0, 0.25, 0.5, 0.75, 0.999]) {
+      expect(LIVE_B1).not.toContain(
+        selectPlacementListeningModel({ level: "A2", difficulty: "mittel" }, { random: () => random }).id
+      );
     }
   });
 
@@ -101,6 +141,7 @@ describe("Placement listening pools", () => {
   it("uses the real approved static audio assets", () => {
     for (const id of [...APPROVED.A2, ...APPROVED.B1]) {
       const model = getPlacementModel(id);
+      if (!model.audioUrl) continue;
       const asset = fileURLToPath(new URL(`../public${model.audioUrl}`, import.meta.url));
       expect(existsSync(asset)).toBe(true);
       expect(statSync(asset).size).toBeGreaterThan(0);
@@ -143,13 +184,25 @@ describe("Placement listening pools", () => {
     ).toBe("placement_listening_02");
   });
 
-  it("falls back within the same level after every same-level option is recent", () => {
+  it("selects the B1 bridge clip for B1 bridge routing", () => {
     const selected = selectPlacementListeningModel(
-      { level: "A2", difficulty: "stark" },
-      { recentIds: [...APPROVED.A2], random: () => 0 }
+      { level: "B1", difficulty: "bridge", b1Entry: true },
+      { random: () => 0 }
     );
-    expect(selected.level).toBe("A2");
-    expect(APPROVED.A2).toContain(selected.id);
+    expect(selected.id).toBe("placement_listening_b1_bridge");
+    expect(selected.listeningQuestions).toHaveLength(3);
+  });
+
+  it("rotates weak A2 leicht listening clips across recent history", () => {
+    const step = { level: "A2", difficulty: "leicht" };
+    const first = selectPlacementListeningModel(step, { random: () => 0.1 });
+    const second = selectPlacementListeningModel(step, {
+      recentIds: [first.id],
+      random: () => 0.1,
+    });
+    expect(first.id).not.toBe(second.id);
+    expect(["placement_listening_10", "placement_listening_a2_support"]).toContain(first.id);
+    expect(["placement_listening_10", "placement_listening_a2_support"]).toContain(second.id);
   });
 
   it("returns null instead of crossing levels for an unavailable pool", () => {

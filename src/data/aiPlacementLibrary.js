@@ -9,6 +9,8 @@ function makePlacementListeningModel({
   audioUrl,
   listeningQuestions,
   source,
+  liveAvailable = true,
+  placementTier = null,
 }) {
   return {
     id,
@@ -31,6 +33,8 @@ function makePlacementListeningModel({
       B2: ['komplexere Zusammenhänge und Begründungen erfassen']
     },
     placementSource: source,
+    liveAvailable,
+    placementTier: placementTier || difficulty,
   };
 }
 
@@ -102,6 +106,49 @@ export const aiPlacementLibrary = [
         'vergleichen',
         'komplexere Satzstrukturen'
       ]
+    }
+  },
+
+  {
+    id: 'a2_self_leicht',
+    service: 'placement',
+    level: 'A2',
+    skill: 'selbstvorstellung',
+    difficulty: 'leicht',
+    placementTier: 'support',
+    title: 'A2 Selbstvorstellung – Leicht (Unterstützung)',
+    prompt:
+      'Der Schüler stellt sich mit einfachen Sätzen vor. Der Prüfer unterstützt mit sehr einfachen Nachfragen.',
+    studentPreview:
+      'Stellen Sie sich kurz vor. Sie können über Name, Land, Wohnort und Familie sprechen.',
+    requiredTopics: ['Name', 'Herkunftsland', 'Wohnort', 'Familie', 'Freizeit'],
+    examinerQuestions: [
+      'Wie heißen Sie?',
+      'Woher kommen Sie?',
+      'Wo wohnen Sie jetzt?',
+      'Haben Sie Familie?',
+      'Was machen Sie gern in der Freizeit?',
+      'Warum lernen Sie Deutsch?'
+    ],
+    followUpRules: [
+      'Nur einfache Nachfragen stellen',
+      'Wenn Antwort sehr kurz ist -> freundlich um ein Detail bitten'
+    ],
+    reportFields: [
+      'Wortschatz',
+      'Satzbau',
+      'Flüssigkeit',
+      'Verständlichkeit',
+      'Reaktion auf Fragen'
+    ],
+    benchmarkMarkers: {
+      A2: [
+        'einfache persönliche Angaben',
+        'kurze Hauptsätze',
+        'Grundwortschatz'
+      ],
+      B1: ['Gründe nennen', 'längere Antworten'],
+      B2: ['Meinung begründen']
     }
   },
 
@@ -1180,10 +1227,43 @@ export const aiPlacementLibrary = [
   }),
 
   makePlacementListeningModel({
+    id: 'placement_listening_a2_support',
+    level: 'A2',
+    difficulty: 'leicht',
+    placementTier: 'support',
+    title: 'A2 Hören – Kurze Nachricht (Stau)',
+    source: 'a2_hoeren_mittel support variant',
+    audioText:
+      'Hallo Anna. Ich komme heute später. Auf der Autobahn gibt es einen Stau. Ich bin ungefähr 30 Minuten verspätet.',
+    listeningQuestions: [
+      { id: 'a2-support-reason', question: 'Warum kommt die Person später?', questionType: 'Hauptaussage', options: ['Wegen eines Staus.', 'Wegen eines Termins.', 'Wegen des Wetters.'], correctOption: 'Wegen eines Staus.' },
+      { id: 'a2-support-delay', question: 'Wie lange ist die Person ungefähr verspätet?', questionType: 'Detail', options: ['13 Minuten.', '30 Minuten.', 'Eine Stunde.'], correctOption: '30 Minuten.' },
+      { id: 'a2-support-place', question: 'Wo gibt es das Problem?', questionType: 'Detail', options: ['Auf der Autobahn.', 'Am Bahnhof.', 'In der Sprachschule.'], correctOption: 'Auf der Autobahn.' }
+    ]
+  }),
+
+  makePlacementListeningModel({
+    id: 'placement_listening_b1_bridge',
+    level: 'B1',
+    difficulty: 'bridge',
+    placementTier: 'bridge',
+    title: 'B1 Hören – Sprachkurs verschieben (Brücke)',
+    source: 'b1_hoeren_mittel bridge variant',
+    audioText:
+      'Guten Tag, hier ist die Sprachschule. Der Deutschkurs am Montag kann leider nicht stattfinden, weil die Lehrerin krank ist. Der Unterricht wird auf Mittwoch um 18 Uhr verschoben. Bitte bestätigen Sie kurz per E-Mail, ob Sie kommen können.',
+    listeningQuestions: [
+      { id: 'b1-bridge-reason', question: 'Warum findet der Kurs am Montag nicht statt?', questionType: 'Hauptaussage', options: ['Die Lehrerin ist krank.', 'Die Schule ist geschlossen.', 'Es gibt zu wenige Teilnehmer.'], correctOption: 'Die Lehrerin ist krank.' },
+      { id: 'b1-bridge-day', question: 'Wann ist der neue Termin?', questionType: 'Detail', options: ['Dienstag.', 'Mittwoch.', 'Donnerstag.'], correctOption: 'Mittwoch.' },
+      { id: 'b1-bridge-time', question: 'Um wie viel Uhr beginnt der Kurs?', questionType: 'Detail', options: ['Um 16 Uhr.', 'Um 18 Uhr.', 'Um 20 Uhr.'], correctOption: 'Um 18 Uhr.' }
+    ]
+  }),
+
+  makePlacementListeningModel({
     id: 'b2_hoeren_buerotermin',
     level: 'B2',
     title: 'B2 Hören – Büro und Terminplanung',
     source: 'b2HorenModels b2-hoeren-01 excerpt',
+    liveAvailable: false,
     audioText:
       'Hallo Frau Berger, hier ist Markus Klein aus der Projektabteilung. Unser Termin morgen um 10 Uhr muss leider verschoben werden, weil Herr Schneider kurzfristig zu einem Kundengespräch nach Linz fahren muss. Wir schlagen Donnerstag um 14 Uhr vor. Bitte bringen Sie die aktuellen Zahlen zur Präsentation mit. Guten Tag, hier spricht Anna Berger. Ich rufe wegen der Besprechung am Donnerstag an. Ich kann um 14 Uhr kommen, aber ich brauche vorher noch die Unterlagen. Könnten Sie mir die Tagesordnung und die Verkaufszahlen per E-Mail schicken? Dann kann ich mich besser vorbereiten.',
     listeningQuestions: [
@@ -1198,6 +1278,7 @@ export const aiPlacementLibrary = [
     level: 'B2',
     title: 'B2 Hören – Bewerbung und Arbeitswelt',
     source: 'b2HorenModels b2-hoeren-02 excerpt',
+    liveAvailable: false,
     audioText:
       'Guten Tag Herr Yilmaz, hier ist Sabine Meier von der Personalabteilung. Wir haben Ihre Bewerbung erhalten und möchten Sie nächste Woche zu einem Vorstellungsgespräch einladen. Bitte bringen Sie Ihre Zeugnisse und eine Kopie Ihres Lebenslaufs mit. Ich fand das Gespräch sehr angenehm. Die Stelle klingt interessant, aber die Arbeitszeiten sind etwas schwierig. Manchmal müsste ich bis 19 Uhr bleiben. Ich möchte zuerst mit meiner Familie sprechen, bevor ich eine Entscheidung treffe.',
     listeningQuestions: [
@@ -1213,6 +1294,7 @@ export const aiPlacementLibrary = [
     difficulty: 'stark',
     title: 'B2 Hören – Digitalisierung und Online-Meeting',
     source: 'b2HorenModels b2-hoeren-03 excerpt',
+    liveAvailable: false,
     audioText:
       'Liebe Kolleginnen und Kollegen, das heutige Teammeeting findet nicht im Besprechungsraum statt, sondern online. Der Link wurde Ihnen bereits per E-Mail geschickt. Bitte testen Sie vorher Kamera und Mikrofon, damit wir pünktlich beginnen können. Ich finde digitale Tools sehr praktisch, aber beim Datenschutz muss man vorsichtig sein. In unserer Firma dürfen deshalb nur Programme benutzt werden, die vorher geprüft wurden.',
     listeningQuestions: [

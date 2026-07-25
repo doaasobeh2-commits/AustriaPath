@@ -38,8 +38,8 @@ describe("Phase 1: conservative Placement start (weak/A2 by default)", () => {
   });
 
   it("routes the pre-evidence Bild/Listening steps from the fixed A2 constant, not the learner-selected level", () => {
-    expect(screenSource).toMatch(/getImageStepAfterSelfIntro\(selfBand, CONSERVATIVE_START_LEVEL\)/);
-    expect(screenSource).toMatch(/getReadingListeningStep\(selfBand, imageBand, CONSERVATIVE_START_LEVEL\)/);
+    expect(screenSource).toMatch(/getImageStepAfterSelfIntro\(selfBand, CONSERVATIVE_START_LEVEL, routingContext\)/);
+    expect(screenSource).toMatch(/getReadingListeningStep\(selfBand, imageBand, CONSERVATIVE_START_LEVEL, routingContext\)/);
     expect(screenSource).not.toMatch(/getImageStepAfterSelfIntro\(selfBand, selectedLevel\)/);
     expect(screenSource).not.toMatch(/getReadingListeningStep\(selfBand, imageBand, selectedLevel\)/);
   });
@@ -55,21 +55,27 @@ describe("Phase 1: conservative Placement start (weak/A2 by default)", () => {
     });
   });
 
-  it("still allows strong first-stage evidence to route upward from the A2 start (evidence-earned movement is preserved)", () => {
+  it("still allows strong first-stage evidence to route upward only after bridge confirmation", () => {
     expect(getImageStepAfterSelfIntro("strong", "A2")).toMatchObject({
+      skill: "bildbeschreibung",
+      level: "A2",
+    });
+    expect(
+      getImageStepAfterSelfIntro("strong", "A2", { bridgeProbeStatus: "confirmed" })
+    ).toMatchObject({
       skill: "bildbeschreibung",
       level: "B1",
       difficulty: "leicht",
     });
   });
 
-  it("still lets sustained strong evidence keep routing upward through the next stage from an A2 start", () => {
-    // Mirrors the existing adaptive-routing contract in placementHistoricalScoring.test.js —
-    // demonstrating that starting conservative never permanently caps a genuinely strong learner.
-    expect(getReadingListeningStep("strong", "strong", "A2")).toMatchObject({
+  it("still lets confirmed strong evidence route to B1 listening bridge from an A2 start", () => {
+    expect(
+      getReadingListeningStep("strong", "strong", "A2", { bridgeProbeStatus: "confirmed" })
+    ).toMatchObject({
       skill: "lesenHoeren",
       level: "B1",
-      difficulty: "leicht",
+      difficulty: "bridge",
     });
   });
 });

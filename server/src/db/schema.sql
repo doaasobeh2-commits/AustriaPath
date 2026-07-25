@@ -541,6 +541,40 @@ CREATE TABLE weekly_plans (
 
 CREATE INDEX idx_weekly_plans_user ON weekly_plans (user_id);
 
+-- ─── PLACEMENT DIAGNOSTICS (hidden admin capture) ────────────────────────────
+
+CREATE TABLE placement_diagnostic_config (
+  id                      SMALLINT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  auto_capture_enabled    BOOLEAN NOT NULL DEFAULT TRUE,
+  capture_limit           INTEGER NOT NULL DEFAULT 20 CHECK (capture_limit > 0),
+  completed_capture_count INTEGER NOT NULL DEFAULT 0 CHECK (completed_capture_count >= 0),
+  updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE placement_diagnostic_sessions (
+  attempt_id              TEXT PRIMARY KEY,
+  user_id                 TEXT,
+  session_id              TEXT NOT NULL,
+  capture_mode            TEXT NOT NULL DEFAULT 'full' CHECK (capture_mode IN ('full', 'error_only')),
+  error_only_capture      BOOLEAN NOT NULL DEFAULT FALSE,
+  captured                BOOLEAN NOT NULL DEFAULT TRUE,
+  qa_mode                 BOOLEAN NOT NULL DEFAULT FALSE,
+  completed_counted       BOOLEAN NOT NULL DEFAULT FALSE,
+  started_at              TIMESTAMPTZ,
+  completed_at            TIMESTAMPTZ,
+  issue_summary           JSONB NOT NULL DEFAULT '{}'::jsonb,
+  payload                 JSONB NOT NULL DEFAULT '{}'::jsonb,
+  lab_replay              JSONB,
+  created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_placement_diagnostic_sessions_list
+  ON placement_diagnostic_sessions (captured, updated_at DESC);
+
+CREATE INDEX idx_placement_diagnostic_sessions_issues
+  ON placement_diagnostic_sessions ((issue_summary->>'hasIssues'));
+
 -- ─── TRIGGERS: updated_at ────────────────────────────────────────────────────
 
 CREATE OR REPLACE FUNCTION set_updated_at()
@@ -558,3 +592,5 @@ CREATE TRIGGER tr_subscriptions_updated BEFORE UPDATE ON subscriptions FOR EACH 
 CREATE TRIGGER tr_exam_sessions_updated BEFORE UPDATE ON exam_sessions FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 CREATE TRIGGER tr_exam_reports_updated BEFORE UPDATE ON exam_reports FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 CREATE TRIGGER tr_lab_queue_updated BEFORE UPDATE ON examiner_lab_queue_items FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER tr_placement_diagnostic_sessions_updated BEFORE UPDATE ON placement_diagnostic_sessions FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER tr_placement_diagnostic_config_updated BEFORE UPDATE ON placement_diagnostic_config FOR EACH ROW EXECUTE FUNCTION set_updated_at();

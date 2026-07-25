@@ -29,6 +29,13 @@ export default function AdminNav({ activeTab, onTabChange, setActiveTab }) {
         <button type="button" onClick={() => setActiveTab("examinerLab")} style={toolButtonStyle("#7c3aed")}>
           🧠 Examiner Lab
         </button>
+        <button
+          type="button"
+          onClick={() => onTabChange("placementDiagnostics")}
+          style={toolButtonStyle("#0f766e")}
+        >
+          🩺 Placement Diagnostics
+        </button>
       </div>
 
       <button

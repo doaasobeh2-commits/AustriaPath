@@ -48,8 +48,15 @@ describe("final band from turnEvidence", () => {
 });
 
 describe("historical routing", () => {
-  it("routes strong self-intro to B1 bild leicht", () => {
+  it("keeps strong self-intro on A2 bild until bridge probe is confirmed", () => {
     expect(getImageStepAfterSelfIntro("strong")).toMatchObject({
+      skill: "bildbeschreibung",
+      level: "A2",
+      difficulty: "mittel",
+    });
+    expect(
+      getImageStepAfterSelfIntro("strong", "A2", { bridgeProbeStatus: "confirmed" })
+    ).toMatchObject({
       skill: "bildbeschreibung",
       level: "B1",
       difficulty: "leicht",
@@ -80,11 +87,11 @@ describe("historical routing", () => {
     });
   });
 
-  it("routes medium+medium to A2 lesenHoeren stark", () => {
+  it("routes medium+medium to A2 lesenHoeren mittel (not the hard medical stark clip)", () => {
     expect(getReadingListeningStep("medium", "medium")).toMatchObject({
       skill: "lesenHoeren",
       level: "A2",
-      difficulty: "stark",
+      difficulty: "mittel",
     });
   });
 
@@ -95,14 +102,14 @@ describe("historical routing", () => {
     });
   });
 
-  it.each([
-    ["weak", "medium", "B1", "A2"],
-    ["medium", "weak", "B1", "A2"],
-    ["strong", "strong", "B1", "B2"],
-    ["weak", "weak", "B2", "A2"],
-    ["medium", "medium", "B2", "B2"],
-  ])("routes %s/%s from %s start to %s listening", (self, image, start, level) => {
-    expect(getReadingListeningStep(self, image, start).level).toBe(level);
+  it("routes confirmed strong oral evidence to B1 listening bridge", () => {
+    expect(
+      getReadingListeningStep("strong", "strong", "A2", { bridgeProbeStatus: "confirmed" })
+    ).toMatchObject({
+      skill: "lesenHoeren",
+      level: "B1",
+      difficulty: "bridge",
+    });
   });
 
   it("routes a stable B2 start to B2 listening", () => {

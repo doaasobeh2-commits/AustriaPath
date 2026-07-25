@@ -7,3 +7,4 @@ deploy/closed-beta-env.local
 .DS_Store
 .vercel/
 .vercel
+server/data/placement-diagnostics/

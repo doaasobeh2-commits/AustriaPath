@@ -3,6 +3,7 @@ import AdminNav from "./AdminNav.jsx";
 import ContentManager from "./ContentManager.jsx";
 import AdminUsersPanel from "./AdminUsersPanel.jsx";
 import AdminOverviewPanel from "./AdminOverviewPanel.jsx";
+import PlacementDiagnosticsPanel from "./PlacementDiagnosticsPanel.jsx";
 import { useAdminContent } from "./useAdminContent.js";
 
 export default function AdminShell({ setActiveTab }) {
@@ -48,6 +49,8 @@ export default function AdminShell({ setActiveTab }) {
       )}
 
       {activeSection === "users" && <AdminUsersPanel isActive={activeSection === "users"} />}
+
+      {activeSection === "placementDiagnostics" && <PlacementDiagnosticsPanel />}
     </div>
   );
 }

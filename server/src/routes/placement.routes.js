@@ -17,6 +17,10 @@ import {
   completePlacementAttempt,
   getPlacementEntitlement,
 } from "../services/placementEntitlementService.js";
+import {
+  finalizePlacementDiagnosticSession,
+  syncPlacementDiagnosticSession,
+} from "../services/placementDiagnosticService.js";
 
 const router = Router();
 
@@ -39,6 +43,43 @@ router.post("/consume-entitlement", requireAuth, requireActiveAccess, async (req
 router.post("/begin-attempt", requireAuth, requireActiveAccess, async (req, res, next) => {
   try {
     success(res, await beginPlacementAttempt(req.auth.userId));
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/diagnostic-sync", requireAuth, requireActiveAccess, async (req, res, next) => {
+  try {
+    const { attemptId, qaMode, session } = req.body || {};
+    if (!attemptId || typeof attemptId !== "string") {
+      throw new AppError("VALIDATION_ERROR", "attemptId ist erforderlich.", 400);
+    }
+    const result = await syncPlacementDiagnosticSession({
+      userId: req.auth.userId,
+      attemptId,
+      qaMode: Boolean(qaMode),
+      session: session && typeof session === "object" ? session : {},
+    });
+    success(res, result);
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/diagnostic-complete", requireAuth, requireActiveAccess, async (req, res, next) => {
+  try {
+    const { attemptId, qaMode, session, labReplay } = req.body || {};
+    if (!attemptId || typeof attemptId !== "string") {
+      throw new AppError("VALIDATION_ERROR", "attemptId ist erforderlich.", 400);
+    }
+    const result = await finalizePlacementDiagnosticSession({
+      userId: req.auth.userId,
+      attemptId,
+      qaMode: Boolean(qaMode),
+      session: session && typeof session === "object" ? session : {},
+      labReplay: labReplay && typeof labReplay === "object" ? labReplay : null,
+    });
+    success(res, result);
   } catch (e) {
     next(e);
   }

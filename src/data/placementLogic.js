@@ -8,6 +8,7 @@
  */
 
 import { getPlacementModel, getPlacementModelsBySkill } from "./aiPlacementLibrary.js";
+import { normalizeRoutingContext } from "./utils/placementExaminerSignals.js";
 
 export const placementStages = [
   "selbstvorstellung",
@@ -46,6 +47,7 @@ export const PLACEMENT_BAND_TO_SCORE = Object.freeze({
  */
 export const PLACEMENT_MODEL_FALLBACKS = Object.freeze({
   "bildbeschreibung|B1|leicht": "b1_bild_mittel",
+  "bildbeschreibung|A2|leicht": "a2_bild_leicht",
   "planung|A2|stark": "a2_planung_mittel",
   "planung|B1|leicht": "b1_planung_schwach",
 });
@@ -72,14 +74,24 @@ export function bandToPlacementScore(band) {
  * Invalid/missing bands are ignored and an entirely invalid evidence set fails closed with null.
  * @param {Array<{ band?: string, needsFollowUp?: boolean }>|undefined} evaluations
  */
-export function getFinalBandFromTurnEvidence(evaluations = []) {
+export function getFinalBandFromTurnEvidence(evaluations = [], options = {}) {
   if (!Array.isArray(evaluations) || evaluations.length === 0) return null;
+  const skill = String(options?.skill || "").toLowerCase();
   const ranks = evaluations
-    .map((item) => normalizePlacementBand(item?.band))
-    .filter(Boolean)
-    .map((band) => ({ weak: 0, medium: 1, strong: 2 })[band]);
+    .map((item, index) => {
+      const band = normalizePlacementBand(item?.band);
+      if (!band) return null;
+      const rank = { weak: 0, medium: 1, strong: 2 }[band];
+      const isClosing = Boolean(item?.planningComplete || item?.isClosingMove);
+      const weight =
+        skill === "planung" && isClosing ? 0.5 : 1;
+      return { rank, weight };
+    })
+    .filter(Boolean);
   if (!ranks.length) return null;
-  const average = ranks.reduce((sum, rank) => sum + rank, 0) / ranks.length;
+  const totalWeight = ranks.reduce((sum, item) => sum + item.weight, 0);
+  const average =
+    ranks.reduce((sum, item) => sum + item.rank * item.weight, 0) / totalWeight;
   if (average < 0.5) return "weak";
   if (average < 1.5) return "medium";
   return "strong";
@@ -111,8 +123,13 @@ export function scorePlacementListeningAnswers(model, answers = {}) {
   return { band, correct, total, ratio, questionResults };
 }
 
-export function getImageStepAfterSelfIntro(selfIntroResult, selectedStartLevel = "A2") {
+export function getImageStepAfterSelfIntro(
+  selfIntroResult,
+  selectedStartLevel = "A2",
+  routingContext = {}
+) {
   const band = normalizePlacementBand(selfIntroResult) || selfIntroResult;
+  const ctx = normalizeRoutingContext(routingContext);
 
   if (selectedStartLevel === "B2") {
     if (band === "weak") {
@@ -160,8 +177,8 @@ export function getImageStepAfterSelfIntro(selfIntroResult, selectedStartLevel =
     return {
       skill: "bildbeschreibung",
       level: "A2",
-      difficulty: "mittel",
-      reason: "Selbstvorstellung schwach → A2 Bildbeschreibung mittel",
+      difficulty: "leicht",
+      reason: "Selbstvorstellung schwach → A2 Bildbeschreibung leicht (Unterstützung)",
     };
   }
 
@@ -175,12 +192,26 @@ export function getImageStepAfterSelfIntro(selfIntroResult, selectedStartLevel =
   }
 
   if (band === "strong" || selfIntroResult === "stark") {
+    if (ctx.bridgeProbeStatus === "confirmed") {
+      return {
+        skill: "bildbeschreibung",
+        level: "B1",
+        difficulty: "leicht",
+        internalLevel: "A2+/B1-",
+        reason:
+          "Selbstvorstellung stark und Brückenfrage bestätigt → B1 Bildbeschreibung leicht",
+      };
+    }
     return {
       skill: "bildbeschreibung",
-      level: "B1",
-      difficulty: "leicht",
-      internalLevel: "A2+/B1-",
-      reason: "Selbstvorstellung stark → Übergang zu B1 Bildbeschreibung leicht",
+      level: "A2",
+      difficulty: "mittel",
+      internalLevel: "A2+",
+      reason:
+        ctx.bridgeProbeStatus === "failed"
+          ? "Starke Selbstvorstellung ohne bestätigte Brückenfrage → stabiler A2-Pfad"
+          : "Selbstvorstellung stark → vorsichtiger A2-Pfad bis Brückenfrage bestätigt",
+      bridgeProbeDue: ctx.bridgeProbeStatus !== "failed",
     };
   }
 
@@ -195,10 +226,12 @@ export function getImageStepAfterSelfIntro(selfIntroResult, selectedStartLevel =
 export function getReadingListeningStep(
   selfIntroResult,
   imageResult,
-  selectedStartLevel = "A2"
+  selectedStartLevel = "A2",
+  routingContext = {}
 ) {
   const selfBand = normalizePlacementBand(selfIntroResult) || selfIntroResult;
   const imageBand = normalizePlacementBand(imageResult) || imageResult;
+  const ctx = normalizeRoutingContext(routingContext);
 
   if (
     selectedStartLevel === "B2" &&
@@ -249,9 +282,9 @@ export function getReadingListeningStep(
     return {
       skill: "lesenHoeren",
       level: "A2",
-      difficulty: "stark",
-      internalLevel: "A2+",
-      reason: "Selbstvorstellung schwach, Bild mittel → A2 Lesen/Hören stark",
+      difficulty: "mittel",
+      internalLevel: "A2",
+      reason: "Selbstvorstellung schwach, Bild mittel → A2 Hören mittel",
     };
   }
 
@@ -262,9 +295,9 @@ export function getReadingListeningStep(
     return {
       skill: "lesenHoeren",
       level: "A2",
-      difficulty: "stark",
-      internalLevel: "A2+",
-      reason: "A2 stabil → Lesen/Hören stärker testen",
+      difficulty: "mittel",
+      internalLevel: "A2",
+      reason: "A2 stabil → A2 Hören mittel (kein schwieriger Medizin-Clip)",
     };
   }
 
@@ -273,12 +306,31 @@ export function getReadingListeningStep(
     imageBand !== "weak" &&
     imageResult !== "schwach"
   ) {
+    if (ctx.bridgeProbeStatus === "confirmed") {
+      return {
+        skill: "lesenHoeren",
+        level: "B1",
+        difficulty: "bridge",
+        internalLevel: "B1-",
+        reason: "Bestätigte mündliche Leistung → B1 Hören Brücke (leicht)",
+        b1Entry: true,
+      };
+    }
     return {
       skill: "lesenHoeren",
-      level: "B1",
+      level: "A2",
+      difficulty: "mittel",
+      internalLevel: "A2+",
+      reason: "Starke mündliche Leistung ohne bestätigte Brücke → A2 Hören mittel",
+    };
+  }
+
+  if (selfBand === "weak" && imageBand === "weak") {
+    return {
+      skill: "lesenHoeren",
+      level: "A2",
       difficulty: "leicht",
-      internalLevel: "B1-",
-      reason: "Starke mündliche Leistung → B1 Lesen/Hören leicht",
+      reason: "Schwache Evidenz → leichter A2 Hören-Clip",
     };
   }
 

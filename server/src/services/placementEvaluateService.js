@@ -21,6 +21,15 @@ import {
   resolvePlacementProductiveBand,
   sanitizePlacementLearnerNotes,
 } from "../../../src/data/utils/placementBandResolution.js";
+import {
+  applyProductiveBandWithTaskSeparation,
+  conversationUsedSimplifiedRephrase,
+  deriveBridgeProbeResult,
+  getBridgeQuestion,
+  sanitizeExaminerSignals,
+  shouldOfferBridgeProbe,
+  simplifiedRephraseForQuestion,
+} from "../../../src/data/utils/placementExaminerSignals.js";
 
 export const PLACEMENT_MAX_FOLLOWUPS = 2;
 export const PLACEMENT_EVAL_METHOD = "placement-ai-turn-v1";
@@ -431,8 +440,18 @@ export function buildAllowedFollowUps(model, conversation = []) {
           .filter((id) => SELF_TOPIC_IDS.has(id))
       )
     : new Set();
-  const isSelfTopicSufficient = (topicId) =>
-    Boolean(topicId) && (selfCoverage[topicId] === COVERAGE.SUFFICIENT || semanticConfirmedTopics.has(topicId));
+  const SELF_TOPIC_CONFIRM_ALIASES = Object.freeze({
+    german_reason: "german_learning",
+    german_duration: "german_learning",
+    learning_strategy: "german_learning",
+  });
+  const isSelfTopicSufficient = (topicId) => {
+    if (!topicId) return false;
+    if (selfCoverage[topicId] === COVERAGE.SUFFICIENT) return true;
+    if (semanticConfirmedTopics.has(topicId)) return true;
+    const alias = SELF_TOPIC_CONFIRM_ALIASES[topicId];
+    return Boolean(alias && semanticConfirmedTopics.has(alias));
+  };
   const askedSelfIntents = new Set(
     (Array.isArray(conversation) ? conversation : [])
       .map((turn) => selfQuestionTopic(turn?.question || ""))
@@ -564,6 +583,22 @@ export function sanitizePlacementEvaluation(
     band = proposedBand;
   }
 
+  const lastTurn = conversation.at(-1) || {};
+  const lastTranscript = String(lastTurn?.transcript || "");
+  const examinerSignals = PRODUCTIVE_SKILLS.has(model?.skill)
+    ? sanitizeExaminerSignals(raw, lastTranscript)
+    : null;
+
+  if (PRODUCTIVE_SKILLS.has(model?.skill) && examinerSignals) {
+    band = applyProductiveBandWithTaskSeparation({
+      communicativeBand,
+      accuracyBand,
+      proposedBand: band,
+      modelLevel: model?.level,
+      examinerSignals,
+    });
+  }
+
   if (!band) {
     throw new AppError(
       "AI_INVALID_RESPONSE",
@@ -618,6 +653,9 @@ export function sanitizePlacementEvaluation(
   let followUpQuestion = null;
   let followUpQuestionId = null;
   let followUpSource = null;
+  let simplifiedRephraseUsed = false;
+  let bridgeProbeDue = false;
+  let bridgeProbeResult = null;
   // Bounded semantic fallback (Planung, information topics only): closed
   // vocabulary validated against this scenario's own evidenceUnits ids.
   // Never lets the provider invent or reorder moves outside the scripted set
@@ -628,6 +666,25 @@ export function sanitizePlacementEvaluation(
 
   if (!planningPack && followUpCount >= PLACEMENT_MAX_FOLLOWUPS) {
     needsFollowUp = false;
+  }
+
+  const currentQuestionText = String(lastTurn?.question || "").trim();
+  if (
+    !planningPack &&
+    PRODUCTIVE_SKILLS.has(model?.skill) &&
+    examinerSignals?.needsSimplifiedRephrase &&
+    followUpCount < PLACEMENT_MAX_FOLLOWUPS &&
+    currentQuestionText &&
+    !conversationUsedSimplifiedRephrase(conversation.slice(0, -1), currentQuestionText)
+  ) {
+    const simplified = simplifiedRephraseForQuestion(currentQuestionText, model.skill);
+    if (simplified) {
+      needsFollowUp = true;
+      followUpQuestion = simplified;
+      followUpQuestionId = `rephrase:${currentQuestionText}`;
+      followUpSource = "examinerQuestions";
+      simplifiedRephraseUsed = true;
+    }
   }
 
   if (planningPack) {
@@ -657,7 +714,7 @@ export function sanitizePlacementEvaluation(
     followUpSource = nextMove
       ? (providerMoveId === nextMove.id ? "examinerQuestions" : "deterministicPlanningFallback")
       : null;
-  } else if (needsFollowUp) {
+  } else if (needsFollowUp && !simplifiedRephraseUsed) {
     const proposedCandidates = [raw, ...(Array.isArray(raw?.followUpCandidates) ? raw.followUpCandidates : [])];
     let matchedBildQuestion = null;
     let matched = null;
@@ -696,6 +753,32 @@ export function sanitizePlacementEvaluation(
     }
   }
 
+  if (
+    model?.skill === "selbstvorstellung" &&
+    examinerSignals &&
+    !simplifiedRephraseUsed
+  ) {
+    if (conversation.some((turn) => turn?.bridgeProbe)) {
+      bridgeProbeResult = deriveBridgeProbeResult(examinerSignals, lastTranscript);
+    } else if (
+      shouldOfferBridgeProbe({
+        band,
+        examinerSignals,
+        conversation,
+        followUpCount,
+      }) &&
+      followUpCount < PLACEMENT_MAX_FOLLOWUPS &&
+      !needsFollowUp
+    ) {
+      const bridge = getBridgeQuestion(conversation);
+      needsFollowUp = true;
+      followUpQuestion = bridge.question;
+      followUpQuestionId = bridge.id;
+      followUpSource = "bridgeProbe";
+      bridgeProbeDue = true;
+    }
+  }
+
   const planningLedger = planningPack
     ? buildPlanningEvidenceLedger(planningPack, conversation, semanticEvidenceConfirmed)
     : null;
@@ -713,6 +796,10 @@ export function sanitizePlacementEvaluation(
           communicativeBand: communicativeBand || null,
           accuracyBand: accuracyBand || null,
           diagnosticFocus,
+          examinerSignals,
+          bridgeProbeDue,
+          bridgeProbeResult,
+          simplifiedRephraseUsed,
         }
       : {}),
     coveredTopics: planningTopics?.coveredTopics || coveredTopics,
@@ -822,15 +909,19 @@ export function buildExaminerSystemPrompt(
     "selectedLevel / Startniveau darf die Bewertung NICHT beeinflussen — nur die Antwort und die Modellfelder.",
     "Antworte NUR mit einem JSON-Objekt (kein Markdown), Schema:",
     productive
-      ? '{"communicativeBand":"weak|medium|strong","accuracyBand":"weak|medium|strong","band":"weak|medium|strong","coveredTopics":[],"missingTopics":[],"diagnosticFocus":[],"semanticTopicsConfirmed":[],"semanticEvidenceConfirmed":[],"needsFollowUp":boolean,"followUpQuestionId":string|null,"followUpQuestion":string|null,"followUpCandidates":[],"followUpSource":"examinerQuestions|followUpRules|missingTopic"|null,"notes":[]}'
+      ? '{"communicativeBand":"weak|medium|strong","accuracyBand":"weak|medium|strong","band":"weak|medium|strong","taskFulfilment":"low|medium|high","comprehension":"low|uncertain|medium|high","communicativeEffectiveness":"low|medium|high","vocabulary":"low|medium|high","grammarAccuracy":"low|medium|high","fluency":"low|medium|high","pronunciationIntelligibility":"low|medium|high","responseRelevance":"low|medium|high","memorizationRisk":"low|medium|high","sttConfidence":"low|medium|high","needsSimplifiedRephrase":boolean,"usableLanguageEvidence":boolean,"ceilingSignal":boolean,"coveredTopics":[],"missingTopics":[],"diagnosticFocus":[],"semanticTopicsConfirmed":[],"semanticEvidenceConfirmed":[],"needsFollowUp":boolean,"followUpQuestionId":string|null,"followUpQuestion":string|null,"followUpCandidates":[],"followUpSource":"examinerQuestions|followUpRules|missingTopic"|null,"notes":[]}'
       : '{"band":"weak|medium|strong","coveredTopics":[],"missingTopics":[],"needsFollowUp":boolean,"followUpQuestionId":string|null,"followUpQuestion":string|null,"followUpCandidates":[],"followUpSource":"examinerQuestions|followUpRules|missingTopic"|null,"notes":[]}',
   ];
 
   if (productive) {
     lines.push(
-      "Trenne ZWINGEND zwei Dimensionen:",
-      "communicativeBand = inhaltliche/kommunikative Aufgabenerfüllung (Verständlichkeit, Themenabdeckung, Reaktion).",
-      "accuracyBand = sprachliche Qualität (Grammatik, Syntax, Wortschatz, Satzbau) — unabhängig von der Verständlichkeit.",
+      "Trenne ZWINGEND Aufgabenverständnis von Sprachleistung:",
+      "taskFulfilment/comprehension/responseRelevance = Hat der Lernende die AKTUELLE Frage verstanden und beantwortet?",
+      "communicativeBand/accuracyBand/vocabulary/grammarAccuracy/fluency = Welche DEUTSCHE Sprachleistung zeigt die Antwort — auch wenn sie thematisch daneben liegt?",
+      "Off-topic oder auswendig gelernte Antworten: taskFulfilment niedrig, aber usableLanguageEvidence=true wenn brauchbares Deutsch vorhanden ist.",
+      "memorizationRisk=high bei sehr glatter, unpersönlicher Selbstvorstellung ohne Bezug zur Frage.",
+      "needsSimplifiedRephrase=true nur bei echter Nichtverständnis-Signale (z.B. Ich habe nicht verstanden, Keine Ahnung).",
+      "Gib in einer Umformulierung NIEMALS die Lösung oder erwartete Inhalte vor.",
       "Eine verständliche, aber grammatisch/syntaktisch stark fehlerhafte Antwort ist communicativeBand medium/strong möglich, accuracyBand aber weak.",
       "band ist dein Gesamtvorschlag; der Server wendet eine Accuracy-Floor an. Setze band konsistent zu den Dimensionen.",
       "strong darf NUR vergeben werden, wenn die Antwort (1) inhaltlich ausreichend vollständig ist, (2) zusammenhängend und niveaugerecht formuliert, (3) brauchbaren Wortschatz zeigt, (4) Grammatik/Syntax dem Modellniveau angemessen ist und (5) nicht stark fragmentiert wirkt.",
@@ -902,6 +993,8 @@ export function buildExaminerSystemPrompt(
       "accuracyBand: sprachliche Qualität über die gesamte Unterhaltung.",
       "Faktische Themenabdeckung wird serverseitig aus dem geschlossenen Evidence-Ledger bestimmt. coveredTopics/missingTopics des Providers werden für Planung ignoriert.",
       "Eine Antwort kann mehrere Evidenzdimensionen abdecken. Off-topic-Inhalt erfüllt das aktuelle Frageziel nicht.",
+      "Off-topic oder nicht verstanden: taskFulfilment niedrig, aber bewerte das produzierte Deutsch separat (fluency, vocabulary, grammarAccuracy).",
+      "Bei Nichtverständnis darfst du dieselbe Planungsfrage EINMAL einfacher umformulieren — ohne die Antwort vorzugeben.",
       "Bei der Abschlussfrage: Dimensionen und band als Gesamtbild der gesamten Planung (nicht nur der letzten Antwort).",
       "semanticEvidenceConfirmed: 0–6 IDs NUR aus evidenceLedger, wenn die Antwort ein reines INFORMATIONS-Thema (Ort, Zeit, Personen o.ä. — NICHT Reaktion/Vorschlag/Problem-Pflichtmoves) eindeutig sprachlich mitgeteilt hat, auch wenn evidenceLedger es (noch) nicht als covered zeigt. Erfinde niemals eine ID, die dort nicht existiert.",
       "Reaktions-/Vorschlags-/Problem-Pflichtmoves sind ein fester, geskripteter Ablauf und werden durch semanticEvidenceConfirmed NIEMALS übersprungen oder ersetzt."

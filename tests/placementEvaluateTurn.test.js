@@ -369,6 +369,13 @@ describe("placementEvaluateService — sanitize", () => {
       communicativeBand: null,
       accuracyBand: null,
       diagnosticFocus: [],
+      examinerSignals: expect.objectContaining({
+        taskFulfilment: "medium",
+        usableLanguageEvidence: true,
+      }),
+      bridgeProbeDue: false,
+      bridgeProbeResult: null,
+      simplifiedRephraseUsed: false,
       coveredTopics: ["Name"],
       missingTopics: ["Familie", "Freizeit"],
       needsFollowUp: true,

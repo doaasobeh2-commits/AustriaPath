@@ -26,9 +26,11 @@ import { savePlacementProfile } from '../../data/utils/placementEngine';
 import {
   beginPlacementAttempt,
   completePlacementAttempt,
+  completePlacementDiagnostic,
   evaluatePlacementTurn,
   getPlacementEntitlement,
   polishPlacementReport,
+  syncPlacementDiagnostic,
 } from '../../api/repositories/index.js';
 import { getPlacementModel } from '../../data/aiPlacementLibrary.js';
 import { ApiError } from '../../api/httpClient.js';
@@ -51,6 +53,11 @@ import {
   recordCompletedPlacementContent,
   savePlacementSession,
 } from '../../utils/placementSession.js';
+import { createPlacementDiagnosticRecorder } from '../../data/utils/placementDiagnosticRecorder.js';
+import {
+  createPlacementRuntimeMonitor,
+  PLACEMENT_RUNTIME_CALM_MESSAGE,
+} from '../../data/utils/placementRuntimeMonitor.js';
 
 const SpeechRecognitionCtor =
   typeof window !== 'undefined'
@@ -106,12 +113,18 @@ export default function PlacementTestScreen({ setActiveTab }) {
   const [selectedBildImage, setSelectedBildImage] = useState(null);
   const [bildImageBroken, setBildImageBroken] = useState(false);
   const [retryAnswer, setRetryAnswer] = useState(null);
+  /** Adaptive routing evidence: bridge probe status, B1 listening stability, etc. */
+  const [routingContext, setRoutingContext] = useState({
+    bridgeProbeStatus: null,
+    b1ListeningStable: false,
+  });
   /** True while the learner must revise a locally rejected too-short answer. */
   const [answerTooShortBlocked, setAnswerTooShortBlocked] = useState(false);
   const [planningMoveId, setPlanningMoveId] = useState(null);
   const [planningPhase, setPlanningPhase] = useState('idle');
   const [planningCountdown, setPlanningCountdown] = useState(15);
   const [planningResponseSeconds, setPlanningResponseSeconds] = useState(0);
+  const [runtimeNotice, setRuntimeNotice] = useState(null);
   const recognitionRef = useRef(null);
   const finalReportInFlightRef = useRef(null);
   const listeningAudioRef = useRef(null);
@@ -121,10 +134,65 @@ export default function PlacementTestScreen({ setActiveTab }) {
   /** True while the learner wants the mic session open (until explicit stop). */
   const listenIntentRef = useRef(false);
   const hydratingRef = useRef(false);
+  /** Planung: defer examiner audio until evaluation UI has cleared. */
+  const pendingPlanningMoveRef = useRef(null);
+  const diagnosticRecorderRef = useRef(null);
+  const runtimeMonitorRef = useRef(null);
+  const stageIndexRef = useRef(stageIndex);
+  const skillRef = useRef(null);
+  const turnEvidenceRef = useRef(turnEvidence);
+
+  useEffect(() => {
+    stageIndexRef.current = stageIndex;
+  }, [stageIndex]);
+  useEffect(() => {
+    turnEvidenceRef.current = turnEvidence;
+  }, [turnEvidence]);
+
+  const syncDiagnosticSession = (session) => {
+    if (!attemptId || isAdminQaMode() || !session) return;
+    void syncPlacementDiagnostic({
+      attemptId,
+      qaMode: false,
+      session,
+    }).catch(() => {});
+  };
+
+  const ensureDiagnosticCapture = (nextAttemptId, startModel) => {
+    if (!nextAttemptId || diagnosticRecorderRef.current) return;
+    const qaMode = isAdminQaMode();
+    runtimeMonitorRef.current = createPlacementRuntimeMonitor({
+      getContext: () => ({
+        stage: skillRef.current,
+        turn: (turnEvidenceRef.current?.[skillRef.current] || []).length,
+      }),
+      onSync: ({ issue }) => {
+        diagnosticRecorderRef.current?.recordIssue(issue);
+        syncDiagnosticSession(diagnosticRecorderRef.current?.buildExportBundle());
+      },
+    });
+    diagnosticRecorderRef.current = createPlacementDiagnosticRecorder({
+      attemptId: nextAttemptId,
+      selectedLevel,
+      qaMode,
+      onSync: ({ session }) => syncDiagnosticSession(session),
+    });
+    if (startModel) {
+      diagnosticRecorderRef.current.recordStageStart({
+        stageIndex: STAGE_SELF,
+        skill: 'selbstvorstellung',
+        modelId: startModel.id,
+        modelLevel: startModel.level,
+        difficulty: startModel.difficulty,
+        reason: 'conservative A2 start',
+      });
+    }
+  };
 
   const totalMinutes = 5;
   const skillName = getStudentSkillName(currentModel?.skill);
   const skill = currentModel?.skill;
+  skillRef.current = skill;
   const isListeningSkill = skill === 'hoeren';
   const isVoiceSkill =
     skill === 'selbstvorstellung' ||
@@ -168,11 +236,21 @@ export default function PlacementTestScreen({ setActiveTab }) {
     }, { once: true });
     audio.addEventListener('error', () => {
       if (listeningAudioRef.current === audio) listeningAudioRef.current = null;
+      runtimeMonitorRef.current?.recordIssue({
+        type: 'planning_audio_playback_error',
+        recoverable: true,
+        adminNote: 'Planung examiner audio failed to play.',
+      });
       setPlanningPhase('playback-error');
       setControlMessage('Die Prüferfrage konnte nicht abgespielt werden. Bitte tippen Sie auf „Erneut abspielen“.');
     }, { once: true });
     void audio.play().catch(() => {
       if (listeningAudioRef.current === audio) listeningAudioRef.current = null;
+      runtimeMonitorRef.current?.recordIssue({
+        type: 'planning_audio_playback_error',
+        recoverable: true,
+        adminNote: 'Planung examiner audio play() rejected.',
+      });
       setPlanningPhase('playback-error');
       setControlMessage('Die Prüferfrage konnte nicht abgespielt werden. Bitte tippen Sie auf „Erneut abspielen“.');
     });
@@ -190,6 +268,13 @@ export default function PlacementTestScreen({ setActiveTab }) {
     );
     return () => window.clearTimeout(timer);
   }, [skill, planningPhase, planningCountdown, planningMoveId]);
+
+  useEffect(() => {
+    if (isEvaluating || skill !== 'planung' || !pendingPlanningMoveRef.current) return;
+    const nextMove = pendingPlanningMoveRef.current;
+    pendingPlanningMoveRef.current = null;
+    playPlanningExaminerMove(nextMove);
+  }, [isEvaluating, skill]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -249,6 +334,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
         setAnswerSubmitted(Boolean(saved.answerSubmitted));
         setFinalizedTranscript(saved.finalizedTranscript || '');
         setRetryAnswer(saved.retryAnswer || null);
+        setRoutingContext(saved.routingContext || { bridgeProbeStatus: null, b1ListeningStable: false });
         setPlanningMoveId(saved.planningMoveId || null);
         setPlanningPhase(
           saved.planningPhase === 'examiner'
@@ -275,6 +361,11 @@ export default function PlacementTestScreen({ setActiveTab }) {
   }, []);
 
   useEffect(() => {
+    if (!resumeChecked || !started || !attemptId) return;
+    ensureDiagnosticCapture(attemptId, null);
+  }, [resumeChecked, started, attemptId]);
+
+  useEffect(() => {
     if (!resumeChecked || !started || !attemptId || !currentModel?.id) return;
     savePlacementSession(attemptId, {
       selectedLevel,
@@ -291,6 +382,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
       answerSubmitted,
       finalizedTranscript,
       retryAnswer,
+      routingContext,
       planningMoveId,
       planningPhase,
       planningCountdown,
@@ -300,7 +392,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
     resumeChecked, started, attemptId, selectedLevel, stageIndex, currentModel,
     skillBands, numericScores, modelsUsed, turnEvidence, selectedBildImage,
     followUpCount, activeFollowUp, listeningAnswers, answerSubmitted,
-    finalizedTranscript, retryAnswer, planningMoveId, planningPhase,
+    finalizedTranscript, retryAnswer, routingContext, planningMoveId, planningPhase,
     planningCountdown, planningResponseSeconds,
   ]);
 
@@ -323,6 +415,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
     try {
       const attempt = await beginPlacementAttempt();
       setAttemptId(attempt.attemptId);
+      ensureDiagnosticCapture(attempt.attemptId, startModel);
     } catch (error) {
       setControlMessage(
         error instanceof ApiError
@@ -436,6 +529,21 @@ export default function PlacementTestScreen({ setActiveTab }) {
         listening: completedModels.find((item) => item.stage === 'lesenHoeren')?.modelId || null,
         planning: completedModels.find((item) => item.stage === 'planung')?.modelId || null,
       });
+      if (!qaOnly && diagnosticRecorderRef.current) {
+        const bundle = diagnosticRecorderRef.current.finalize({
+          finalPlacement: profile,
+          learnerReport: profile.learnerReport,
+          skillBands: completedBands,
+          modelsUsed: completedModels,
+          turnEvidence: evidenceSnapshot || turnEvidence,
+        });
+        void completePlacementDiagnostic({
+          attemptId,
+          qaMode: false,
+          session: bundle,
+          labReplay: diagnosticRecorderRef.current.buildLabReplayPayload(),
+        }).catch(() => {});
+      }
       clearPlacementSession(attemptId);
       setResult(profile);
       setIsBuildingReport(false);
@@ -448,9 +556,9 @@ export default function PlacementTestScreen({ setActiveTab }) {
 
     let nextStep = null;
     if (stageIndex === STAGE_SELF) {
-      nextStep = getImageStepAfterSelfIntro(selfBand, CONSERVATIVE_START_LEVEL);
+      nextStep = getImageStepAfterSelfIntro(selfBand, CONSERVATIVE_START_LEVEL, routingContext);
     } else if (stageIndex === STAGE_IMAGE) {
-      nextStep = getReadingListeningStep(selfBand, imageBand, CONSERVATIVE_START_LEVEL);
+      nextStep = getReadingListeningStep(selfBand, imageBand, CONSERVATIVE_START_LEVEL, routingContext);
     } else if (stageIndex === STAGE_LISTEN) {
       nextStep = getPlanningStep({
         selfIntroResult: selfBand,
@@ -463,6 +571,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
       ? nextStep.skill === 'lesenHoeren'
         ? selectPlacementListeningModel(nextStep, {
             recentIds: recentPlacementContentIds('listening'),
+            b1Stable: routingContext.b1ListeningStable,
           })
         : nextStep.skill === 'planung'
           ? selectPlacementPlanningPack(nextStep, {
@@ -471,11 +580,49 @@ export default function PlacementTestScreen({ setActiveTab }) {
           : resolvePlacementModelFromStep(nextStep)
       : null;
     if (!nextModel) {
+      runtimeMonitorRef.current?.recordIssue({
+        type: 'unavailable_listening_model',
+        recoverable: false,
+        adminNote: `Could not resolve model for ${nextStep?.skill || 'unknown'} step.`,
+        stage: nextStep?.skill || null,
+      });
       setControlMessage(
         'Nächstes Placement-Modell konnte nicht aufgelöst werden. Bitte Support kontaktieren.'
       );
       return;
     }
+
+    diagnosticRecorderRef.current?.recordRoutingDecision({
+      fromStageIndex: stageIndex,
+      fromSkill: skill,
+      nextStep,
+      nextModelId: nextModel.id,
+      routingContext,
+      completedBands: {
+        selbstvorstellung: selfBand,
+        bildbeschreibung: imageBand,
+        lesenHoeren: listenBand,
+      },
+    });
+
+    if (nextStep.skill === 'lesenHoeren') {
+      diagnosticRecorderRef.current?.recordListeningSelection({
+        step: nextStep,
+        modelId: nextModel.id,
+        title: nextModel.title,
+        difficulty: nextModel.difficulty,
+        questionCount: nextModel.listeningQuestions?.length || 0,
+      });
+    }
+
+    diagnosticRecorderRef.current?.recordStageStart({
+      stageIndex: stageIndex + 1,
+      skill: nextStep.skill === 'lesenHoeren' ? 'hoeren' : nextStep.skill,
+      modelId: nextModel.id,
+      modelLevel: nextModel.level,
+      difficulty: nextStep.difficulty,
+      reason: nextStep.reason,
+    });
 
     if (nextStep.skill === 'bildbeschreibung') {
       const img = await selectPlacementBildImageSafe(nextStep, {
@@ -519,8 +666,15 @@ export default function PlacementTestScreen({ setActiveTab }) {
     if (!currentModel || isEvaluating || isBuildingReport) return;
 
     const evaluations = turnEvidence[evidenceKey] || [];
+    if (skill === 'planung') {
+      diagnosticRecorderRef.current?.recordPlanningStageSummary({
+        band: getFinalBandFromTurnEvidence(evaluations, { skill }),
+        turnCount: evaluations.length,
+        evaluations,
+      });
+    }
     // Always aggregate the full stage; Planung must not let the closing turn dominate.
-    const band = getFinalBandFromTurnEvidence(evaluations);
+    const band = getFinalBandFromTurnEvidence(evaluations, { skill });
     const score = bandToPlacementScore(band);
     const qaMode = isAdminQaMode();
     const last = evaluations[evaluations.length - 1];
@@ -787,6 +941,22 @@ export default function PlacementTestScreen({ setActiveTab }) {
       ...prev,
       [currentModel.skill]: [...(prev[currentModel.skill] || []), evaluation],
     }));
+    diagnosticRecorderRef.current?.recordTurn({
+      stageIndex,
+      skill: currentModel.skill,
+      turnIndex: (turnEvidence[currentModel.skill] || []).length,
+      examinerQuestionText: 'Hörverstehen — objektive Fragen',
+      learnerTranscript: JSON.stringify(listeningAnswers),
+      inputMode: 'listening_mcq',
+      evaluatorOutput: evaluation,
+      semanticCoverage: {
+        coveredTopics: evaluation.coveredTopics,
+        missingTopics: evaluation.missingTopics,
+      },
+    });
+    if (scored.band === 'strong' || scored.band === 'medium') {
+      setRoutingContext((prev) => ({ ...prev, b1ListeningStable: true }));
+    }
     setAnswerSubmitted(true);
     setControlMessage('Hörantworten erfasst. Klicken Sie auf Weiter.');
   };
@@ -800,8 +970,17 @@ export default function PlacementTestScreen({ setActiveTab }) {
       setControlMessage('Bitte sprechen oder tippen Sie zuerst eine Antwort.');
       return;
     }
-    if (!currentModel?.id || isEvaluating) return;
+    if (!currentModel?.id) {
+      setControlMessage('Bitte sprechen oder tippen Sie zuerst eine Antwort.');
+      return;
+    }
+    if (isEvaluating) {
+      runtimeMonitorRef.current?.recordDuplicateRequestPrevented();
+      return;
+    }
 
+    runtimeMonitorRef.current?.recordSttObservation({ transcript: text, inputMode });
+    setRuntimeNotice(null);
     setIsEvaluating(true);
     setAnswerTooShortBlocked(false);
     if (currentModel.skill === 'planung') setPlanningPhase('evaluating');
@@ -860,21 +1039,75 @@ export default function PlacementTestScreen({ setActiveTab }) {
         };
       }
 
-      const evaluation = await evaluatePlacementTurn(payload);
+      const monitor = runtimeMonitorRef.current;
+      const evaluation = monitor
+        ? await monitor.withEvaluateRecovery(
+            payload.idempotencyKey,
+            () => evaluatePlacementTurn(payload)
+          )
+        : await evaluatePlacementTurn(payload);
       setRetryAnswer(null);
       const turnRecord = {
         ...evaluation,
         question: currentTurnQuestion,
         transcript: text,
         inputMode,
-        ...(currentModel.skill === 'planung' ? { moveId: planningMoveId } : {}),
+        examinerSignals: evaluation.examinerSignals || null,
+        bridgeProbe: evaluation.followUpSource === 'bridgeProbe' || Boolean(evaluation.bridgeProbeDue),
+        simplifiedRephraseUsed: Boolean(evaluation.simplifiedRephraseUsed),
+        ...(currentModel.skill === 'planung'
+          ? {
+              moveId: planningMoveId,
+              isClosingMove: Boolean(evaluation.planningComplete),
+            }
+          : {}),
       };
+
+      if (currentModel.skill === 'selbstvorstellung') {
+        if (evaluation.bridgeProbeResult === 'confirmed') {
+          setRoutingContext((prev) => ({ ...prev, bridgeProbeStatus: 'confirmed' }));
+        } else if (evaluation.bridgeProbeResult === 'failed') {
+          setRoutingContext((prev) => ({ ...prev, bridgeProbeStatus: 'failed' }));
+        } else if (evaluation.bridgeProbeDue) {
+          setRoutingContext((prev) => ({ ...prev, bridgeProbeStatus: 'due' }));
+        }
+      }
 
       const skillKey = currentModel.skill;
       setTurnEvidence((prev) => ({
         ...prev,
         [skillKey]: [...(prev[skillKey] || []), turnRecord],
       }));
+      diagnosticRecorderRef.current?.recordTurn({
+        stageIndex,
+        skill: skillKey,
+        turnIndex: (turnEvidence[skillKey] || []).length,
+        examinerQuestionId: evaluation.followUpQuestionId || planningMoveId || null,
+        examinerQuestionText: currentTurnQuestion,
+        learnerTranscript: text,
+        sttConfidence: inputMode === 'typed' ? 'typed_input' : 'browser_stt_unknown',
+        inputMode,
+        evaluatorOutput: evaluation,
+        examinerSignals: evaluation.examinerSignals || null,
+        followUpDecision: {
+          needsFollowUp: evaluation.needsFollowUp,
+          followUpQuestion: evaluation.followUpQuestion,
+          followUpSource: evaluation.followUpSource,
+          bridgeProbeDue: evaluation.bridgeProbeDue,
+          bridgeProbeResult: evaluation.bridgeProbeResult,
+        },
+        semanticCoverage: {
+          coveredTopics: evaluation.coveredTopics,
+          missingTopics: evaluation.missingTopics,
+          selfTopicsConfirmed: evaluation.selfTopicsConfirmed,
+        },
+        routingContext,
+        moveId: planningMoveId,
+      });
+      if (evaluation.simplifiedRephraseUsed) {
+        runtimeMonitorRef.current?.recordSimplifiedRephraseUsed();
+      }
+      setRuntimeNotice(null);
       setFinalizedTranscript('');
 
       setAnswerSubmitted(true);
@@ -895,7 +1128,8 @@ export default function PlacementTestScreen({ setActiveTab }) {
             setRecognizedDraft('');
             setFinalizedTranscript('');
             setAnswerSubmitted(false);
-            playPlanningExaminerMove(nextMove);
+            runtimeMonitorRef.current?.recordPrematureAudioPrevented();
+            pendingPlanningMoveRef.current = nextMove;
           }
         } else {
           setPlanningPhase('complete');
@@ -918,6 +1152,11 @@ export default function PlacementTestScreen({ setActiveTab }) {
       }
     } catch (err) {
       if (!isAdminQaMode() && isPlacementAnswerTooShortValidationError(err)) {
+        runtimeMonitorRef.current?.recordIssue({
+          type: 'answer_too_short_validation',
+          recoverable: true,
+          adminNote: 'Server rejected answer as too short.',
+        });
         setRetryAnswer(null);
         setAnswerTooShortBlocked(true);
         setAnswerSubmitted(false);
@@ -926,12 +1165,11 @@ export default function PlacementTestScreen({ setActiveTab }) {
         return;
       }
 
-      const msg =
-        err instanceof ApiError
-          ? err.message
-          : 'Auswertung derzeit nicht verfügbar. Bitte erneut senden.';
-
       if (isAdminQaMode()) {
+        const msg =
+          err instanceof ApiError
+            ? err.message
+            : 'Auswertung derzeit nicht verfügbar. Bitte erneut senden.';
         const skillKey = currentModel.skill;
         const qaEvidence = {
           productType: 'placement_test',
@@ -960,9 +1198,8 @@ export default function PlacementTestScreen({ setActiveTab }) {
       } else {
         setRetryAnswer({ text, inputMode });
         if (currentModel.skill === 'planung') setPlanningPhase('responding');
-        setControlMessage(
-          msg + ' Ihre erkannte Antwort bleibt erhalten. Bitte versuchen Sie die Auswertung erneut.'
-        );
+        setRuntimeNotice(PLACEMENT_RUNTIME_CALM_MESSAGE);
+        setControlMessage('Bitte versuchen Sie die Auswertung erneut.');
         setAnswerSubmitted(false);
       }
     } finally {
@@ -1194,7 +1431,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
           )
         ) : null}
 
-        {activeFollowUp ? (
+        {activeFollowUp && !isEvaluating ? (
           <p style={followUpPromptStyle}>{activeFollowUp}</p>
         ) : null}
 
@@ -1224,7 +1461,9 @@ export default function PlacementTestScreen({ setActiveTab }) {
                 Prüferfrage erneut abspielen
               </button>
             ) : null}
-            {['responding', 'evaluating', 'complete'].includes(planningPhase) && currentTurnQuestion ? (
+            {['responding', 'evaluating', 'complete'].includes(planningPhase) &&
+            currentTurnQuestion &&
+            !isEvaluating ? (
               <p>{currentTurnQuestion}</p>
             ) : null}
             {planningPhase === 'responding' ? <p>Verbleibende Antwortzeit: {planningResponseSeconds} Sekunden</p> : null}
@@ -1362,6 +1601,12 @@ export default function PlacementTestScreen({ setActiveTab }) {
 
         {answerSubmitted && !activeFollowUp ? (
           <p style={{ ...smallTextStyle, color: '#166534' }}>✓ Antwort gesendet</p>
+        ) : null}
+        {runtimeNotice ? (
+          <div style={runtimeNoticeStyle}>
+            <p style={{ margin: 0 }}>{runtimeNotice.de}</p>
+            <p style={{ margin: '6px 0 0', direction: 'rtl' }}>{runtimeNotice.ar}</p>
+          </div>
         ) : null}
         {controlMessage ? <p style={{ ...smallTextStyle, color: '#b45309' }}>{controlMessage}</p> : null}
 
@@ -1519,6 +1764,17 @@ const smallTextStyle = {
   color: '#64748b',
   fontSize: 14,
   marginTop: 10,
+};
+
+const runtimeNoticeStyle = {
+  marginTop: 10,
+  padding: '12px 14px',
+  borderRadius: 12,
+  background: '#fffbeb',
+  border: '1px solid #fde68a',
+  color: '#92400e',
+  fontSize: 14,
+  lineHeight: 1.45,
 };
 
 const areaBlockStyle = {

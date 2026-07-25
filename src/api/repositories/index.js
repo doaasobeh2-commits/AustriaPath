@@ -130,6 +130,41 @@ export async function completePlacementAttempt(attemptId, reportSnapshot) {
   });
 }
 
+/** Hidden admin diagnostic sync — silent, learner-invisible. */
+export async function syncPlacementDiagnostic(body) {
+  return apiFetch("/placement/diagnostic-sync", {
+    method: "POST",
+    json: body,
+  });
+}
+
+export async function completePlacementDiagnostic(body) {
+  return apiFetch("/placement/diagnostic-complete", {
+    method: "POST",
+    json: body,
+  });
+}
+
+export async function fetchPlacementDiagnosticConfig() {
+  return apiFetch("/admin/placement-diagnostics/config");
+}
+
+export async function updatePlacementDiagnosticConfig(body) {
+  return apiFetch("/admin/placement-diagnostics/config", {
+    method: "PATCH",
+    json: body,
+  });
+}
+
+export async function fetchPlacementDiagnosticSessions(filter = "all") {
+  const qs = filter && filter !== "all" ? `?filter=${encodeURIComponent(filter)}` : "";
+  return apiFetch(`/admin/placement-diagnostics/sessions${qs}`);
+}
+
+export async function exportPlacementDiagnosticSession(attemptId) {
+  return apiFetch(`/admin/placement-diagnostics/sessions/${encodeURIComponent(attemptId)}/export`);
+}
+
 export async function listMessages() {
   return apiFetch("/messages");
 }
