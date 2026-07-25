@@ -477,7 +477,11 @@ export const weeklyPlanLibrary = [
 ];
 
 function cleanLevel(level = 'B1') {
-  return String(level).replace('+', '').trim().toUpperCase() || 'B1';
+  const raw = String(level).trim().toUpperCase() || 'B1';
+  if (raw.startsWith('A2')) return 'A2';
+  if (raw.startsWith('B1')) return 'B1';
+  if (raw.startsWith('B2')) return 'B2';
+  return raw.replace(/[+-]$/, '') || 'B1';
 }
 
 function normalizeSkills(skills = []) {

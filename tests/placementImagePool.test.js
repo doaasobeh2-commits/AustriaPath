@@ -103,13 +103,13 @@ describe("placementImagePool — selection stickiness & rotation", () => {
     expect(step).toMatchObject({
       skill: "bildbeschreibung",
       level: "B1",
-      difficulty: "leicht",
+      difficulty: "mittel",
     });
 
     const first = selectPlacementBildImage(step, { random: () => 0.42 });
     const second = selectPlacementBildImage(step, { random: () => 0.42 });
     expect(first).toEqual(second);
-    expect(PLACEMENT_BILD_POOLS["B1|leicht"]).toContain(first.catalogId);
+    expect(PLACEMENT_BILD_POOLS["B1|mittel"]).toContain(first.catalogId);
   });
 
   it("maps routing steps to the correct approved pool", () => {
@@ -121,7 +121,7 @@ describe("placementImagePool — selection stickiness & rotation", () => {
       selectPlacementBildImage(weak, { random: () => 0 }).catalogLevel
     ).toBe("A2");
     expect(
-      PLACEMENT_BILD_POOLS["A2|mittel"]
+      PLACEMENT_BILD_POOLS["A2|leicht"]
     ).toContain(selectPlacementBildImage(weak, { random: () => 0 }).catalogId);
 
     expect(
@@ -131,29 +131,24 @@ describe("placementImagePool — selection stickiness & rotation", () => {
     );
 
     expect(
-      PLACEMENT_BILD_POOLS["B1|leicht"]
+      PLACEMENT_BILD_POOLS["B1|mittel"]
     ).toContain(
       selectPlacementBildImage(strong, { random: () => 0.1 }).catalogId
     );
   });
 
-  it("selects B2 training assets for the normal B2 image route", () => {
-    const step = getImageStepAfterSelfIntro("medium", "B2");
+  it("selects B1 bild assets for strong self-intro (capped at B1)", () => {
+    const step = getImageStepAfterSelfIntro("strong");
     const selected = selectPlacementBildImage(step, { random: () => 0.99 });
-    expect(step).toMatchObject({ level: "B2", difficulty: "mittel" });
-    expect(selected).toMatchObject({
-      catalogLevel: "B2",
-      catalogId: 101,
-      imagePath: "/images/b2/b2-09.jpeg",
-    });
+    expect(step).toMatchObject({ level: "B1", difficulty: "mittel" });
+    expect(PLACEMENT_BILD_POOLS["B1|mittel"]).toContain(selected.catalogId);
   });
 
   it.each([
-    ["A2", "weak"], ["A2", "medium"], ["A2", "strong"],
-    ["B1", "weak"], ["B1", "medium"], ["B1", "strong"],
-    ["B2", "weak"], ["B2", "medium"], ["B2", "strong"],
-  ])("%s start + %s self band always resolves a model and image", (start, band) => {
-    const step = getImageStepAfterSelfIntro(band, start);
+    ["weak", "A2"], ["medium", "A2"], ["strong", "B1"],
+  ])("%s self band resolves %s bild model and image", (band, level) => {
+    const step = getImageStepAfterSelfIntro(band);
+    expect(step.level).toBe(level);
     expect(resolvePlacementModelFromStep(step)).toBeTruthy();
     expect(selectPlacementBildImage(step, { random: () => 0 })).toBeTruthy();
   });

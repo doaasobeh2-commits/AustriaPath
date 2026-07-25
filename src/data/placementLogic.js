@@ -8,7 +8,6 @@
  */
 
 import { getPlacementModel, getPlacementModelsBySkill } from "./aiPlacementLibrary.js";
-import { normalizeRoutingContext } from "./utils/placementExaminerSignals.js";
 
 export const placementStages = [
   "selbstvorstellung",
@@ -52,6 +51,11 @@ export const PLACEMENT_MODEL_FALLBACKS = Object.freeze({
   "planung|B1|leicht": "b1_planung_schwach",
 });
 
+export const PLACEMENT_WORKING_LEVELS = Object.freeze(["A2", "B1", "B2"]);
+const WORKING_LEVEL_INDEX = { A2: 0, B1: 1, B2: 2 };
+
+export const PLACEMENT_B2_CONFIRMATION_MODEL_ID = "b2_diskussion_mittel";
+
 export function normalizePlacementBand(band) {
   const key = String(band || "")
     .toLowerCase()
@@ -60,6 +64,123 @@ export function normalizePlacementBand(band) {
   if (key === "mittel" || key === "medium") return "medium";
   if (key === "stark" || key === "strong") return "strong";
   return null;
+}
+
+/** Map self-intro band to next-task level — never above B1 (Rule 2). */
+export function workingLevelAfterSelf(band) {
+  const normalized = normalizePlacementBand(band);
+  if (normalized === "strong") return "B1";
+  return "A2";
+}
+
+/**
+ * @deprecated Use workingLevelAfterSelf for post-self routing.
+ * Kept for callers that need band→level without self cap.
+ */
+export function bandToWorkingLevel(band) {
+  return workingLevelAfterSelf(band);
+}
+
+/** Move at most one working level based on stage band evidence. */
+export function stepWorkingLevelByBand(currentLevel = "A2", band) {
+  const idx = WORKING_LEVEL_INDEX[currentLevel] ?? 0;
+  const normalized = normalizePlacementBand(band);
+  if (normalized === "weak") {
+    return PLACEMENT_WORKING_LEVELS[Math.max(0, idx - 1)];
+  }
+  if (normalized === "strong") {
+    return PLACEMENT_WORKING_LEVELS[Math.min(2, idx + 1)];
+  }
+  return PLACEMENT_WORKING_LEVELS[idx];
+}
+
+/** @deprecated Use stepWorkingLevelByBand */
+export function updateWorkingLevel(currentLevel = "A2", band) {
+  return stepWorkingLevelByBand(currentLevel, band);
+}
+
+/** Speaking working level after Bild — one step from post-self level only. */
+export function computeSpeakingWorkingLevelAfterBild(selfIntroResult, imageResult) {
+  const afterSelf = workingLevelAfterSelf(selfIntroResult);
+  return stepWorkingLevelByBand(afterSelf, imageResult);
+}
+
+/** @deprecated */
+export function computeWorkingLevelAfterBild(selfIntroResult, imageResult) {
+  return computeSpeakingWorkingLevelAfterBild(selfIntroResult, imageResult);
+}
+
+/**
+ * Listening is supplementary evidence only (Rules 3–4).
+ * Never lowers speaking working level; may block B2 promotion when weak.
+ */
+export function evaluateListeningRouting(speakingWorkingLevel = "A2", listenBand) {
+  const listen = normalizePlacementBand(listenBand);
+  return {
+    speakingWorkingLevel,
+    b2PromotionAllowed: listen !== "weak",
+    listenConfirmsHigher: listen === "strong",
+  };
+}
+
+/** @deprecated Listening must not change speaking working level. */
+export function applyListeningToWorkingLevel(
+  speakingWorkingLevel = "A2",
+  listenBand,
+  _priorBands = []
+) {
+  return evaluateListeningRouting(speakingWorkingLevel, listenBand)
+    .speakingWorkingLevel;
+}
+
+/**
+ * Strong repeated B1 oral evidence + listening not weak → one B2 confirmation task.
+ * Both-only-medium = stable B1, no B2 attempt (Rules 5–6).
+ */
+export function qualifiesForB2Confirmation(
+  selfIntroResult,
+  imageResult,
+  lesenHoerenResult
+) {
+  if (
+    computeSpeakingWorkingLevelForPlanung(selfIntroResult, imageResult) !== "B1"
+  ) {
+    return false;
+  }
+  const selfBand = normalizePlacementBand(selfIntroResult);
+  const imageBand = normalizePlacementBand(imageResult);
+  const listenBand = normalizePlacementBand(lesenHoerenResult);
+  if (!selfBand || !imageBand || selfBand === "weak" || imageBand === "weak") {
+    return false;
+  }
+  if (selfBand === "medium" && imageBand === "medium") return false;
+  const hasStrongEvidence =
+    selfBand === "strong" || imageBand === "strong";
+  if (!hasStrongEvidence) return false;
+  if (listenBand === "weak") return false;
+  return true;
+}
+
+/** Speaking-only planung level (listening never downgrades). */
+export function computeSpeakingWorkingLevelForPlanung(
+  selfIntroResult,
+  imageResult
+) {
+  const speaking = computeSpeakingWorkingLevelAfterBild(
+    selfIntroResult,
+    imageResult
+  );
+  return speaking === "B2" ? "B1" : speaking;
+}
+
+/** @deprecated */
+export function computeWorkingLevelForPlanung(
+  selfIntroResult,
+  imageResult,
+  lesenHoerenResult
+) {
+  void lesenHoerenResult;
+  return computeSpeakingWorkingLevelForPlanung(selfIntroResult, imageResult);
 }
 
 export function bandToPlacementScore(band) {
@@ -123,274 +244,96 @@ export function scorePlacementListeningAnswers(model, answers = {}) {
   return { band, correct, total, ratio, questionResults };
 }
 
-export function getImageStepAfterSelfIntro(
-  selfIntroResult,
-  selectedStartLevel = "A2",
-  routingContext = {}
-) {
-  const band = normalizePlacementBand(selfIntroResult) || selfIntroResult;
-  const ctx = normalizeRoutingContext(routingContext);
-
-  if (selectedStartLevel === "B2") {
-    if (band === "weak") {
-      return {
-        skill: "bildbeschreibung",
-        level: "B1",
-        difficulty: "mittel",
-        internalLevel: "B1",
-        reason: "B2-Start schwach → eine Stufe tiefer zu B1 Bildbeschreibung",
-      };
-    }
-    return {
-      skill: "bildbeschreibung",
-      level: "B2",
-      difficulty: "mittel",
-      internalLevel: band === "strong" ? "B2" : "B2-",
-      reason: "B2-Start bestätigt → B2 Bildbeschreibung mittel",
-    };
-  }
-
-  if (selectedStartLevel === "B1") {
-    if (band === "weak") {
-      return {
-        skill: "bildbeschreibung",
-        level: "A2",
-        difficulty: "mittel",
-        reason: "B1-Start schwach → A2 Bildbeschreibung mittel",
-      };
-    }
-    return band === "strong" ? {
-      skill: "bildbeschreibung",
-      level: "B2",
-      difficulty: "mittel",
-      internalLevel: "B2-",
-      reason: "B1-Start stark → B2 Bildbeschreibung mittel",
-    } : {
-      skill: "bildbeschreibung",
-      level: "B1",
-      difficulty: "mittel",
-      reason: "B1-Start bestätigt → B1 Bildbeschreibung mittel",
-    };
-  }
-
-  if (band === "weak" || selfIntroResult === "schwach") {
-    return {
-      skill: "bildbeschreibung",
-      level: "A2",
-      difficulty: "leicht",
-      reason: "Selbstvorstellung schwach → A2 Bildbeschreibung leicht (Unterstützung)",
-    };
-  }
-
-  if (band === "medium" || selfIntroResult === "mittel") {
-    return {
-      skill: "bildbeschreibung",
-      level: "A2",
-      difficulty: "mittel",
-      reason: "Selbstvorstellung mittel → A2 Bildbeschreibung mittel",
-    };
-  }
-
-  if (band === "strong" || selfIntroResult === "stark") {
-    if (ctx.bridgeProbeStatus === "confirmed") {
-      return {
-        skill: "bildbeschreibung",
-        level: "B1",
-        difficulty: "leicht",
-        internalLevel: "A2+/B1-",
-        reason:
-          "Selbstvorstellung stark und Brückenfrage bestätigt → B1 Bildbeschreibung leicht",
-      };
-    }
-    return {
-      skill: "bildbeschreibung",
-      level: "A2",
-      difficulty: "mittel",
-      internalLevel: "A2+",
-      reason:
-        ctx.bridgeProbeStatus === "failed"
-          ? "Starke Selbstvorstellung ohne bestätigte Brückenfrage → stabiler A2-Pfad"
-          : "Selbstvorstellung stark → vorsichtiger A2-Pfad bis Brückenfrage bestätigt",
-      bridgeProbeDue: ctx.bridgeProbeStatus !== "failed",
-    };
-  }
+/**
+ * Bild step from Selbstvorstellung evidence only — ignores any predicted level.
+ */
+export function getImageStepAfterSelfIntro(selfIntroResult) {
+  const band = normalizePlacementBand(selfIntroResult) || "weak";
+  const level = workingLevelAfterSelf(band);
+  const difficulty =
+    level === "A2" ? (band === "weak" ? "leicht" : "mittel") : "mittel";
 
   return {
     skill: "bildbeschreibung",
-    level: "A2",
-    difficulty: "leicht",
-    reason: "Standardstart",
+    level,
+    difficulty,
+    internalLevel: level,
+    reason: `Selbstvorstellung ${band} → ${level} Bildbeschreibung ${difficulty} (max B1 nach Selbstvorstellung)`,
   };
 }
 
+/**
+ * Listening step from oral evidence only. Uses working level after Bildbeschreibung.
+ */
 export function getReadingListeningStep(
   selfIntroResult,
   imageResult,
-  selectedStartLevel = "A2",
-  routingContext = {}
+  options = {}
 ) {
-  const selfBand = normalizePlacementBand(selfIntroResult) || selfIntroResult;
-  const imageBand = normalizePlacementBand(imageResult) || imageResult;
-  const ctx = normalizeRoutingContext(routingContext);
+  const imageBand = normalizePlacementBand(imageResult) || "weak";
+  const speakingLevel =
+    options.speakingWorkingLevel ||
+    options.workingLevel ||
+    computeSpeakingWorkingLevelAfterBild(selfIntroResult, imageResult);
+  const workingLevel = speakingLevel === "B2" ? "B1" : speakingLevel;
 
-  if (
-    selectedStartLevel === "B2" &&
-    selfBand !== "weak" &&
-    imageBand !== "weak"
-  ) {
-    return {
-      skill: "lesenHoeren",
-      level: "B2",
-      difficulty: "mittel",
-      internalLevel: "B2-",
-      reason: "Stabiler B2-Start → B2 Hören",
-    };
-  }
-
-  if (
-    selectedStartLevel === "B1" &&
-    selfBand === "strong" &&
-    imageBand === "strong"
-  ) {
-    return {
-      skill: "lesenHoeren",
-      level: "B2",
-      difficulty: "mittel",
-      internalLevel: "B2-",
-      reason: "Sehr starke B1-Leistung → B2 Hören",
-    };
-  }
-
-  if (
-    selectedStartLevel === "B1" &&
-    selfBand === "medium" &&
-    imageBand === "medium"
-  ) {
-    return {
-      skill: "lesenHoeren",
-      level: "B1",
-      difficulty: "mittel",
-      internalLevel: "B1",
-      reason: "Stabile mittlere B1-Evidenz → B1 Hören mittel",
-    };
-  }
-
-  if (
-    (selfBand === "weak" || selfIntroResult === "schwach") &&
-    (imageBand === "medium" || imageResult === "mittel")
-  ) {
-    return {
-      skill: "lesenHoeren",
-      level: "A2",
-      difficulty: "mittel",
-      internalLevel: "A2",
-      reason: "Selbstvorstellung schwach, Bild mittel → A2 Hören mittel",
-    };
-  }
-
-  if (
-    (selfBand === "medium" || selfIntroResult === "mittel") &&
-    (imageBand === "medium" || imageResult === "mittel")
-  ) {
-    return {
-      skill: "lesenHoeren",
-      level: "A2",
-      difficulty: "mittel",
-      internalLevel: "A2",
-      reason: "A2 stabil → A2 Hören mittel (kein schwieriger Medizin-Clip)",
-    };
-  }
-
-  if (
-    (selfBand === "strong" || selfIntroResult === "stark") &&
-    imageBand !== "weak" &&
-    imageResult !== "schwach"
-  ) {
-    if (ctx.bridgeProbeStatus === "confirmed") {
-      return {
-        skill: "lesenHoeren",
-        level: "B1",
-        difficulty: "bridge",
-        internalLevel: "B1-",
-        reason: "Bestätigte mündliche Leistung → B1 Hören Brücke (leicht)",
-        b1Entry: true,
-      };
-    }
-    return {
-      skill: "lesenHoeren",
-      level: "A2",
-      difficulty: "mittel",
-      internalLevel: "A2+",
-      reason: "Starke mündliche Leistung ohne bestätigte Brücke → A2 Hören mittel",
-    };
-  }
-
-  if (selfBand === "weak" && imageBand === "weak") {
-    return {
-      skill: "lesenHoeren",
-      level: "A2",
-      difficulty: "leicht",
-      reason: "Schwache Evidenz → leichter A2 Hören-Clip",
-    };
-  }
+  let difficulty = "mittel";
+  if (workingLevel === "A2" && imageBand === "weak") difficulty = "leicht";
+  else if (workingLevel === "B1" && imageBand !== "strong") difficulty = "bridge";
 
   return {
     skill: "lesenHoeren",
-    level: "A2",
-    difficulty: "mittel",
-    reason: "Standard A2 Lesen/Hören",
+    level: workingLevel,
+    difficulty,
+    internalLevel: workingLevel,
+    speakingWorkingLevel: speakingLevel,
+    reason: `Sprech-Arbeitsniveau ${speakingLevel} → ${workingLevel} Hören (Hören ändert das Niveau nicht)`,
+    ...(workingLevel === "B1" && difficulty === "bridge" ? { b1Entry: true } : {}),
   };
 }
 
 export function getPlanningStep(results) {
   const { selfIntroResult, imageResult, lesenHoerenResult } = results;
-  const selfBand = normalizePlacementBand(selfIntroResult) || selfIntroResult;
-  const imageBand = normalizePlacementBand(imageResult) || imageResult;
-  const listenBand =
-    normalizePlacementBand(lesenHoerenResult) || lesenHoerenResult;
+  const speakingWorkingLevel = computeSpeakingWorkingLevelAfterBild(
+    selfIntroResult,
+    imageResult
+  );
 
-  const bands = [selfBand, imageBand, listenBand];
-  const strongCount = bands.filter((band) => band === "strong").length;
-  const mediumOrStrongCount = bands.filter(
-    (band) => band === "medium" || band === "strong"
-  ).length;
-  const weakCount = bands.filter((band) => band === "weak").length;
-
-  if (strongCount === 3) {
+  if (
+    qualifiesForB2Confirmation(
+      selfIntroResult,
+      imageResult,
+      lesenHoerenResult
+    )
+  ) {
     return {
-      skill: "planung",
+      skill: "diskussion",
       level: "B2",
       difficulty: "mittel",
+      mode: "b2_confirmation",
+      modelId: PLACEMENT_B2_CONFIRMATION_MODEL_ID,
+      speakingWorkingLevel,
       internalLevel: "B2-",
-      reason: "Durchgehend starke Evidenz vor Planung → B2 Planung",
+      reason:
+        "Starke wiederholte B1-Sprechleistung → kurze B2-Bestätigung (Diskussion)",
     };
   }
 
-  if (weakCount === 0 && strongCount >= 2) {
-    return {
-      skill: "planung",
-      level: "B1",
-      difficulty: "mittel",
-      internalLevel: "B1",
-      reason: "Konsistente B1-oder-höhere Evidenz → B1 Planung mittel",
-    };
-  }
-
-  if (weakCount <= 1 && mediumOrStrongCount >= 2) {
-    return {
-      skill: "planung",
-      level: "B1",
-      difficulty: "leicht",
-      internalLevel: "B1-",
-      reason: "Gemischte oder entstehende B1-Evidenz → B1 Planung schwach",
-    };
-  }
+  const level = computeSpeakingWorkingLevelForPlanung(
+    selfIntroResult,
+    imageResult
+  );
+  const imageBand = normalizePlacementBand(imageResult);
+  const difficulty =
+    level === "B1" && imageBand === "weak" ? "leicht" : "mittel";
 
   return {
     skill: "planung",
-    level: "A2",
-    difficulty: "mittel",
-    reason: "Standard A2 Planung mittel",
+    level,
+    difficulty,
+    speakingWorkingLevel,
+    internalLevel: level,
+    reason: `Sprech-Arbeitsniveau ${speakingWorkingLevel} → ${level} Planung (Hören beeinflusst nur die Auswertung)`,
   };
 }
 
@@ -412,6 +355,67 @@ export function getFinalInternalLevel(score) {
   if (score < 88) return "B1";
   if (score < 95) return "B1+";
   return "B2-";
+}
+
+function capPlacementLevelAtB1(level) {
+  if (level === "B2-" || level === "B2" || level === "B2+") return "B1+";
+  if (level === "B1-" || level === "B1" || level === "B1+") return level;
+  return "B1-";
+}
+
+function capPlacementLevelAtA2(level) {
+  if (level === "A2" || level === "A2+") return level;
+  return "A2";
+}
+
+/**
+ * Apply routing confirmation outcomes after weighted score (Rules 6–7).
+ * Does not change band weights or band→score mapping.
+ */
+export function resolvePlacementFinalLevel({
+  score,
+  bands = {},
+  modelsUsed = [],
+}) {
+  const scoreLevel = getFinalInternalLevel(score);
+  const hadB2Confirmation = modelsUsed.some(
+    (item) =>
+      item?.requested?.mode === "b2_confirmation" ||
+      item?.stage === "diskussion"
+  );
+  if (hadB2Confirmation) {
+    const confirmationBand = normalizePlacementBand(bands.planung);
+    if (confirmationBand === "weak") {
+      return capPlacementLevelAtB1(scoreLevel);
+    }
+    if (confirmationBand === "medium" || confirmationBand === "strong") {
+      return "B2-";
+    }
+    return capPlacementLevelAtB1(scoreLevel);
+  }
+
+  const selfBand = normalizePlacementBand(bands.selbstvorstellung);
+  const imageBand = normalizePlacementBand(bands.bildbeschreibung);
+  const listenBand = normalizePlacementBand(bands.lesenHoeren);
+  if (imageBand === "weak" && listenBand === "weak") {
+    return capPlacementLevelAtA2(scoreLevel);
+  }
+  const speakingAfterBild = computeSpeakingWorkingLevelAfterBild(
+    bands.selbstvorstellung,
+    bands.bildbeschreibung
+  );
+  const stableB1Speaking =
+    speakingAfterBild === "B1" &&
+    selfBand !== "weak" &&
+    imageBand !== "weak";
+  if (
+    stableB1Speaking &&
+    (scoreLevel === "A2" || scoreLevel === "A2+")
+  ) {
+    return "B1-";
+  }
+
+  return scoreLevel;
 }
 
 function librarySkillForRouting(skill) {
@@ -452,12 +456,9 @@ export function resolvePlacementModelFromStep(step) {
   return null;
 }
 
-/** Fixed historical diagnostic start — always A2 Selbstvorstellung mittel */
-export function getPlacementStartModel(selectedLevel = "A2") {
-  const level = ["A2", "B1", "B2"].includes(selectedLevel)
-    ? selectedLevel
-    : "A2";
-  return getPlacementModel(`${level.toLowerCase()}_self_mittel`);
+/** Every attempt starts at A2 Selbstvorstellung — ignores predicted/stored level. */
+export function getPlacementStartModel(_ignoredPredictedLevel) {
+  return getPlacementModel("a2_self_mittel");
 }
 
 /**
@@ -465,6 +466,7 @@ export function getPlacementStartModel(selectedLevel = "A2") {
  */
 export function scoreKeyForModelSkill(modelSkill) {
   if (modelSkill === "hoeren") return "lesenHoeren";
+  if (modelSkill === "diskussion") return "planung";
   return modelSkill;
 }
 
@@ -521,7 +523,7 @@ export function buildHistoricalPlacementResult({
   modelsUsed = [],
 }) {
   const score = calculatePlacementScore(numericScores);
-  const level = getFinalInternalLevel(score);
+  const level = resolvePlacementFinalLevel({ score, bands, modelsUsed });
 
   const strengths = [];
   const weaknesses = [];

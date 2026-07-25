@@ -13,6 +13,7 @@ import {
   getPlacementStartModel,
   getReadingListeningStep,
   PLACEMENT_BAND_TO_SCORE,
+  resolvePlacementFinalLevel,
   resolvePlacementModelFromStep,
   scorePlacementListeningAnswers,
 } from "../src/data/placementLogic.js";
@@ -48,135 +49,133 @@ describe("final band from turnEvidence", () => {
 });
 
 describe("historical routing", () => {
-  it("keeps strong self-intro on A2 bild until bridge probe is confirmed", () => {
-    expect(getImageStepAfterSelfIntro("strong")).toMatchObject({
+  it("maps self performance to bild level capped at B1 after Selbstvorstellung", () => {
+    expect(getImageStepAfterSelfIntro("weak")).toMatchObject({
       skill: "bildbeschreibung",
       level: "A2",
-      difficulty: "mittel",
-    });
-    expect(
-      getImageStepAfterSelfIntro("strong", "A2", { bridgeProbeStatus: "confirmed" })
-    ).toMatchObject({
-      skill: "bildbeschreibung",
-      level: "B1",
       difficulty: "leicht",
     });
-  });
-
-  it("routes a confirmed B2 start to the real B2 bild model step", () => {
-    expect(getImageStepAfterSelfIntro("medium", "B2")).toMatchObject({
-      skill: "bildbeschreibung",
-      level: "B2",
-      difficulty: "mittel",
-    });
-  });
-
-  it("routes a weak B2 start down to B1 bild", () => {
-    expect(getImageStepAfterSelfIntro("weak", "B2")).toMatchObject({
-      skill: "bildbeschreibung",
-      level: "B1",
-      difficulty: "mittel",
-    });
-  });
-
-  it("lets a strong B1 start reach B2 bild", () => {
-    expect(getImageStepAfterSelfIntro("strong", "B1")).toMatchObject({
-      skill: "bildbeschreibung",
-      level: "B2",
-      difficulty: "mittel",
-    });
-  });
-
-  it("routes medium+medium to A2 lesenHoeren mittel (not the hard medical stark clip)", () => {
-    expect(getReadingListeningStep("medium", "medium")).toMatchObject({
-      skill: "lesenHoeren",
+    expect(getImageStepAfterSelfIntro("medium")).toMatchObject({
       level: "A2",
       difficulty: "mittel",
     });
-  });
-
-  it("keeps stable B1 medium/medium evidence at B1 listening", () => {
-    expect(getReadingListeningStep("medium", "medium", "B1")).toMatchObject({
+    expect(getImageStepAfterSelfIntro("strong")).toMatchObject({
       level: "B1",
       difficulty: "mittel",
     });
   });
 
-  it("routes confirmed strong oral evidence to B1 listening bridge", () => {
+  it("routes listening from speaking working level without downgrade", () => {
     expect(
-      getReadingListeningStep("strong", "strong", "A2", { bridgeProbeStatus: "confirmed" })
+      getReadingListeningStep("medium", "medium", { speakingWorkingLevel: "B1" })
     ).toMatchObject({
       skill: "lesenHoeren",
       level: "B1",
       difficulty: "bridge",
     });
-  });
-
-  it("routes a stable B2 start to B2 listening", () => {
-    expect(getReadingListeningStep("medium", "strong", "B2")).toMatchObject({
-      skill: "lesenHoeren",
-      level: "B2",
-      difficulty: "mittel",
+    expect(
+      getReadingListeningStep("weak", "weak", { speakingWorkingLevel: "A2" })
+    ).toMatchObject({
+      level: "A2",
+      difficulty: "leicht",
     });
   });
 
-  it("routes a very strong B1 path to B2 listening", () => {
-    expect(getReadingListeningStep("strong", "strong", "B1")).toMatchObject({
-      skill: "lesenHoeren",
-      level: "B2",
-      difficulty: "mittel",
-    });
-  });
-
-  it("does not keep a weak B2 start at B2 listening", () => {
-    expect(getReadingListeningStep("weak", "medium", "B2").level).toBe("A2");
-  });
-
-  it("routes consistently strong evidence to B1 planung mittel", () => {
+  it("routes stable B1 planung without B2 unless confirmation qualifies", () => {
     expect(
       getPlanningStep({
-        selfIntroResult: "stark",
-        imageResult: "strong",
-        lesenHoerenResult: "medium",
+        selfIntroResult: "strong",
+        imageResult: "medium",
+        lesenHoerenResult: "weak",
       })
     ).toMatchObject({
       skill: "planung",
       level: "B1",
-      difficulty: "mittel",
     });
   });
 
-  it("routes mixed/emerging B1 evidence to B1 planung schwach", () => {
-    expect(getPlanningStep({
-      selfIntroResult: "strong", imageResult: "medium", lesenHoerenResult: "weak",
-    })).toMatchObject({ level: "B1", difficulty: "leicht" });
+  it("routes B2 confirmation when strong repeated B1 evidence and listening allows", () => {
+    expect(
+      getPlanningStep({
+        selfIntroResult: "medium",
+        imageResult: "strong",
+        lesenHoerenResult: "strong",
+      })
+    ).toMatchObject({
+      skill: "diskussion",
+      level: "B2",
+      mode: "b2_confirmation",
+    });
   });
 
-  it("routes lower evidence to A2 planung and never to B2 discussion", () => {
+  it("routes lower evidence to A2 planung", () => {
     const step = getPlanningStep({
-      selfIntroResult: "strong", imageResult: "weak", lesenHoerenResult: "weak",
+      selfIntroResult: "weak",
+      imageResult: "weak",
+      lesenHoerenResult: "weak",
     });
     expect(step).toMatchObject({ level: "A2", difficulty: "mittel" });
     expect(resolvePlacementModelFromStep(step)?.id).toBe("a2_planung_mittel");
-    expect(resolvePlacementModelFromStep(step)?.id).not.toBe("b2_diskussion_mittel");
   });
 
-  it("makes b1_planung_mittel reachable", () => {
+  it("makes b1_planung_mittel reachable at B1 working level", () => {
     const step = getPlanningStep({
-      selfIntroResult: "strong", imageResult: "strong", lesenHoerenResult: "medium",
+      selfIntroResult: "strong",
+      imageResult: "medium",
+      lesenHoerenResult: "weak",
     });
+    expect(step).toMatchObject({ skill: "planung", level: "B1" });
     expect(resolvePlacementModelFromStep(step)?.id).toBe("b1_planung_mittel");
   });
 });
 
-describe("missing-model fallbacks", () => {
-  it("starts at a2_self_mittel", () => {
-    expect(getPlacementStartModel()?.id).toBe("a2_self_mittel");
+describe("B2 confirmation final level (Rule 7)", () => {
+  it("confirms B2- after successful diskussion without changing weighted score", () => {
+    const level = resolvePlacementFinalLevel({
+      score: 91,
+      bands: { planung: "strong" },
+      modelsUsed: [
+        {
+          stage: "diskussion",
+          requested: { mode: "b2_confirmation" },
+        },
+      ],
+    });
+    expect(level).toBe("B2-");
+    expect(getFinalInternalLevel(91)).toBe("B1+");
   });
 
-  it("uses the selected starting level model", () => {
-    expect(getPlacementStartModel("B1")?.id).toBe("b1_self_mittel");
-    expect(getPlacementStartModel("B2")?.id).toBe("b2_self_mittel");
+  it("keeps B1 when B2 confirmation is weak", () => {
+    expect(
+      resolvePlacementFinalLevel({
+        score: 91,
+        bands: { planung: "weak" },
+        modelsUsed: [{ stage: "diskussion" }],
+      })
+    ).toBe("B1+");
+  });
+
+  it("floors stable B1 speaking to B1- when weak listening lowers score only", () => {
+    expect(
+      resolvePlacementFinalLevel({
+        score: 59,
+        bands: {
+          selbstvorstellung: "strong",
+          bildbeschreibung: "medium",
+          lesenHoeren: "weak",
+          planung: "medium",
+        },
+        modelsUsed: [{ stage: "planung", requested: { skill: "planung", level: "B1" } }],
+      })
+    ).toBe("B1-");
+    expect(getFinalInternalLevel(59)).toBe("A2+");
+  });
+});
+
+describe("missing-model fallbacks", () => {
+  it("always starts at a2_self_mittel", () => {
+    expect(getPlacementStartModel()?.id).toBe("a2_self_mittel");
+    expect(getPlacementStartModel("B2")?.id).toBe("a2_self_mittel");
   });
 
   it("resolves B1 bild leicht via documented fallback b1_bild_mittel", () => {
