@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { b1PlanningModels } from '../../data/modelsb1';
 import { b2PlanningModels } from '../../data/b2PlanningModels';
+import { getUserLevel } from '../../utils/userPreferences';
 
 const planningModels = {
   A2: [
@@ -57,9 +58,28 @@ const planningModels = {
   B2: b2PlanningModels,
 };
 
-export function PlanningScreen({ setActiveTab }) {
-  const [level, setLevel] = useState('B1');
+export function PlanningScreen({
+  setActiveTab,
+  navigationContext,
+  selectedLevel,
+  clearNavigationContext,
+}) {
+  const userLevel = selectedLevel || getUserLevel();
+  const [level, setLevel] = useState(userLevel);
   const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (!navigationContext?.fromDailyLearning) return;
+    if (selectedLevel) setLevel(selectedLevel);
+    const models = planningModels[selectedLevel || userLevel] || [];
+    if (navigationContext.planId) {
+      const planIndex = models.findIndex((item) => item.id === navigationContext.planId);
+      if (planIndex >= 0) setIndex(planIndex);
+    } else if (typeof navigationContext.planIndex === 'number') {
+      setIndex(navigationContext.planIndex);
+    }
+    clearNavigationContext?.();
+  }, [navigationContext, selectedLevel, userLevel, clearNavigationContext]);
 
   const models = planningModels[level] || [];
   const model = models[index];

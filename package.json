@@ -13,6 +13,7 @@
     "audit": "npm audit --audit-level=moderate",
     "test": "vitest run",
     "test:watch": "vitest",
+    "build:daily-learning": "node scripts/build-daily-learning-bank.mjs",
     "server:dev": "node --watch server/src/index.js",
     "server:start": "node server/src/index.js",
     "start": "node server/src/index.js",

@@ -369,9 +369,12 @@ function getAdminSpeakingModels() {
 
 export function SpeakingScreen({
   setActiveTab,
-  userLevel = localStorage.getItem('userLevel') || 'A2'
+  userLevel = localStorage.getItem('userLevel') || 'A2',
+  selectedLevel,
+  navigationContext,
+  clearNavigationContext,
 }) {
-  const level = userLevel;
+  const level = selectedLevel || userLevel;
   const [index, setIndex] = useState(0);
   const [showPremiumHint, setShowPremiumHint] = useState(false);
 
@@ -394,6 +397,19 @@ export function SpeakingScreen({
   }, [adminModels]);
 
   const models = modelsByLevel[level] || [];
+
+  useEffect(() => {
+    if (!navigationContext?.fromDailyLearning || !models.length) return;
+    if (navigationContext.speakingTitle) {
+      const speakingIndex = models.findIndex(
+        (item) => item.title === navigationContext.speakingTitle
+      );
+      if (speakingIndex >= 0) setIndex(speakingIndex);
+    } else if (typeof navigationContext.speakingIndex === 'number') {
+      setIndex(navigationContext.speakingIndex);
+    }
+    clearNavigationContext?.();
+  }, [navigationContext, models, clearNavigationContext]);
   const current = models[index];
   const sectionTitle = getTypeByLevel(level);
 

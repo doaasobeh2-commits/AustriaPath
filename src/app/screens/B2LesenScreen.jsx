@@ -1,10 +1,21 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { b2LesenModels } from '../../data/b2LesenModels';
 
-export function B2LesenScreen({ setActiveTab }) {
+export function B2LesenScreen({ setActiveTab, navigationContext, clearNavigationContext }) {
   const [modelIndex, setModelIndex] = useState(0);
   const [activePart, setActivePart] = useState(null);
   const [showSolutions, setShowSolutions] = useState(false);
+
+  useEffect(() => {
+    if (!navigationContext?.fromDailyLearning) return;
+    if (typeof navigationContext.lesenModelIndex === 'number') {
+      setModelIndex(navigationContext.lesenModelIndex);
+    } else if (navigationContext.lesenModelId) {
+      const idx = b2LesenModels.findIndex((m) => m.id === navigationContext.lesenModelId);
+      if (idx >= 0) setModelIndex(idx);
+    }
+    clearNavigationContext?.();
+  }, [navigationContext, clearNavigationContext]);
 
   const model = b2LesenModels[modelIndex];
 

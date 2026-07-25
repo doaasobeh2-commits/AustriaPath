@@ -98,10 +98,23 @@ const SECTIONS = [
   { id: 'fehler', label: 'Fehler' },
 ];
 
-export function AkademieScreen({ setActiveTab, selectedLevel = 'A2' }) {
+export function AkademieScreen({
+  setActiveTab,
+  selectedLevel = 'A2',
+  navigationContext,
+  clearNavigationContext,
+}) {
   const level = selectedLevel || 'A2';
   const [section, setSection] = useState('grammatik');
   const [contentVersion, setContentVersion] = useState(0);
+
+  useEffect(() => {
+    if (!navigationContext?.fromDailyLearning) return;
+    if (navigationContext.akademieSection) {
+      setSection(navigationContext.akademieSection);
+    }
+    clearNavigationContext?.();
+  }, [navigationContext, clearNavigationContext]);
 
   useEffect(() => {
     const refresh = () => setContentVersion((v) => v + 1);

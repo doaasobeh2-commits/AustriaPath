@@ -83,9 +83,12 @@ function getAdminImageModels() {
 
 export function ImageTrainingScreen({
   setActiveTab,
-  userLevel = getUserLevel()
+  userLevel,
+  selectedLevel,
+  navigationContext,
+  clearNavigationContext,
 }) {
-  const level = userLevel;
+  const level = selectedLevel || userLevel || getUserLevel();
   const labels = getScreenLabels(getUserLanguage());
   const [selectedImage, setSelectedImage] = useState(null);
   const [showPremiumHint, setShowPremiumHint] = useState(false);
@@ -111,6 +114,17 @@ export function ImageTrainingScreen({
   const models = modelsByLevel[level] || [];
 
   const language = getUserLanguage();
+
+  useEffect(() => {
+    if (!navigationContext?.fromDailyLearning || !models.length) return;
+    const match = models.find(
+      (item) =>
+        (navigationContext.imageId != null && item.id === navigationContext.imageId) ||
+        (navigationContext.imageTitle && item.title === navigationContext.imageTitle)
+    );
+    if (match) setSelectedImage(match);
+    clearNavigationContext?.();
+  }, [navigationContext, models, clearNavigationContext]);
 
   const premiumMessage = getSmartPremiumMessage(language, 'bild');
 

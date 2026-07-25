@@ -54,6 +54,7 @@ import TrialExpiredScreen from "./screens/TrialExpiredScreen";
 import MessagesScreen from "./screens/MessagesScreen.jsx";
 import { isTrialExpiredUser } from "../utils/accessStatus.js";
 import { isOnboardingComplete, markOnboardingComplete } from "../utils/userPreferences.js";
+import DailyLearningScreen from "./screens/DailyLearningScreen.jsx";
 
 const AdminScreen = React.lazy(() =>
   import("./screens/AdminScreen").then((module) => ({ default: module.AdminScreen }))
@@ -83,6 +84,7 @@ export default function App() {
   const [selectedLevel, setSelectedLevel] = useState(null);
   const [levelTarget, setLevelTarget] = useState(null);
   const [selectedWritingModel, setSelectedWritingModel] = useState(null);
+  const [navigationContext, setNavigationContext] = useState(null);
   const [authScreen, setAuthScreen] = useState("welcome");
   const [showOnboarding, setShowOnboarding] = useState(() => !isOnboardingComplete());
   const [legalView, setLegalView] = useState(null);
@@ -103,11 +105,24 @@ export default function App() {
     isAdminPreviewAllowed(currentUser) &&
     localStorage.getItem("isAdminPreview") === "true";
 
+  const clearNavigationContext = useCallback(() => {
+    setNavigationContext(null);
+  }, []);
+
   const setActiveTabGuarded = useCallback(
     (tab) => {
       setActiveTab((current) => {
         const requested = typeof tab === "function" ? tab(current) : tab;
-        return getSafeTab(requested, currentUser);
+        const resolved = getSafeTab(requested, currentUser);
+        if (resolved === "home") {
+          setNavigationContext((ctx) => {
+            if (ctx?.fromDailyLearning) {
+              setSelectedWritingModel(null);
+            }
+            return null;
+          });
+        }
+        return resolved;
       });
     },
     [currentUser]
@@ -406,6 +421,16 @@ export default function App() {
             <HomeScreen setActiveTab={setActiveTabGuarded} />
           )}
 
+          {guardedTab === "dailyLearning" && (
+            <DailyLearningScreen
+              setActiveTab={setActiveTabGuarded}
+              setSelectedWritingModel={setSelectedWritingModel}
+              setNavigationContext={setNavigationContext}
+              setSelectedLevel={setSelectedLevel}
+              clearNavigationContext={clearNavigationContext}
+            />
+          )}
+
           {guardedTab === "messages" && (
             <MessagesScreen setActiveTab={setActiveTabGuarded} />
           )}
@@ -438,6 +463,8 @@ export default function App() {
             <AkademieScreen
               setActiveTab={setActiveTabGuarded}
               selectedLevel={selectedLevel}
+              navigationContext={navigationContext}
+              clearNavigationContext={clearNavigationContext}
             />
           )}
 
@@ -483,7 +510,12 @@ export default function App() {
           )}
 
           {guardedTab === "lesen" && (
-            <LesenScreen setActiveTab={setActiveTabGuarded} selectedLevel={selectedLevel} />
+            <LesenScreen
+              setActiveTab={setActiveTabGuarded}
+              selectedLevel={selectedLevel}
+              navigationContext={navigationContext}
+              clearNavigationContext={clearNavigationContext}
+            />
           )}
 
           {guardedTab === "horen" && (
@@ -502,15 +534,27 @@ export default function App() {
             <ImageTrainingScreen
               setActiveTab={setActiveTabGuarded}
               selectedLevel={selectedLevel}
+              navigationContext={navigationContext}
+              clearNavigationContext={clearNavigationContext}
             />
           )}
 
           {guardedTab === "planning" && (
-            <PlanningScreen setActiveTab={setActiveTabGuarded} selectedLevel={selectedLevel} />
+            <PlanningScreen
+              setActiveTab={setActiveTabGuarded}
+              selectedLevel={selectedLevel}
+              navigationContext={navigationContext}
+              clearNavigationContext={clearNavigationContext}
+            />
           )}
 
           {guardedTab === "speaking" && (
-            <SpeakingScreen setActiveTab={setActiveTabGuarded} selectedLevel={selectedLevel} />
+            <SpeakingScreen
+              setActiveTab={setActiveTabGuarded}
+              selectedLevel={selectedLevel}
+              navigationContext={navigationContext}
+              clearNavigationContext={clearNavigationContext}
+            />
           )}
 
           {guardedTab === "database" && (

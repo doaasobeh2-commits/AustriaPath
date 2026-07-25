@@ -1,5 +1,7 @@
-import React from 'react';
-import { getUserLanguage } from '../../utils/userPreferences';
+import React, { useMemo } from 'react';
+import { getUserLanguage, getUserLevel } from '../../utils/userPreferences';
+import { getDailyLearningSession } from '../../data/dailyLearningRotation.js';
+import { DailyLearningHomeCard } from '../components/DailyLearningHomeCard.jsx';
 
 const homeTexts = {
   Deutsch: {
@@ -47,6 +49,8 @@ const homeTexts = {
 export function HomeScreen({ setActiveTab }) {
   const userLanguage = getUserLanguage();
   const homeT = homeTexts[userLanguage] || homeTexts.Deutsch;
+  const level = getUserLevel();
+  const dailySession = useMemo(() => getDailyLearningSession(level), [level]);
 
   return (
     <div style={pageStyle}>
@@ -67,6 +71,11 @@ export function HomeScreen({ setActiveTab }) {
         </div>
 
         <div style={contentStyle}>
+          <DailyLearningHomeCard
+            sessionComplete={dailySession.sessionComplete}
+            onStart={() => setActiveTab('dailyLearning')}
+          />
+
           <div style={gridStyle}>
             <Card icon="📖" title="Lesen Trainer" text="Kostenlose Lesemodelle für A2, B1 und B2." color="#e0f2fe" onClick={() => setActiveTab('lesen')} />
             <Card icon="🎧" title="Hören Trainer" text="Kostenlose Hörmodelle mit Text, Audio und Fragen." color="#f3e8ff" onClick={() => setActiveTab('horen')} />

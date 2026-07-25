@@ -172,13 +172,22 @@ const lesenModels = {
 
 export function LesenScreen({
   setActiveTab,
-  userLevel = getUserLevel()
+  userLevel = getUserLevel(),
+  selectedLevel,
+  navigationContext,
+  clearNavigationContext,
 }) {
-  const level = userLevel;
+  const level = selectedLevel || userLevel;
   const labels = getScreenLabels(getUserLanguage());
   if (level === 'B2') {
-  return <B2LesenScreen setActiveTab={setActiveTab} />;
-}
+    return (
+      <B2LesenScreen
+        setActiveTab={setActiveTab}
+        navigationContext={navigationContext}
+        clearNavigationContext={clearNavigationContext}
+      />
+    );
+  }
 if (level === 'B1') {
   return <B1LesenScreen setActiveTab={setActiveTab} />;
 }
