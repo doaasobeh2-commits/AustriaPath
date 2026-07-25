@@ -50,20 +50,20 @@ describe("Placement attempt usage bounds", () => {
     await closeDb();
   });
 
-  it("derives a bounded allowance that fits the longest legitimate current flow", async () => {
-    const longestPlanningPath = Math.max(
-      ...placementPlanningPacks.map((pack) => pack.mainMoves.length)
-    );
-    expect(longestPlanningPath).toBe(8);
+  it("derives a bounded allowance that fits the adaptive 4–5 minute flow", async () => {
     expect(PLACEMENT_TURN_BOUNDS).toEqual({
       selbstvorstellung: 3,
       bildbeschreibung: 3,
-      planung: longestPlanningPath,
+      planung: 8,
     });
-    expect(PLACEMENT_TURN_LIMIT).toBe(14);
+    expect(PLACEMENT_TURN_LIMIT).toBe(9);
 
-    const longestPack = placementPlanningPacks.find(
-      (pack) => pack.mainMoves.length === longestPlanningPath
+    const picnicPack = placementPlanningPacks.find(
+      (pack) => pack.scenarioId === "a2_planung_picknick"
+    );
+    const planungMoveIds = ["picnic-time", "picnic-reaction", "picnic-close"];
+    const planungMoves = planungMoveIds.map((id) =>
+      picnicPack.mainMoves.find((move) => move.id === id)
     );
     const legitimateTurns = [
       ...[0, 1, 2].map((turn) => ({
@@ -74,11 +74,11 @@ describe("Placement attempt usage bounds", () => {
         key: `turn:1:${turn}`,
         payload: { skill: "bildbeschreibung", turn },
       })),
-      ...longestPack.mainMoves.map((move) => ({
-        key: `turn:3:${longestPack.scenarioId}:${move.id}`,
+      ...planungMoves.map((move) => ({
+        key: `turn:3:${picnicPack.scenarioId}:${move.id}`,
         payload: {
           skill: "planung",
-          modelId: longestPack.scenarioId,
+          modelId: picnicPack.scenarioId,
           currentMoveId: move.id,
           answer: `Antwort auf ${move.id}`,
         },
@@ -130,7 +130,7 @@ describe("Placement attempt usage bounds", () => {
       )
     ).resolves.toEqual({
       index: legitimateTurns.length - 1,
-      moveId: longestPack.finalMoveId,
+      moveId: picnicPack.finalMoveId,
     });
 
     await expect(
@@ -147,7 +147,7 @@ describe("Placement attempt usage bounds", () => {
     ).rejects.toMatchObject({ code: "PLACEMENT_TURN_LIMIT_REACHED", status: 409 });
   });
 
-  it("allows Self, Bild, and every Picknick move through closing and completion", async () => {
+  it("allows Self, Bild, and three Picknick examiner turns through closing", async () => {
     const { rows } = await query(
       `INSERT INTO users
          (email, password_hash, level, allowed_levels, ai_credits, is_access_approved)
@@ -167,12 +167,11 @@ describe("Placement attempt usage bounds", () => {
     const picnicPack = placementPlanningPacks.find(
       (pack) => pack.scenarioId === "a2_planung_picknick"
     );
+    const planungMoveIds = ["picnic-time", "picnic-reaction", "picnic-close"];
     const turnKeys = [
       ...[0, 1, 2].map((turn) => `turn:0:${turn}`),
-      ...[0, 1, 2].map((turn) => `turn:1:${turn}`),
-      ...picnicPack.mainMoves.map(
-        (move) => `turn:3:${picnicPack.scenarioId}:${move.id}`
-      ),
+      ...[0, 1].map((turn) => `turn:1:${turn}`),
+      ...planungMoveIds.map((id) => `turn:3:${picnicPack.scenarioId}:${id}`),
     ];
 
     for (const key of turnKeys) {
@@ -243,7 +242,7 @@ describe("Placement attempt usage bounds", () => {
       `SELECT metadata FROM subscriptions WHERE user_id = $1 AND is_current = TRUE`,
       [userId]
     );
-    expect(rows[0].metadata.placementUsage.completedOperations).toHaveLength(10);
+    expect(rows[0].metadata.placementUsage.completedOperations).toHaveLength(9);
     expect(rows[0].metadata.placementUsage.completedReportOperation).toMatchObject({
       operation: "report",
       idempotencyKey: "report:final",

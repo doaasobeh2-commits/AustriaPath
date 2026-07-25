@@ -100,8 +100,8 @@ describe("adaptive turn caps", () => {
     expect(getPlacementFollowUpLimit("diskussion")).toBe(0);
   });
 
-  it("fits the shortened exam within eight evaluate turns", () => {
-    expect(PLACEMENT_TURN_LIMIT).toBe(8);
+  it("fits the shortened exam within nine evaluate turns", () => {
+    expect(PLACEMENT_TURN_LIMIT).toBe(9);
   });
 
   it("caps planung at three examiner turns", () => {

@@ -27,8 +27,8 @@ export const PLACEMENT_TURN_BOUNDS = Object.freeze({
   bildbeschreibung: 3, // initial response + at most two follow-ups
   planung: 8, // longest current closed pack (main or replacement-equivalent moves)
 });
-export const PLACEMENT_TURN_LIMIT = Object.values(PLACEMENT_TURN_BOUNDS)
-  .reduce((total, value) => total + value, 0);
+/** Hard cap on unique successful AI turn evaluations per placement attempt. */
+export const PLACEMENT_TURN_LIMIT = 9;
 const PLACEMENT_REPORT_LIMIT = 1;
 
 function canonicalizeForHash(value) {
@@ -319,6 +319,13 @@ export async function beginPlacementAttempt(userId) {
         id: attemptId,
         status: "in_progress",
         startedAt: existingAttempt?.startedAt || new Date().toISOString(),
+      },
+      placementUsage: {
+        attemptId,
+        evaluatedTurns: 0,
+        reports: 0,
+        completedOperations: [],
+        completedReportOperation: null,
       },
     };
     await q(
