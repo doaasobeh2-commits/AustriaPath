@@ -3,15 +3,15 @@
  */
 
 import { Router } from "express";
-import { success } from "../utils/response.js";
-import { requireAuth, requireAdmin } from "../middleware/auth.js";
+import { success } from "../../utils/response.js";
+import { requireAuth, requireAdmin } from "../../middleware/auth.js";
 import {
   exportPlacementDiagnosticSession,
   getPlacementDiagnosticConfig,
   getPlacementDiagnosticSession,
   listPlacementDiagnosticSessions,
   updatePlacementDiagnosticConfig,
-} from "../services/placementDiagnosticService.js";
+} from "../../services/placementDiagnosticService.js";
 
 const router = Router();
 
