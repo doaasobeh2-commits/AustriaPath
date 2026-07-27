@@ -95,6 +95,14 @@ export function getA2SchreibenEvaluation(task) {
 }
 
 /**
+ * Catalog Schreiben tasks with backend AI correction support.
+ * @param {object} task
+ */
+export function isA2SchreibenAiCorrectionTask(task) {
+  return Boolean(task?.id && A2_SCHREIBEN_EVALUATION_BY_TASK_ID[task.id]);
+}
+
+/**
  * @param {object} task
  */
 export function isA2SchreibenEvaluationTask(task) {
