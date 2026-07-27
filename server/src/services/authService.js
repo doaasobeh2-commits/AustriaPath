@@ -129,10 +129,21 @@ export async function requestPasswordReset(email) {
   const clean = email?.trim().toLowerCase();
   if (!clean) return { sent: true };
   const user = await findUserByEmail(clean);
-  if (!user) return { sent: true };
-  const token = await createOneTimeToken(TOKEN_ROUTE_RESET, { userId: user.id, email: clean }, 1);
-  const resetUrl = `${env.corsOrigin}?resetPassword=${token}`;
-  await sendPasswordResetEmail(clean, resetUrl);
+  if (!user || user.status === "blocked") return { sent: true };
+  try {
+    const token = await createOneTimeToken(
+      TOKEN_ROUTE_RESET,
+      { userId: user.id, email: clean },
+      1
+    );
+    const resetUrl = `${env.corsOrigin}?resetPassword=${token}`;
+    await sendPasswordResetEmail(clean, resetUrl);
+  } catch (error) {
+    console.warn(
+      "[auth] password reset email failed:",
+      error instanceof Error ? error.message : String(error)
+    );
+  }
   return { sent: true };
 }
 
