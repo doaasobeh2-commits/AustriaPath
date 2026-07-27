@@ -1,0 +1,458 @@
+{
+  "schemaVersion": "1.0",
+  "level": "A2",
+  "taskType": "aufgabe_loesen_fixed_dialogue",
+  "runtimeRules": {
+    "liveAIConversation": false,
+    "conditionalBranching": false,
+    "evaluateAfterCompletionOnly": true,
+    "continueRegardlessOfLearnerAnswer": true,
+    "audioUnit": "one prerecorded file per partner turn",
+    "studentRecordingBetweenTurns": true
+  },
+  "audioBasePath": "/audio/a2/aufgabe-loesen/",
+  "voiceProfiles": [
+    {
+      "id": "VOICE-F-RECEPTION-01",
+      "gender": "female",
+      "use": "medical reception",
+      "language": "de-DE",
+      "style": "professional, calm, polite, natural",
+      "speed": 0.94
+    },
+    {
+      "id": "VOICE-M-RECEPTION-01",
+      "gender": "male",
+      "use": "medical reception",
+      "language": "de-AT or neutral de-DE",
+      "style": "professional, helpful, concise",
+      "speed": 0.94
+    },
+    {
+      "id": "VOICE-F-SERVICE-01",
+      "gender": "female",
+      "use": "salon/service",
+      "language": "de-DE",
+      "style": "friendly, everyday, natural",
+      "speed": 0.96
+    },
+    {
+      "id": "VOICE-M-SERVICE-02",
+      "gender": "male",
+      "use": "housing/maintenance",
+      "language": "de-AT or neutral de-DE",
+      "style": "practical, calm, clear",
+      "speed": 0.94
+    },
+    {
+      "id": "VOICE-F-OFFICE-01",
+      "gender": "female",
+      "use": "language school",
+      "language": "de-DE",
+      "style": "professional, welcoming, clear",
+      "speed": 0.93
+    },
+    {
+      "id": "VOICE-M-HOTEL-01",
+      "gender": "male",
+      "use": "hotel reception",
+      "language": "de-DE",
+      "style": "professional, warm, clear",
+      "speed": 0.95
+    },
+    {
+      "id": "VOICE-F-OFFICE-02",
+      "gender": "female",
+      "use": "school office",
+      "language": "de-AT or neutral de-DE",
+      "style": "calm, supportive, clear",
+      "speed": 0.93
+    },
+    {
+      "id": "VOICE-M-CUSTOMER-01",
+      "gender": "male",
+      "use": "parcel customer service",
+      "language": "de-DE",
+      "style": "neutral, efficient, clear",
+      "speed": 0.95
+    },
+    {
+      "id": "VOICE-M-SERVICE-01",
+      "gender": "male",
+      "use": "shop customer service",
+      "language": "de-DE",
+      "style": "helpful, neutral, natural",
+      "speed": 0.95
+    },
+    {
+      "id": "VOICE-F-RESTAURANT-01",
+      "gender": "female",
+      "use": "restaurant",
+      "language": "de-AT or neutral de-DE",
+      "style": "friendly, warm, natural",
+      "speed": 0.96
+    }
+  ],
+  "tasks": [
+    {
+      "id": "A2-AL-001",
+      "title": "Zahnarzttermin absagen",
+      "category": "Gesundheit",
+      "situation": "Sie haben morgen einen Termin beim Zahnarzt. Sie können nicht kommen. Rufen Sie in der Zahnarztpraxis an.",
+      "learnerRole": "Patient/in",
+      "partnerRole": "Mitarbeiter/in der Zahnarztpraxis",
+      "taskPoints": [
+        "Sagen Sie, dass Sie morgen einen Termin haben.",
+        "Erklären Sie kurz, warum Sie nicht kommen können.",
+        "Bitten Sie um einen neuen Termin und bestätigen Sie ihn."
+      ],
+      "voiceProfileId": "VOICE-F-RECEPTION-01",
+      "turns": [
+        {
+          "turn": 1,
+          "partnerText": "Guten Tag, Zahnarztpraxis Berger. Wie kann ich Ihnen helfen?",
+          "audioFile": "a2-al-001-turn-01.mp3"
+        },
+        {
+          "turn": 2,
+          "partnerText": "Für wann haben Sie den Termin, und warum können Sie nicht kommen?",
+          "audioFile": "a2-al-001-turn-02.mp3"
+        },
+        {
+          "turn": 3,
+          "partnerText": "Kein Problem. Ich habe am Donnerstag um zehn Uhr einen Termin frei. Passt das für Sie?",
+          "audioFile": "a2-al-001-turn-03.mp3"
+        },
+        {
+          "turn": 4,
+          "partnerText": "Gut, dann ist Ihr neuer Termin am Donnerstag um zehn Uhr. Auf Wiederhören.",
+          "audioFile": "a2-al-001-turn-04.mp3"
+        }
+      ]
+    },
+    {
+      "id": "A2-AL-002",
+      "title": "Termin beim Hausarzt vereinbaren",
+      "category": "Gesundheit",
+      "situation": "Sie sind seit zwei Tagen krank und brauchen einen Termin beim Hausarzt. Rufen Sie in der Praxis an.",
+      "learnerRole": "Patient/in",
+      "partnerRole": "Mitarbeiter/in der Arztpraxis",
+      "taskPoints": [
+        "Sagen Sie, welche Beschwerden Sie haben.",
+        "Sagen Sie, seit wann Sie krank sind.",
+        "Fragen Sie nach einem Termin und bestätigen Sie ihn."
+      ],
+      "voiceProfileId": "VOICE-M-RECEPTION-01",
+      "turns": [
+        {
+          "turn": 1,
+          "partnerText": "Guten Tag, Ordination Dr. Klein. Was kann ich für Sie tun?",
+          "audioFile": "a2-al-002-turn-01.mp3"
+        },
+        {
+          "turn": 2,
+          "partnerText": "Welche Beschwerden haben Sie, und seit wann sind Sie krank?",
+          "audioFile": "a2-al-002-turn-02.mp3"
+        },
+        {
+          "turn": 3,
+          "partnerText": "Ich kann Ihnen heute um sechzehn Uhr einen Termin geben. Können Sie kommen?",
+          "audioFile": "a2-al-002-turn-03.mp3"
+        },
+        {
+          "turn": 4,
+          "partnerText": "In Ordnung. Bitte bringen Sie Ihre e-card mit. Bis später.",
+          "audioFile": "a2-al-002-turn-04.mp3"
+        }
+      ]
+    },
+    {
+      "id": "A2-AL-003",
+      "title": "Friseurtermin buchen",
+      "category": "Dienstleistung",
+      "situation": "Sie möchten diese Woche zum Friseur gehen. Rufen Sie im Salon an und vereinbaren Sie einen Termin.",
+      "learnerRole": "Kundin/Kunde",
+      "partnerRole": "Mitarbeiter/in im Friseursalon",
+      "taskPoints": [
+        "Sagen Sie, welche Leistung Sie möchten.",
+        "Sagen Sie, an welchem Tag Sie Zeit haben.",
+        "Bestätigen Sie Uhrzeit und Preis."
+      ],
+      "voiceProfileId": "VOICE-F-SERVICE-01",
+      "turns": [
+        {
+          "turn": 1,
+          "partnerText": "Guten Tag, Friseursalon Bella. Wie kann ich Ihnen helfen?",
+          "audioFile": "a2-al-003-turn-01.mp3"
+        },
+        {
+          "turn": 2,
+          "partnerText": "Möchten Sie nur die Haare schneiden oder auch waschen?",
+          "audioFile": "a2-al-003-turn-02.mp3"
+        },
+        {
+          "turn": 3,
+          "partnerText": "Am Freitag habe ich um vierzehn Uhr Zeit. Der Haarschnitt kostet dreißig Euro. Passt das?",
+          "audioFile": "a2-al-003-turn-03.mp3"
+        },
+        {
+          "turn": 4,
+          "partnerText": "Gut, dann sehen wir uns am Freitag um vierzehn Uhr. Auf Wiederhören.",
+          "audioFile": "a2-al-003-turn-04.mp3"
+        }
+      ]
+    },
+    {
+      "id": "A2-AL-004",
+      "title": "Heizung in der Wohnung ist kaputt",
+      "category": "Wohnen",
+      "situation": "Die Heizung in Ihrer Wohnung funktioniert nicht. Rufen Sie die Hausverwaltung an.",
+      "learnerRole": "Mieter/in",
+      "partnerRole": "Mitarbeiter/in der Hausverwaltung",
+      "taskPoints": [
+        "Erklären Sie das Problem.",
+        "Sagen Sie, seit wann die Heizung nicht funktioniert.",
+        "Bitten Sie um einen Reparaturtermin."
+      ],
+      "voiceProfileId": "VOICE-M-SERVICE-02",
+      "turns": [
+        {
+          "turn": 1,
+          "partnerText": "Guten Tag, Hausverwaltung Steiner. Was ist das Problem?",
+          "audioFile": "a2-al-004-turn-01.mp3"
+        },
+        {
+          "turn": 2,
+          "partnerText": "Seit wann funktioniert die Heizung nicht mehr?",
+          "audioFile": "a2-al-004-turn-02.mp3"
+        },
+        {
+          "turn": 3,
+          "partnerText": "Ein Techniker kann morgen zwischen acht und zehn Uhr kommen. Sind Sie zu Hause?",
+          "audioFile": "a2-al-004-turn-03.mp3"
+        },
+        {
+          "turn": 4,
+          "partnerText": "Gut, dann kommt der Techniker morgen Vormittag. Vielen Dank für Ihren Anruf.",
+          "audioFile": "a2-al-004-turn-04.mp3"
+        }
+      ]
+    },
+    {
+      "id": "A2-AL-005",
+      "title": "Deutschkurs anfragen",
+      "category": "Bildung",
+      "situation": "Sie möchten einen Deutschkurs besuchen. Rufen Sie bei einer Sprachschule an und fragen Sie nach Informationen.",
+      "learnerRole": "Interessent/in",
+      "partnerRole": "Mitarbeiter/in der Sprachschule",
+      "taskPoints": [
+        "Sagen Sie, welches Niveau Sie suchen.",
+        "Fragen Sie nach Kurszeiten und Beginn.",
+        "Fragen Sie nach dem Preis und melden Sie sich an."
+      ],
+      "voiceProfileId": "VOICE-F-OFFICE-01",
+      "turns": [
+        {
+          "turn": 1,
+          "partnerText": "Guten Tag, Sprachschule Aktiv. Wie kann ich Ihnen helfen?",
+          "audioFile": "a2-al-005-turn-01.mp3"
+        },
+        {
+          "turn": 2,
+          "partnerText": "Welches Sprachniveau haben Sie ungefähr?",
+          "audioFile": "a2-al-005-turn-02.mp3"
+        },
+        {
+          "turn": 3,
+          "partnerText": "Der A2-Kurs beginnt am dritten September und ist montags und mittwochs am Abend. Der Kurs kostet zweihundertachtzig Euro.",
+          "audioFile": "a2-al-005-turn-03.mp3"
+        },
+        {
+          "turn": 4,
+          "partnerText": "Gut. Dann brauche ich bitte Ihren Namen und Ihre E-Mail-Adresse für die Anmeldung.",
+          "audioFile": "a2-al-005-turn-04.mp3"
+        }
+      ]
+    },
+    {
+      "id": "A2-AL-006",
+      "title": "Hotelzimmer reservieren",
+      "category": "Reisen",
+      "situation": "Sie möchten für ein Wochenende ein Hotelzimmer reservieren. Rufen Sie im Hotel an.",
+      "learnerRole": "Gast",
+      "partnerRole": "Mitarbeiter/in an der Hotelrezeption",
+      "taskPoints": [
+        "Sagen Sie Anreise- und Abreisetag.",
+        "Sagen Sie, für wie viele Personen Sie buchen.",
+        "Fragen Sie nach Frühstück und Preis und bestätigen Sie die Buchung."
+      ],
+      "voiceProfileId": "VOICE-M-HOTEL-01",
+      "turns": [
+        {
+          "turn": 1,
+          "partnerText": "Guten Tag, Hotel am Stadtpark. Was kann ich für Sie tun?",
+          "audioFile": "a2-al-006-turn-01.mp3"
+        },
+        {
+          "turn": 2,
+          "partnerText": "Für welches Datum und für wie viele Personen möchten Sie buchen?",
+          "audioFile": "a2-al-006-turn-02.mp3"
+        },
+        {
+          "turn": 3,
+          "partnerText": "Ein Doppelzimmer mit Frühstück kostet neunzig Euro pro Nacht. Möchten Sie es reservieren?",
+          "audioFile": "a2-al-006-turn-03.mp3"
+        },
+        {
+          "turn": 4,
+          "partnerText": "Vielen Dank. Das Zimmer ist für Sie reserviert. Wir freuen uns auf Ihren Besuch.",
+          "audioFile": "a2-al-006-turn-04.mp3"
+        }
+      ]
+    },
+    {
+      "id": "A2-AL-007",
+      "title": "Kind in der Schule krankmelden",
+      "category": "Familie und Schule",
+      "situation": "Ihr Kind ist krank und kann heute nicht in die Schule kommen. Rufen Sie im Sekretariat an.",
+      "learnerRole": "Mutter/Vater",
+      "partnerRole": "Mitarbeiter/in im Schulsekretariat",
+      "taskPoints": [
+        "Nennen Sie den Namen und die Klasse Ihres Kindes.",
+        "Sagen Sie, warum das Kind fehlt.",
+        "Sagen Sie, wie lange es wahrscheinlich zu Hause bleibt."
+      ],
+      "voiceProfileId": "VOICE-F-OFFICE-02",
+      "turns": [
+        {
+          "turn": 1,
+          "partnerText": "Guten Morgen, Schulsekretariat. Wie kann ich Ihnen helfen?",
+          "audioFile": "a2-al-007-turn-01.mp3"
+        },
+        {
+          "turn": 2,
+          "partnerText": "Wie heißt Ihr Kind, und in welche Klasse geht es?",
+          "audioFile": "a2-al-007-turn-02.mp3"
+        },
+        {
+          "turn": 3,
+          "partnerText": "Warum kann Ihr Kind heute nicht kommen, und wie lange bleibt es wahrscheinlich zu Hause?",
+          "audioFile": "a2-al-007-turn-03.mp3"
+        },
+        {
+          "turn": 4,
+          "partnerText": "Danke für die Information. Bitte melden Sie sich wieder, wenn Ihr Kind länger fehlt.",
+          "audioFile": "a2-al-007-turn-04.mp3"
+        }
+      ]
+    },
+    {
+      "id": "A2-AL-008",
+      "title": "Paket ist nicht angekommen",
+      "category": "Post und Lieferung",
+      "situation": "Sie warten auf ein Paket. Laut Nachricht wurde es zugestellt, aber Sie haben es nicht bekommen. Rufen Sie beim Paketdienst an.",
+      "learnerRole": "Kundin/Kunde",
+      "partnerRole": "Mitarbeiter/in beim Paketdienst",
+      "taskPoints": [
+        "Sagen Sie, dass das Paket nicht angekommen ist.",
+        "Nennen Sie die Sendungsnummer oder Ihre Adresse.",
+        "Fragen Sie, wo das Paket ist und was Sie tun sollen."
+      ],
+      "voiceProfileId": "VOICE-M-CUSTOMER-01",
+      "turns": [
+        {
+          "turn": 1,
+          "partnerText": "Guten Tag, Paketservice Express. Wie kann ich Ihnen helfen?",
+          "audioFile": "a2-al-008-turn-01.mp3"
+        },
+        {
+          "turn": 2,
+          "partnerText": "Haben Sie bitte die Sendungsnummer oder Ihre Adresse?",
+          "audioFile": "a2-al-008-turn-02.mp3"
+        },
+        {
+          "turn": 3,
+          "partnerText": "Das Paket wurde bei einer Nachbarin im zweiten Stock abgegeben. Können Sie dort nachfragen?",
+          "audioFile": "a2-al-008-turn-03.mp3"
+        },
+        {
+          "turn": 4,
+          "partnerText": "Gut. Falls das Paket dort nicht ist, rufen Sie uns bitte noch einmal an.",
+          "audioFile": "a2-al-008-turn-04.mp3"
+        }
+      ]
+    },
+    {
+      "id": "A2-AL-009",
+      "title": "Kaputtes Gerät zurückgeben",
+      "category": "Einkaufen",
+      "situation": "Sie haben vor einer Woche einen Wasserkocher gekauft. Das Gerät funktioniert nicht. Gehen Sie zum Kundendienst.",
+      "learnerRole": "Kundin/Kunde",
+      "partnerRole": "Mitarbeiter/in beim Kundendienst",
+      "taskPoints": [
+        "Sagen Sie, wann Sie das Gerät gekauft haben.",
+        "Erklären Sie, was nicht funktioniert.",
+        "Bitten Sie um Umtausch oder Rückgabe."
+      ],
+      "voiceProfileId": "VOICE-M-SERVICE-01",
+      "turns": [
+        {
+          "turn": 1,
+          "partnerText": "Guten Tag. Was kann ich für Sie tun?",
+          "audioFile": "a2-al-009-turn-01.mp3"
+        },
+        {
+          "turn": 2,
+          "partnerText": "Wann haben Sie den Wasserkocher gekauft, und was funktioniert nicht?",
+          "audioFile": "a2-al-009-turn-02.mp3"
+        },
+        {
+          "turn": 3,
+          "partnerText": "Haben Sie den Kassenbon dabei? Dann können wir das Gerät umtauschen.",
+          "audioFile": "a2-al-009-turn-03.mp3"
+        },
+        {
+          "turn": 4,
+          "partnerText": "In Ordnung. Sie bekommen gleich einen neuen Wasserkocher.",
+          "audioFile": "a2-al-009-turn-04.mp3"
+        }
+      ]
+    },
+    {
+      "id": "A2-AL-010",
+      "title": "Tisch im Restaurant reservieren",
+      "category": "Freizeit und Essen",
+      "situation": "Sie möchten am Samstag mit Ihrer Familie essen gehen. Rufen Sie im Restaurant an und reservieren Sie einen Tisch.",
+      "learnerRole": "Gast",
+      "partnerRole": "Mitarbeiter/in im Restaurant",
+      "taskPoints": [
+        "Sagen Sie Tag, Uhrzeit und Personenzahl.",
+        "Fragen Sie nach einem Tisch am Fenster oder nach einem Kinderstuhl.",
+        "Bestätigen Sie die Reservierung."
+      ],
+      "voiceProfileId": "VOICE-F-RESTAURANT-01",
+      "turns": [
+        {
+          "turn": 1,
+          "partnerText": "Guten Tag, Restaurant Sonnenhof. Möchten Sie einen Tisch reservieren?",
+          "audioFile": "a2-al-010-turn-01.mp3"
+        },
+        {
+          "turn": 2,
+          "partnerText": "Für welchen Tag, um wie viel Uhr und für wie viele Personen?",
+          "audioFile": "a2-al-010-turn-02.mp3"
+        },
+        {
+          "turn": 3,
+          "partnerText": "Wir haben um achtzehn Uhr einen Tisch am Fenster frei. Brauchen Sie auch einen Kinderstuhl?",
+          "audioFile": "a2-al-010-turn-03.mp3"
+        },
+        {
+          "turn": 4,
+          "partnerText": "Perfekt. Der Tisch ist am Samstag um achtzehn Uhr für Sie reserviert. Bis dann.",
+          "audioFile": "a2-al-010-turn-04.mp3"
+        }
+      ]
+    }
+  ]
+}

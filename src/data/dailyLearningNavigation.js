@@ -224,6 +224,7 @@ function resolveWeeklyPlanTarget(target) {
       buttonKey: "speaking",
       level: target.level,
       speakingTitle: target.speakingTitle,
+      canonicalTaskId: target.canonicalTaskId,
     };
   }
 
@@ -238,6 +239,15 @@ function resolveWeeklyPlanTarget(target) {
   }
 
   if (target.tab === "lesen") {
+    if (target.canonicalModelId) {
+      return {
+        tab: "lesen",
+        buttonKey: "lesen",
+        level: target.level,
+        canonicalModelId: target.canonicalModelId,
+      };
+    }
+
     const modelIndex = b2LesenModels.findIndex((m) => m.id === target.lesenModelId);
     if (modelIndex < 0) return null;
     return {
@@ -246,6 +256,15 @@ function resolveWeeklyPlanTarget(target) {
       level: target.level,
       lesenModelId: target.lesenModelId,
       lesenModelIndex: modelIndex,
+    };
+  }
+
+  if (target.tab === "horen") {
+    return {
+      tab: "horen",
+      buttonKey: "lesen",
+      level: target.level,
+      canonicalModelId: target.canonicalModelId,
     };
   }
 
@@ -284,6 +303,8 @@ export function buildDailyLearningNavigationContext(target) {
     akademieItemIndex: target.akademieItemIndex,
     lesenModelId: target.lesenModelId,
     lesenModelIndex: target.lesenModelIndex,
+    canonicalModelId: target.canonicalModelId,
+    canonicalTaskId: target.canonicalTaskId,
   };
 }
 

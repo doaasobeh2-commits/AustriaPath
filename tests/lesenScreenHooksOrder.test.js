@@ -11,13 +11,12 @@ const SRC = resolve(process.cwd(), 'src/app/screens/LesenScreen.jsx');
 describe('LesenScreen hooks order', () => {
   const source = readFileSync(SRC, 'utf8');
 
-  it('does not import unpublished A2 catalog / coach dependencies', () => {
-    expect(source).not.toMatch(/a2LesenCatalog/);
-    expect(source).not.toMatch(/A2LesenGuidedPanel/);
-    expect(source).not.toMatch(/weeklyPlanHandoff/);
-    expect(source).not.toMatch(/weeklyPlanGuidedCompletion/);
-    expect(source).not.toMatch(/useAdminLearningLevel/);
-    expect(source).not.toMatch(/LearningLevelSelector/);
+  it('uses the A2 guided catalog inside LesenScreen', () => {
+    expect(source).toMatch(/a2LesenCatalog/);
+    expect(source).toMatch(/A2LesenGuidedPanel/);
+    expect(source).toMatch(/pickRandomA2LesenModel/);
+    expect(source).toMatch(/useAdminLearningLevel/);
+    expect(source).toMatch(/LearningLevelSelector/);
   });
 
   it('calls all hooks before B1/B2 early returns', () => {
@@ -39,7 +38,6 @@ describe('LesenScreen hooks order', () => {
     expect(beforeReturns).toMatch(/useEffect\s*\(/);
 
     const afterReturns = body.slice(firstEarlyReturn);
-    // No additional hook calls after the early-return gates.
     expect(afterReturns).not.toMatch(/\n\s*const\s+\[[^\]]+\]\s*=\s*useState\s*\(/);
     expect(afterReturns).not.toMatch(/\n\s*const\s+\w+\s*=\s*useMemo\s*\(/);
     expect(afterReturns).not.toMatch(/\n\s*useEffect\s*\(/);

@@ -521,13 +521,20 @@ export default function App() {
             <LesenScreen
               setActiveTab={setActiveTabGuarded}
               selectedLevel={selectedLevel}
+              setSelectedLevel={setSelectedLevel}
               navigationContext={navigationContext}
               clearNavigationContext={clearNavigationContext}
             />
           )}
 
           {guardedTab === "horen" && (
-            <HorenScreen setActiveTab={setActiveTabGuarded} selectedLevel={selectedLevel} />
+            <HorenScreen
+              setActiveTab={setActiveTabGuarded}
+              selectedLevel={selectedLevel}
+              setSelectedLevel={setSelectedLevel}
+              navigationContext={navigationContext}
+              clearNavigationContext={clearNavigationContext}
+            />
           )}
 
           {guardedTab === "writing" && (
@@ -542,6 +549,7 @@ export default function App() {
             <ImageTrainingScreen
               setActiveTab={setActiveTabGuarded}
               selectedLevel={selectedLevel}
+              setSelectedLevel={setSelectedLevel}
               navigationContext={navigationContext}
               clearNavigationContext={clearNavigationContext}
             />
@@ -560,6 +568,7 @@ export default function App() {
             <SpeakingScreen
               setActiveTab={setActiveTabGuarded}
               selectedLevel={selectedLevel}
+              setSelectedLevel={setSelectedLevel}
               navigationContext={navigationContext}
               clearNavigationContext={clearNavigationContext}
             />

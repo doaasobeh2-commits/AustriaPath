@@ -1,4 +1,20 @@
-export const a2Images = [
+const A2_IMAGE_CANONICAL = {
+  1: { canonicalId: 'A2-IMG-01', assetStatus: 'available' },
+  2: { canonicalId: 'A2-IMG-02', assetStatus: 'available' },
+  3: { canonicalId: 'A2-IMG-03', assetStatus: 'available' },
+  4: { canonicalId: 'A2-IMG-04', assetStatus: 'available' },
+  5: { canonicalId: 'A2-IMG-05', assetStatus: 'available' },
+  6: { canonicalId: 'A2-IMG-06', assetStatus: 'available' },
+  7: { canonicalId: 'A2-IMG-07', assetStatus: 'available' },
+  8: { canonicalId: 'A2-IMG-08', assetStatus: 'available' },
+  9: { canonicalId: 'A2-IMG-09', assetStatus: 'available' },
+  10: { canonicalId: 'A2-IMG-10', assetStatus: 'available' },
+  11: { canonicalId: 'A2-IMG-11', assetStatus: 'available' },
+  12: { canonicalId: 'A2-IMG-12', assetStatus: 'available' },
+  13: { canonicalId: 'A2-IMG-13', assetStatus: 'available' },
+};
+
+const a2ImagesBase = [
   {
     id: 1,
     title: "Paketlieferant",
@@ -537,5 +553,108 @@ export const a2Images = [
       "❌ Sie liest Zeitschrift.",
       "✅ Sie liest eine Zeitschrift."
     ]
+  },
+
+  {
+    id: 12,
+    title: "Bäckerei",
+    image: "/images/a2/baeckerei.jpeg",
+    shortText: "Eine Frau kauft Brot in einer Bäckerei.",
+    description: [
+      "Auf dem Bild sehe ich eine Bäckerei.",
+      "Eine Frau steht an der Theke.",
+      "Sie kauft Brot.",
+      "Hinter der Theke steht eine Verkäuferin.",
+      "Man sieht Brot, Brötchen und Kuchen.",
+      "Die Bäckerei ist hell und freundlich."
+    ],
+    words: [
+      "die Bäckerei",
+      "das Brot",
+      "die Brötchen",
+      "der Kuchen",
+      "die Verkäuferin",
+      "die Frau",
+      "die Theke"
+    ],
+    verbs: [
+      "kaufen",
+      "stehen",
+      "geben",
+      "nehmen",
+      "bezahlen",
+      "wählen"
+    ],
+    sentences: [
+      "Auf dem Bild sehe ich eine Bäckerei.",
+      "Die Frau kauft Brot.",
+      "Die Verkäuferin steht hinter der Theke.",
+      "Es gibt viele Backwaren."
+    ],
+    opinion: [
+      "Ich finde das Bild freundlich.",
+      "Frisches Brot ist lecker.",
+      "Ich kaufe manchmal in einer Bäckerei ein."
+    ],
+    mistakes: [
+      "Nicht: Die Frau kauft ein Brot in der Bäckerei.",
+      "Besser: Die Frau kauft Brot in der Bäckerei.",
+      "Nicht: Die Verkäuferin gibt der Frau das Brot.",
+      "Richtig: Die Verkäuferin gibt der Frau das Brot."
+    ]
+  },
+
+  {
+    id: 13,
+    title: "Familienausflug",
+    image: "/images/a2/familienausflug.jpeg",
+    shortText: "Eine Familie macht einen Ausflug im Park.",
+    description: [
+      "Auf dem Bild sehe ich eine Familie.",
+      "Die Eltern und Kinder sind draußen.",
+      "Sie gehen spazieren.",
+      "Das Wetter ist schön.",
+      "Im Hintergrund sieht man Bäume und einen Weg.",
+      "Die Familie wirkt glücklich."
+    ],
+    words: [
+      "der Ausflug",
+      "die Familie",
+      "die Eltern",
+      "die Kinder",
+      "das Wetter",
+      "der Park",
+      "der Weg"
+    ],
+    verbs: [
+      "gehen",
+      "spazieren",
+      "machen",
+      "sein",
+      "sehen",
+      "genießen"
+    ],
+    sentences: [
+      "Auf dem Bild sehe ich eine Familie.",
+      "Die Familie macht einen Ausflug.",
+      "Das Wetter ist schön.",
+      "Die Kinder gehen mit den Eltern spazieren."
+    ],
+    opinion: [
+      "Ich finde das Bild schön.",
+      "Ein Ausflug mit der Familie ist schön.",
+      "Ich mag Zeit in der Natur."
+    ],
+    mistakes: [
+      "Nicht: Die Familie macht ein Ausflug.",
+      "Richtig: Die Familie macht einen Ausflug.",
+      "Nicht: Das Wetter ist schön Wetter.",
+      "Richtig: Das Wetter ist schön."
+    ]
   }
 ];
+
+export const a2Images = a2ImagesBase.map((img) => ({
+  ...img,
+  ...A2_IMAGE_CANONICAL[img.id],
+}));

@@ -5,6 +5,15 @@ import { B1HorenScreen } from "./lesen/B1HorenScreen";
 import { b2HorenModels } from '../../data/b2HorenModels';
 import { isPremiumUser, trackSectionVisit } from '../../data/utils/premiumHint';
 import { getUserLanguage } from '../../utils/userPreferences';
+import { useAdminLearningLevel } from '../hooks/useAdminLearningLevel.js';
+import { LearningLevelSelector } from '../components/LearningLevelSelector.jsx';
+import {
+  getA2HorenModel,
+  pickRandomA2HorenModel,
+} from '../../data/a2HorenCatalog.js';
+import { A2HorenGuidedPanel } from './horen/A2HorenGuidedPanel.jsx';
+import { submitGuidedCatalogWeeklyPlanExercise } from '../../data/utils/weeklyPlanGuidedCompletion.js';
+import { readWeeklyPlanHandoff } from '../../data/utils/weeklyPlanHandoff.js';
 
 
 function splitLines(value) {
@@ -86,36 +95,26 @@ function getAdminHorenModels() {
 
 
 
-const staticA2HorenModels = [
-  {
-    title: 'Termin beim Arzt',
-    level: 'A2',
-    text:
-      'Guten Tag. Hier spricht Frau Müller. Ihr Termin ist morgen um 10 Uhr. Bitte bringen Sie Ihre Versicherungskarte mit.',
-    questions: [
-      { q: 'Wann ist der Termin?', a: 'Der Termin ist morgen um 10 Uhr.' },
-      {
-        q: 'Was soll Frau Müller mitbringen?',
-        a: 'Sie soll ihre Versicherungskarte mitbringen.'
-      }
-    ],
-    words: ['der Termin', 'der Arzt', 'morgen', 'die Versicherungskarte'],
-    verbs: ['sprechen', 'mitbringen', 'kommen'],
-    grammar: ['um 10 Uhr', 'Bitte + Verb'],
-    mistakes: ['❌ Der Termin ist in 10 Uhr.', '✅ Der Termin ist um 10 Uhr.'],
-    tip: 'Achten Sie auf Uhrzeiten und Namen.'
-  }
-];
+const staticA2HorenModels = [];
 
 export function HorenScreen({
   setActiveTab,
-  userLevel = localStorage.getItem('userLevel') || 'A2'
+  selectedLevel,
+  setSelectedLevel,
+  navigationContext,
+  clearNavigationContext,
 }) {
-  const level = userLevel;
+  const { level, setLevel } = useAdminLearningLevel({
+    selectedLevel,
+    setSelectedLevel,
+    navigationLevel: navigationContext?.level,
+  });
 
   const [index, setIndex] = useState(0);
   const [showTranscript, setShowTranscript] = useState(false);
   const [showPremiumHint, setShowPremiumHint] = useState(false);
+  const [activeA2Model, setActiveA2Model] = useState(() => pickRandomA2HorenModel());
+  const [weeklyPlanModelId, setWeeklyPlanModelId] = useState(null);
 
   
   
@@ -145,6 +144,50 @@ export function HorenScreen({
 
   const premiumMessage = getSmartPremiumMessage(language, 'hoeren');
 
+  useEffect(() => {
+    if (level !== 'A2') return;
+    const handoff = readWeeklyPlanHandoff();
+    if (handoff?.canonicalModelId) {
+      setWeeklyPlanModelId(handoff.canonicalModelId);
+    } else {
+      setWeeklyPlanModelId(null);
+    }
+    if (navigationContext?.canonicalModelId) {
+      const linked = getA2HorenModel(navigationContext.canonicalModelId);
+      if (linked) setActiveA2Model(linked);
+      clearNavigationContext?.();
+      return;
+    }
+    if (handoff?.canonicalModelId) {
+      const linked = getA2HorenModel(handoff.canonicalModelId);
+      if (linked) setActiveA2Model(linked);
+      return;
+    }
+    setActiveA2Model(pickRandomA2HorenModel());
+  }, [level, navigationContext, clearNavigationContext]);
+
+  const handleA2GuidedComplete = ({ score, total }) => {
+    if (!activeA2Model?.model_id) return;
+    submitGuidedCatalogWeeklyPlanExercise({
+      setActiveTab,
+      modelId: activeA2Model.model_id,
+      correctCount: score,
+      totalQuestions: total,
+      audioPlayed: true,
+    });
+  };
+
+  const handleA2Restart = () => {
+    if (weeklyPlanModelId) {
+      const linked = getA2HorenModel(weeklyPlanModelId);
+      if (linked) {
+        setActiveA2Model(linked);
+        return;
+      }
+    }
+    setActiveA2Model(pickRandomA2HorenModel());
+  };
+
  useEffect(() => {
   if (!models.length) return;
 
@@ -172,7 +215,76 @@ export function HorenScreen({
     window.speechSynthesis.cancel();
   };
 if (level === 'B1') {
-    return <B1HorenScreen setActiveTab={setActiveTab} />;
+    return (
+      <div style={pageStyle}>
+        <button onClick={() => setActiveTab('home')} style={backButtonStyle}>
+          ← Zurück
+        </button>
+        <LearningLevelSelector
+          level={level}
+          onChange={(nextLevel) => {
+            setLevel(nextLevel);
+            setIndex(0);
+          }}
+          inputStyle={inputStyle}
+        />
+        <B1HorenScreen setActiveTab={setActiveTab} />
+      </div>
+    );
+  }
+
+  if (level === 'A2') {
+    return (
+      <div style={pageStyle}>
+        <button onClick={() => setActiveTab('home')} style={backButtonStyle}>
+          ← Zurück
+        </button>
+
+        <h1>🎧 Hören Trainer</h1>
+
+        <p style={subtitleStyle}>
+          Lernen Sie mit Hörmodellen, Fragen und Lösungen.
+        </p>
+
+        {showPremiumHint && (
+          <div style={premiumHintStyle}>
+            <div style={{ fontSize: '30px' }}>{premiumMessage.icon}</div>
+            <h3 style={{ margin: '8px 0', color: '#0f172a' }}>{premiumMessage.title}</h3>
+            <p style={{ color: '#475569', lineHeight: 1.6 }}>{premiumMessage.text}</p>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <button onClick={() => setActiveTab('premium')} style={premiumButtonStyle}>
+                {premiumMessage.button}
+              </button>
+              <button onClick={() => setShowPremiumHint(false)} style={laterButtonStyle}>
+                {premiumMessage.later}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <LearningLevelSelector
+          level={level}
+          onChange={(nextLevel) => {
+            setLevel(nextLevel);
+            setActiveA2Model(pickRandomA2HorenModel());
+          }}
+          inputStyle={inputStyle}
+        />
+
+        {activeA2Model ? (
+          <A2HorenGuidedPanel
+            model={activeA2Model}
+            onComplete={handleA2GuidedComplete}
+            onRestart={handleA2Restart}
+          />
+        ) : (
+          <div style={boxStyle}>
+            <h2>A2 Inhalte nicht verfügbar</h2>
+            <p style={{ color: '#64748b' }}>Die Hörmodelle konnten nicht geladen werden.</p>
+          </div>
+        )}
+      </div>
+    );
   }
   
   return (
@@ -219,9 +331,14 @@ if (level === 'B1') {
         </div>
       )}
 
-      <select style={inputStyle} value={level} disabled>
-        <option value={level}>{level}</option>
-      </select>
+      <LearningLevelSelector
+        level={level}
+        onChange={(nextLevel) => {
+          setLevel(nextLevel);
+          setIndex(0);
+        }}
+        inputStyle={inputStyle}
+      />
 
       {models.length === 0 ? (
         <div style={boxStyle}>

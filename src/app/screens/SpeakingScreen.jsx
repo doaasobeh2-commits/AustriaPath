@@ -1,9 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { b1PlanningModels } from '../../data/modelsb1';
 import { b2DiscussionModels } from '../../data/b2PlanningModels';
+import {
+  AUFGABE_LOESEN_EXERCISE_TYPE,
+  getA2AufgabeLoesenSpeakingModels,
+} from '../../data/a2AufgabeLoesenCatalog.js';
 import { getSmartPremiumMessage } from '../../data/smartPremiumMessages';
 import { isPremiumUser, trackSectionVisit } from '../../data/utils/premiumHint';
 import { getUserLanguage } from '../../utils/userPreferences';
+import { submitSpeakingWeeklyPlanExercise } from '../../data/utils/weeklyPlanGuidedCompletion.js';
+import { readWeeklyPlanHandoff } from '../../data/utils/weeklyPlanHandoff.js';
+import { AufgabeLoesenGuidedPanel } from './speaking/AufgabeLoesenGuidedPanel.jsx';
+import { useAdminLearningLevel } from '../hooks/useAdminLearningLevel.js';
+import { LearningLevelSelector } from '../components/LearningLevelSelector.jsx';
 
 const STORAGE_KEY = 'austriaPathAdminData';
 
@@ -183,45 +192,7 @@ const b2SpeakingModels = [
 ];
 
 const speakingModels = {
-  A2: [
-    {
-      title: 'Aufgabe lösen: Termin beim Arzt',
-      type: 'Aufgabe lösen',
-      level: 'A2',
-      situation:
-        'Sie können morgen nicht zum Arzt kommen. Rufen Sie in der Praxis an.',
-      task: 'Sagen Sie warum. Bitten Sie um einen neuen Termin.',
-      example: `Person A: Guten Tag. Ich habe morgen einen Termin beim Arzt.
-
-Person B: Um wie viel Uhr haben Sie den Termin?
-
-Person A: Um 10 Uhr. Leider kann ich nicht kommen, weil ich arbeiten muss.
-
-Person B: Kein Problem. Möchten Sie einen neuen Termin?
-
-Person A: Ja bitte.
-
-Person B: Nächsten Dienstag um 14 Uhr.
-
-Person A: Das passt gut. Vielen Dank.
-
-Person B: Gern geschehen. Auf Wiederhören.`,
-      words: ['der Termin', 'die Praxis', 'der Arzt', 'nächste Woche'],
-      verbs: ['anrufen', 'verschieben', 'kommen', 'arbeiten'],
-      sentences: [
-        'Leider kann ich nicht kommen.',
-        'Können wir den Termin verschieben?',
-        'Das passt gut.',
-        'Vielen Dank.'
-      ],
-      grammar: ['Modalverb können', 'weil + Verb am Ende', 'höfliche Fragen'],
-      mistakes: [
-        '❌ Ich muss arbeiten weil.',
-        '✅ Ich muss arbeiten, weil ich arbeiten muss.'
-      ],
-      tip: 'Antworten Sie kurz und höflich.'
-    }
-  ],
+  A2: getA2AufgabeLoesenSpeakingModels(),
 
   B1: b1PlanningModels.map((item) => ({
     title: `Etwas planen: ${item.title}`,
@@ -369,14 +340,22 @@ function getAdminSpeakingModels() {
 
 export function SpeakingScreen({
   setActiveTab,
-  userLevel = localStorage.getItem('userLevel') || 'A2',
   selectedLevel,
+  setSelectedLevel,
   navigationContext,
   clearNavigationContext,
 }) {
-  const level = selectedLevel || userLevel;
+  const { level, setLevel } = useAdminLearningLevel({
+    selectedLevel,
+    setSelectedLevel,
+    navigationLevel: navigationContext?.level,
+  });
   const [index, setIndex] = useState(0);
   const [showPremiumHint, setShowPremiumHint] = useState(false);
+
+  useEffect(() => {
+    setIndex(0);
+  }, [level]);
 
   const adminModels = useMemo(() => getAdminSpeakingModels(), []);
 
@@ -399,7 +378,18 @@ export function SpeakingScreen({
   const models = modelsByLevel[level] || [];
 
   useEffect(() => {
-    if (!navigationContext?.fromDailyLearning || !models.length) return;
+    if (!models.length) return;
+
+    if (navigationContext?.canonicalTaskId) {
+      const taskIndex = models.findIndex(
+        (item) => item.canonicalId === navigationContext.canonicalTaskId
+      );
+      if (taskIndex >= 0) setIndex(taskIndex);
+      clearNavigationContext?.();
+      return;
+    }
+
+    if (!navigationContext?.fromDailyLearning) return;
     if (navigationContext.speakingTitle) {
       const speakingIndex = models.findIndex(
         (item) => item.title === navigationContext.speakingTitle
@@ -410,8 +400,25 @@ export function SpeakingScreen({
     }
     clearNavigationContext?.();
   }, [navigationContext, models, clearNavigationContext]);
+
   const current = models[index];
   const sectionTitle = getTypeByLevel(level);
+  const isGuidedAufgabeLoesen = Boolean(current?.isGuidedAufgabeLoesen);
+
+  const handleGuidedComplete = (payload) => {
+    submitSpeakingWeeklyPlanExercise({
+      setActiveTab,
+      speakingSubmitted: true,
+      learnerResponse: payload?.learnerResponse || '',
+    });
+  };
+
+  const handleGuidedRestart = () => {
+    const handoff = readWeeklyPlanHandoff();
+    if (!handoff?.canonicalTaskId) return;
+    const taskIndex = models.findIndex((item) => item.canonicalId === handoff.canonicalTaskId);
+    if (taskIndex >= 0) setIndex(taskIndex);
+  };
 
   const language = getUserLanguage();
 
@@ -438,9 +445,7 @@ export function SpeakingScreen({
 
         <h1>🗣️ Sprechen üben</h1>
 
-        <select style={inputStyle} value={userLevel} disabled>
-          <option value={userLevel}>{userLevel}</option>
-        </select>
+        <LearningLevelSelector level={level} onChange={setLevel} inputStyle={inputStyle} />
 
         <div style={cardStyle}>
           Für {level} sind noch keine Inhalte verfügbar.
@@ -494,9 +499,7 @@ export function SpeakingScreen({
         </div>
       )}
 
-      <select style={inputStyle} value={userLevel} disabled>
-        <option value={userLevel}>{userLevel}</option>
-      </select>
+      <LearningLevelSelector level={level} onChange={setLevel} inputStyle={inputStyle} />
 
       <div style={levelInfoStyle}>
         <b>{level}:</b> {sectionTitle}
@@ -508,7 +511,7 @@ export function SpeakingScreen({
         onChange={(e) => setIndex(Number(e.target.value))}
       >
         {models.map((item, i) => (
-          <option key={i} value={i}>
+          <option key={item.canonicalId || i} value={i}>
             {item.type} {i + 1}: {item.title}
           </option>
         ))}
@@ -523,28 +526,66 @@ export function SpeakingScreen({
           {current.type}: {current.title}
         </h2>
 
-        <h3>📌 Situation</h3>
-        <p style={{ whiteSpace: 'pre-line' }}>{current.situation}</p>
+        {isGuidedAufgabeLoesen ? (
+          <>
+            {current.category && (
+              <p style={{ color: '#64748b', margin: '0 0 8px' }}>{current.category}</p>
+            )}
 
-        <h3>🎯 Aufgabe</h3>
-        <p style={{ whiteSpace: 'pre-line' }}>{current.task}</p>
+            <h3>📌 Situation</h3>
+            <p style={{ whiteSpace: 'pre-line' }}>{current.situation}</p>
 
-        <h3>✅ Beispiel</h3>
-        <p style={{ lineHeight: '1.7', whiteSpace: 'pre-line' }}>
-          {current.example || 'Beispiel wird bald ergänzt.'}
-        </p>
+            <h3>🎯 Aufgabe</h3>
+            <ul style={{ margin: 0, paddingLeft: '18px' }}>
+              {(current.taskPoints || []).map((point) => (
+                <li key={point} style={{ marginBottom: '4px', lineHeight: 1.5 }}>
+                  {point}
+                </li>
+              ))}
+            </ul>
+
+            <p style={{ color: '#64748b', marginTop: '12px', fontSize: '14px' }}>
+              Ihre Rolle: {current.learnerRole} · Partnerrolle: {current.partnerRole}
+            </p>
+
+            <div style={{ marginTop: '16px' }}>
+              <AufgabeLoesenGuidedPanel
+                task={current.catalogTask}
+                onComplete={handleGuidedComplete}
+                onRestart={handleGuidedRestart}
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <h3>📌 Situation</h3>
+            <p style={{ whiteSpace: 'pre-line' }}>{current.situation}</p>
+
+            <h3>🎯 Aufgabe</h3>
+            <p style={{ whiteSpace: 'pre-line' }}>{current.task}</p>
+
+            <h3>✅ Beispiel</h3>
+            <p style={{ lineHeight: '1.7', whiteSpace: 'pre-line' }}>
+              {current.example || 'Beispiel wird bald ergänzt.'}
+            </p>
+          </>
+        )}
       </div>
 
-      <InfoBox title="📌 Wichtige Wörter" items={current.words} />
-      <InfoBox title="💪 Wichtige Verben" items={current.verbs} />
-      <InfoBox title="🗣️ Nützliche Sätze" items={current.sentences} />
-      <InfoBox title="📚 Wichtige Grammatik" items={current.grammar} />
-      <InfoBox title="⚠️ Häufige Fehler" items={current.mistakes} />
+      {!isGuidedAufgabeLoesen && (
+        <>
+          <InfoBox title="📌 Wichtige Wörter" items={current.words} />
+          <InfoBox title="💪 Wichtige Verben" items={current.verbs} />
+          <InfoBox title="🗣️ Nützliche Sätze" items={current.sentences} />
+          <InfoBox title="📚 Wichtige Grammatik" items={current.grammar} />
+          <InfoBox title="⚠️ Häufige Fehler" items={current.mistakes} />
 
-      <div style={cardStyle}>
-        <h3>⭐ Lerntipp</h3>
-        <p>{current.tip}</p>
-      </div>
+          <div style={cardStyle}>
+            <h3>⭐ Lerntipp</h3>
+            <p>{current.tip}</p>
+          </div>
+        </>
+      )}
     </div>
   );
 }

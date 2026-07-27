@@ -1,0 +1,684 @@
+{
+  "version": 1,
+  "level": "A2",
+  "library_type": "guided_listening",
+  "noise_policy": "clean_voice_only_no_background_noise",
+  "models_count": 10,
+  "clips_count": 20,
+  "questions_per_clip": 2,
+  "audioBasePath": "/audio/a2/hoeren/",
+  "models": [
+    {
+      "model_id": "A2-H-001",
+      "title": "Unterwegs und Wetter",
+      "clips": [
+        {
+          "clip_id": "A2-H-001-01",
+          "topic": "Bahnhofsdurchsage",
+          "audio_file": "a2-h-001-clip-01.mp3",
+          "voice_profile_id": "VOICE-F-ANNOUNCEMENT-01",
+          "transcript": "Achtung am Bahnsteig drei. Der Zug nach Wien fährt heute nicht um zehn Uhr fünfzehn, sondern um zehn Uhr fünfunddreißig. Grund ist eine technische Störung. Der Zug fährt heute von Bahnsteig fünf ab.",
+          "questions": [
+            {
+              "question_id": "A2-H-001-01-Q1",
+              "type": "single_choice",
+              "text": "Wann fährt der Zug nach Wien?",
+              "options": [
+                "Um 10:15 Uhr",
+                "Um 10:35 Uhr",
+                "Um 11:05 Uhr"
+              ],
+              "correct_answer": "Um 10:35 Uhr"
+            },
+            {
+              "question_id": "A2-H-001-01-Q2",
+              "type": "single_choice",
+              "text": "Von welchem Bahnsteig fährt der Zug ab?",
+              "options": [
+                "Bahnsteig 3",
+                "Bahnsteig 4",
+                "Bahnsteig 5"
+              ],
+              "correct_answer": "Bahnsteig 5"
+            }
+          ]
+        },
+        {
+          "clip_id": "A2-H-001-02",
+          "topic": "Wetterbericht",
+          "audio_file": "a2-h-001-clip-02.mp3",
+          "voice_profile_id": "VOICE-M-RADIO-01",
+          "transcript": "Heute ist es im Osten Österreichs sonnig und warm. In Wien und Niederösterreich steigen die Temperaturen auf achtundzwanzig Grad. Am Nachmittag gibt es im Westen Regen und starken Wind.",
+          "questions": [
+            {
+              "question_id": "A2-H-001-02-Q1",
+              "type": "true_false",
+              "text": "In Wien werden heute 28 Grad erwartet.",
+              "options": [
+                "Richtig",
+                "Falsch"
+              ],
+              "correct_answer": "Richtig"
+            },
+            {
+              "question_id": "A2-H-001-02-Q2",
+              "type": "single_choice",
+              "text": "Wo gibt es am Nachmittag Regen?",
+              "options": [
+                "Im Osten",
+                "Im Westen",
+                "Im Süden"
+              ],
+              "correct_answer": "Im Westen"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model_id": "A2-H-002",
+      "title": "Straße und Schule",
+      "clips": [
+        {
+          "clip_id": "A2-H-002-01",
+          "topic": "Verkehrsmeldung",
+          "audio_file": "a2-h-002-clip-01.mp3",
+          "voice_profile_id": "VOICE-M-RADIO-02",
+          "transcript": "Auf der A1 Richtung Salzburg gibt es zwischen St. Pölten und Melk einen Stau. Nach einem Unfall ist nur eine Fahrspur frei. Die Wartezeit beträgt ungefähr zwanzig Minuten.",
+          "questions": [
+            {
+              "question_id": "A2-H-002-01-Q1",
+              "type": "single_choice",
+              "text": "Auf welcher Autobahn gibt es einen Stau?",
+              "options": [
+                "Auf der A1",
+                "Auf der A2",
+                "Auf der A4"
+              ],
+              "correct_answer": "Auf der A1"
+            },
+            {
+              "question_id": "A2-H-002-01-Q2",
+              "type": "true_false",
+              "text": "Die Wartezeit beträgt ungefähr 20 Minuten.",
+              "options": [
+                "Richtig",
+                "Falsch"
+              ],
+              "correct_answer": "Richtig"
+            }
+          ]
+        },
+        {
+          "clip_id": "A2-H-002-02",
+          "topic": "Nachricht von der Schule",
+          "audio_file": "a2-h-002-clip-02.mp3",
+          "voice_profile_id": "VOICE-F-OFFICE-02",
+          "transcript": "Guten Tag, hier ist die Volksschule Sonnenweg. Der Elternabend am Dienstag beginnt nicht um achtzehn Uhr, sondern um achtzehn Uhr dreißig. Bitte kommen Sie in den Klassenraum 2B im ersten Stock.",
+          "questions": [
+            {
+              "question_id": "A2-H-002-02-Q1",
+              "type": "single_choice",
+              "text": "Wann beginnt der Elternabend?",
+              "options": [
+                "Um 18:00 Uhr",
+                "Um 18:30 Uhr",
+                "Um 19:00 Uhr"
+              ],
+              "correct_answer": "Um 18:30 Uhr"
+            },
+            {
+              "question_id": "A2-H-002-02-Q2",
+              "type": "single_choice",
+              "text": "Wo findet der Elternabend statt?",
+              "options": [
+                "Im Klassenraum 2B",
+                "In der Turnhalle",
+                "Im Sekretariat"
+              ],
+              "correct_answer": "Im Klassenraum 2B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model_id": "A2-H-003",
+      "title": "Einkaufen und Arzt",
+      "clips": [
+        {
+          "clip_id": "A2-H-003-01",
+          "topic": "Supermarktangebot",
+          "audio_file": "a2-h-003-clip-01.mp3",
+          "voice_profile_id": "VOICE-F-ANNOUNCEMENT-02",
+          "transcript": "Diese Woche im Markt Frisch: Ein Kilo Äpfel kostet nur ein Euro neunundneunzig. Milch ist heute im Angebot: zwei Packungen kosten zusammen zwei Euro fünfzig. Das Angebot gilt bis Samstag.",
+          "questions": [
+            {
+              "question_id": "A2-H-003-01-Q1",
+              "type": "single_choice",
+              "text": "Was kostet ein Kilo Äpfel?",
+              "options": [
+                "1,49 Euro",
+                "1,99 Euro",
+                "2,50 Euro"
+              ],
+              "correct_answer": "1,99 Euro"
+            },
+            {
+              "question_id": "A2-H-003-01-Q2",
+              "type": "true_false",
+              "text": "Das Angebot gilt bis Samstag.",
+              "options": [
+                "Richtig",
+                "Falsch"
+              ],
+              "correct_answer": "Richtig"
+            }
+          ]
+        },
+        {
+          "clip_id": "A2-H-003-02",
+          "topic": "Arzttermin",
+          "audio_file": "a2-h-003-clip-02.mp3",
+          "voice_profile_id": "VOICE-F-RECEPTION-01",
+          "transcript": "Guten Tag, hier ist die Ordination Dr. Bauer. Ihr Termin morgen muss leider verschoben werden. Der neue Termin ist am Donnerstag um neun Uhr zwanzig. Bitte bringen Sie Ihre e-card und eine Liste Ihrer Medikamente mit.",
+          "questions": [
+            {
+              "question_id": "A2-H-003-02-Q1",
+              "type": "single_choice",
+              "text": "Wann ist der neue Termin?",
+              "options": [
+                "Donnerstag um 9:20 Uhr",
+                "Mittwoch um 9:20 Uhr",
+                "Donnerstag um 10:20 Uhr"
+              ],
+              "correct_answer": "Donnerstag um 9:20 Uhr"
+            },
+            {
+              "question_id": "A2-H-003-02-Q2",
+              "type": "single_choice",
+              "text": "Was soll die Person mitbringen?",
+              "options": [
+                "Nur einen Pass",
+                "Die e-card und eine Medikamentenliste",
+                "Eine Rechnung"
+              ],
+              "correct_answer": "Die e-card und eine Medikamentenliste"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model_id": "A2-H-004",
+      "title": "Paket und Freizeit",
+      "clips": [
+        {
+          "clip_id": "A2-H-004-01",
+          "topic": "Paketabholung",
+          "audio_file": "a2-h-004-clip-01.mp3",
+          "voice_profile_id": "VOICE-M-CUSTOMER-01",
+          "transcript": "Ihr Paket konnte heute nicht zugestellt werden. Sie können es ab morgen in der Postfiliale am Hauptplatz abholen. Die Filiale ist von acht bis achtzehn Uhr geöffnet. Bitte bringen Sie einen Lichtbildausweis mit.",
+          "questions": [
+            {
+              "question_id": "A2-H-004-01-Q1",
+              "type": "single_choice",
+              "text": "Wo kann man das Paket abholen?",
+              "options": [
+                "In der Postfiliale am Hauptplatz",
+                "Beim Nachbarn",
+                "Im Supermarkt"
+              ],
+              "correct_answer": "In der Postfiliale am Hauptplatz"
+            },
+            {
+              "question_id": "A2-H-004-01-Q2",
+              "type": "single_choice",
+              "text": "Was muss man mitbringen?",
+              "options": [
+                "Einen Schlüssel",
+                "Einen Lichtbildausweis",
+                "Eine Bankkarte"
+              ],
+              "correct_answer": "Einen Lichtbildausweis"
+            }
+          ]
+        },
+        {
+          "clip_id": "A2-H-004-02",
+          "topic": "Kinoansage",
+          "audio_file": "a2-h-004-clip-02.mp3",
+          "voice_profile_id": "VOICE-F-SERVICE-01",
+          "transcript": "Der Film Abenteuer im Schnee beginnt heute um neunzehn Uhr dreißig im Saal vier. Die Vorstellung dauert eine Stunde und vierzig Minuten. Karten kosten neun Euro. Kinder bis zwölf Jahre zahlen sechs Euro.",
+          "questions": [
+            {
+              "question_id": "A2-H-004-02-Q1",
+              "type": "single_choice",
+              "text": "Wann beginnt der Film?",
+              "options": [
+                "Um 18:30 Uhr",
+                "Um 19:30 Uhr",
+                "Um 20:30 Uhr"
+              ],
+              "correct_answer": "Um 19:30 Uhr"
+            },
+            {
+              "question_id": "A2-H-004-02-Q2",
+              "type": "single_choice",
+              "text": "Wie viel zahlen Kinder bis zwölf Jahre?",
+              "options": [
+                "6 Euro",
+                "9 Euro",
+                "12 Euro"
+              ],
+              "correct_answer": "6 Euro"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model_id": "A2-H-005",
+      "title": "Arbeit und Restaurant",
+      "clips": [
+        {
+          "clip_id": "A2-H-005-01",
+          "topic": "Dienstplan",
+          "audio_file": "a2-h-005-clip-01.mp3",
+          "voice_profile_id": "VOICE-M-OFFICE-01",
+          "transcript": "Hallo Maria, hier ist Thomas aus dem Büro. Deine Schicht am Freitag beginnt schon um sieben Uhr statt um acht Uhr. Dafür kannst du am Freitag um fünfzehn Uhr nach Hause gehen. Bitte gib mir heute noch Bescheid.",
+          "questions": [
+            {
+              "question_id": "A2-H-005-01-Q1",
+              "type": "single_choice",
+              "text": "Wann beginnt Marias Schicht am Freitag?",
+              "options": [
+                "Um 7 Uhr",
+                "Um 8 Uhr",
+                "Um 15 Uhr"
+              ],
+              "correct_answer": "Um 7 Uhr"
+            },
+            {
+              "question_id": "A2-H-005-01-Q2",
+              "type": "true_false",
+              "text": "Maria kann um 15 Uhr nach Hause gehen.",
+              "options": [
+                "Richtig",
+                "Falsch"
+              ],
+              "correct_answer": "Richtig"
+            }
+          ]
+        },
+        {
+          "clip_id": "A2-H-005-02",
+          "topic": "Restaurantreservierung",
+          "audio_file": "a2-h-005-clip-02.mp3",
+          "voice_profile_id": "VOICE-F-RESTAURANT-01",
+          "transcript": "Guten Tag, hier ist das Restaurant Sonnenhof. Ihre Reservierung für Samstag ist bestätigt: vier Personen um achtzehn Uhr. Der Tisch ist im ruhigen Nebenraum. Falls Sie später kommen, rufen Sie bitte unter 02742 55190 an.",
+          "questions": [
+            {
+              "question_id": "A2-H-005-02-Q1",
+              "type": "single_choice",
+              "text": "Für wie viele Personen ist der Tisch reserviert?",
+              "options": [
+                "Für zwei Personen",
+                "Für vier Personen",
+                "Für sechs Personen"
+              ],
+              "correct_answer": "Für vier Personen"
+            },
+            {
+              "question_id": "A2-H-005-02-Q2",
+              "type": "single_choice",
+              "text": "Welche Telefonnummer soll man bei Verspätung anrufen?",
+              "options": [
+                "02742 55190",
+                "02742 51590",
+                "02742 55109"
+              ],
+              "correct_answer": "02742 55190"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model_id": "A2-H-006",
+      "title": "Wohnen und Bus",
+      "clips": [
+        {
+          "clip_id": "A2-H-006-01",
+          "topic": "Hausverwaltung",
+          "audio_file": "a2-h-006-clip-01.mp3",
+          "voice_profile_id": "VOICE-M-SERVICE-02",
+          "transcript": "Guten Tag, hier ist die Hausverwaltung. Am Mittwoch wird zwischen neun und zwölf Uhr das Wasser im Haus abgestellt. Ein Installateur repariert eine Leitung im Keller. Bitte verwenden Sie in dieser Zeit kein Wasser.",
+          "questions": [
+            {
+              "question_id": "A2-H-006-01-Q1",
+              "type": "single_choice",
+              "text": "Wann wird das Wasser abgestellt?",
+              "options": [
+                "Am Dienstag",
+                "Am Mittwoch",
+                "Am Donnerstag"
+              ],
+              "correct_answer": "Am Mittwoch"
+            },
+            {
+              "question_id": "A2-H-006-01-Q2",
+              "type": "single_choice",
+              "text": "Warum wird das Wasser abgestellt?",
+              "options": [
+                "Wegen einer Reparatur",
+                "Wegen einer Reinigung",
+                "Wegen eines Umzugs"
+              ],
+              "correct_answer": "Wegen einer Reparatur"
+            }
+          ]
+        },
+        {
+          "clip_id": "A2-H-006-02",
+          "topic": "Businformation",
+          "audio_file": "a2-h-006-clip-02.mp3",
+          "voice_profile_id": "VOICE-F-ANNOUNCEMENT-03",
+          "transcript": "Die Buslinie sieben fährt heute wegen einer Baustelle nicht über den Rathausplatz. Bitte steigen Sie an der Haltestelle Bahnhof um. Die Änderung gilt von Montag bis Freitag.",
+          "questions": [
+            {
+              "question_id": "A2-H-006-02-Q1",
+              "type": "true_false",
+              "text": "Die Buslinie 7 fährt heute über den Rathausplatz.",
+              "options": [
+                "Richtig",
+                "Falsch"
+              ],
+              "correct_answer": "Falsch"
+            },
+            {
+              "question_id": "A2-H-006-02-Q2",
+              "type": "single_choice",
+              "text": "Wo soll man umsteigen?",
+              "options": [
+                "Am Bahnhof",
+                "Am Rathausplatz",
+                "Beim Krankenhaus"
+              ],
+              "correct_answer": "Am Bahnhof"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model_id": "A2-H-007",
+      "title": "Kurs und Apotheke",
+      "clips": [
+        {
+          "clip_id": "A2-H-007-01",
+          "topic": "Deutschkurs",
+          "audio_file": "a2-h-007-clip-01.mp3",
+          "voice_profile_id": "VOICE-F-OFFICE-01",
+          "transcript": "Der neue Deutschkurs A2 beginnt am zweiten Oktober. Der Unterricht ist immer dienstags und donnerstags von achtzehn bis zwanzig Uhr. Die Anmeldung ist bis zum zwanzigsten September möglich. Der Kurs kostet zweihundertsechzig Euro.",
+          "questions": [
+            {
+              "question_id": "A2-H-007-01-Q1",
+              "type": "single_choice",
+              "text": "An welchen Tagen findet der Kurs statt?",
+              "options": [
+                "Montag und Mittwoch",
+                "Dienstag und Donnerstag",
+                "Freitag und Samstag"
+              ],
+              "correct_answer": "Dienstag und Donnerstag"
+            },
+            {
+              "question_id": "A2-H-007-01-Q2",
+              "type": "single_choice",
+              "text": "Wie viel kostet der Kurs?",
+              "options": [
+                "206 Euro",
+                "260 Euro",
+                "280 Euro"
+              ],
+              "correct_answer": "260 Euro"
+            }
+          ]
+        },
+        {
+          "clip_id": "A2-H-007-02",
+          "topic": "Apothekeninformation",
+          "audio_file": "a2-h-007-clip-02.mp3",
+          "voice_profile_id": "VOICE-M-SERVICE-03",
+          "transcript": "Die Stadtapotheke ist heute bis zwanzig Uhr geöffnet. In der Nacht hat die Apotheke am Bahnhof Bereitschaft. Bei dringenden Fragen erreichen Sie den Apothekendienst unter der Nummer 1455.",
+          "questions": [
+            {
+              "question_id": "A2-H-007-02-Q1",
+              "type": "single_choice",
+              "text": "Bis wann ist die Stadtapotheke heute geöffnet?",
+              "options": [
+                "Bis 18 Uhr",
+                "Bis 20 Uhr",
+                "Bis 22 Uhr"
+              ],
+              "correct_answer": "Bis 20 Uhr"
+            },
+            {
+              "question_id": "A2-H-007-02-Q2",
+              "type": "single_choice",
+              "text": "Welche Nummer hat der Apothekendienst?",
+              "options": [
+                "1445",
+                "1455",
+                "1545"
+              ],
+              "correct_answer": "1455"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model_id": "A2-H-008",
+      "title": "Sport und Gemeinde",
+      "clips": [
+        {
+          "clip_id": "A2-H-008-01",
+          "topic": "Sportkurs",
+          "audio_file": "a2-h-008-clip-01.mp3",
+          "voice_profile_id": "VOICE-M-COACH-01",
+          "transcript": "Der Schwimmkurs für Anfänger beginnt nächsten Montag um siebzehn Uhr. Der Kurs findet im Hallenbad statt und dauert acht Wochen. Bitte bringen Sie Badekleidung, ein Handtuch und Badeschuhe mit.",
+          "questions": [
+            {
+              "question_id": "A2-H-008-01-Q1",
+              "type": "single_choice",
+              "text": "Wo findet der Kurs statt?",
+              "options": [
+                "Im Hallenbad",
+                "In der Turnhalle",
+                "Im Park"
+              ],
+              "correct_answer": "Im Hallenbad"
+            },
+            {
+              "question_id": "A2-H-008-01-Q2",
+              "type": "true_false",
+              "text": "Der Kurs dauert acht Wochen.",
+              "options": [
+                "Richtig",
+                "Falsch"
+              ],
+              "correct_answer": "Richtig"
+            }
+          ]
+        },
+        {
+          "clip_id": "A2-H-008-02",
+          "topic": "Gemeindeinformation",
+          "audio_file": "a2-h-008-clip-02.mp3",
+          "voice_profile_id": "VOICE-F-OFFICE-03",
+          "transcript": "Das Gemeindeamt bleibt am Freitag wegen einer internen Schulung geschlossen. Am Donnerstag ist es von acht bis sechzehn Uhr geöffnet. Ab Montag gelten wieder die normalen Öffnungszeiten.",
+          "questions": [
+            {
+              "question_id": "A2-H-008-02-Q1",
+              "type": "true_false",
+              "text": "Das Gemeindeamt ist am Freitag geöffnet.",
+              "options": [
+                "Richtig",
+                "Falsch"
+              ],
+              "correct_answer": "Falsch"
+            },
+            {
+              "question_id": "A2-H-008-02-Q2",
+              "type": "single_choice",
+              "text": "Bis wann ist das Gemeindeamt am Donnerstag geöffnet?",
+              "options": [
+                "Bis 12 Uhr",
+                "Bis 16 Uhr",
+                "Bis 18 Uhr"
+              ],
+              "correct_answer": "Bis 16 Uhr"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model_id": "A2-H-009",
+      "title": "Familie und Bibliothek",
+      "clips": [
+        {
+          "clip_id": "A2-H-009-01",
+          "topic": "Geburtstagseinladung",
+          "audio_file": "a2-h-009-clip-01.mp3",
+          "voice_profile_id": "VOICE-F-FRIENDLY-01",
+          "transcript": "Hallo, hier ist Lena. Ich feiere am Sonntag meinen Geburtstag. Die Feier beginnt um fünfzehn Uhr bei mir zu Hause in der Gartenstraße zwölf. Bitte sag mir bis Freitag, ob du kommen kannst.",
+          "questions": [
+            {
+              "question_id": "A2-H-009-01-Q1",
+              "type": "single_choice",
+              "text": "Wann beginnt die Geburtstagsfeier?",
+              "options": [
+                "Um 12 Uhr",
+                "Um 15 Uhr",
+                "Um 17 Uhr"
+              ],
+              "correct_answer": "Um 15 Uhr"
+            },
+            {
+              "question_id": "A2-H-009-01-Q2",
+              "type": "single_choice",
+              "text": "Bis wann soll man antworten?",
+              "options": [
+                "Bis Freitag",
+                "Bis Samstag",
+                "Bis Sonntag"
+              ],
+              "correct_answer": "Bis Freitag"
+            }
+          ]
+        },
+        {
+          "clip_id": "A2-H-009-02",
+          "topic": "Bibliothek",
+          "audio_file": "a2-h-009-clip-02.mp3",
+          "voice_profile_id": "VOICE-M-OFFICE-02",
+          "transcript": "Ihre ausgeliehenen Bücher müssen bis zum vierzehnten Juni zurückgegeben werden. Sie können die Bücher online noch einmal für drei Wochen verlängern. Bei Fragen rufen Sie bitte die Bibliothek unter 02742 33388 an.",
+          "questions": [
+            {
+              "question_id": "A2-H-009-02-Q1",
+              "type": "single_choice",
+              "text": "Bis wann müssen die Bücher zurückgegeben werden?",
+              "options": [
+                "Bis 4. Juni",
+                "Bis 14. Juni",
+                "Bis 24. Juni"
+              ],
+              "correct_answer": "Bis 14. Juni"
+            },
+            {
+              "question_id": "A2-H-009-02-Q2",
+              "type": "single_choice",
+              "text": "Wie lange kann man die Bücher verlängern?",
+              "options": [
+                "Eine Woche",
+                "Zwei Wochen",
+                "Drei Wochen"
+              ],
+              "correct_answer": "Drei Wochen"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model_id": "A2-H-010",
+      "title": "Reise und Reparatur",
+      "clips": [
+        {
+          "clip_id": "A2-H-010-01",
+          "topic": "Flughafeninformation",
+          "audio_file": "a2-h-010-clip-01.mp3",
+          "voice_profile_id": "VOICE-F-ANNOUNCEMENT-04",
+          "transcript": "Der Flug nach Berlin mit der Nummer OS zweihundertfünfzehn startet heute vierzig Minuten später. Der neue Abflug ist um vierzehn Uhr zehn. Bitte gehen Sie zum Ausgang B zwölf.",
+          "questions": [
+            {
+              "question_id": "A2-H-010-01-Q1",
+              "type": "single_choice",
+              "text": "Wann ist der neue Abflug?",
+              "options": [
+                "Um 13:30 Uhr",
+                "Um 14:10 Uhr",
+                "Um 14:50 Uhr"
+              ],
+              "correct_answer": "Um 14:10 Uhr"
+            },
+            {
+              "question_id": "A2-H-010-01-Q2",
+              "type": "single_choice",
+              "text": "Zu welchem Ausgang sollen die Reisenden gehen?",
+              "options": [
+                "B10",
+                "B12",
+                "C12"
+              ],
+              "correct_answer": "B12"
+            }
+          ]
+        },
+        {
+          "clip_id": "A2-H-010-02",
+          "topic": "Fahrradreparatur",
+          "audio_file": "a2-h-010-clip-02.mp3",
+          "voice_profile_id": "VOICE-M-SERVICE-01",
+          "transcript": "Guten Tag, hier ist die Fahrradwerkstatt. Ihr Fahrrad ist fertig. Die Reparatur kostet fünfundvierzig Euro. Sie können das Fahrrad heute bis achtzehn Uhr oder morgen ab neun Uhr abholen.",
+          "questions": [
+            {
+              "question_id": "A2-H-010-02-Q1",
+              "type": "single_choice",
+              "text": "Wie viel kostet die Reparatur?",
+              "options": [
+                "35 Euro",
+                "45 Euro",
+                "55 Euro"
+              ],
+              "correct_answer": "45 Euro"
+            },
+            {
+              "question_id": "A2-H-010-02-Q2",
+              "type": "true_false",
+              "text": "Das Fahrrad kann heute bis 18 Uhr abgeholt werden.",
+              "options": [
+                "Richtig",
+                "Falsch"
+              ],
+              "correct_answer": "Richtig"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

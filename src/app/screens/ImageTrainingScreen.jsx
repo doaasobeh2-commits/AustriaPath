@@ -1,16 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { a2Images } from '../../data/a2Images';
+import { getAvailableA2Images } from '../../data/a2ImageTaskCatalog';
 import { b1Images } from '../../data/b1Images';
 import { b2Images } from '../../data/b2Images';
 import { getSmartPremiumMessage } from '../../data/smartPremiumMessages';
 import { b2Grafiken } from '../../data/b2Grafiken';
 import { isPremiumUser, trackSectionVisit } from '../../data/utils/premiumHint';
-import { getUserLanguage, getUserLevel } from '../../utils/userPreferences';
+import { getUserLanguage } from '../../utils/userPreferences';
 import { getScreenLabels } from '../../i18n/screenLabels';
+import { useAdminLearningLevel } from '../hooks/useAdminLearningLevel.js';
+import { LearningLevelSelector } from '../components/LearningLevelSelector.jsx';
 
 
 const imageModels = {
-  A2: a2Images,
+  A2: getAvailableA2Images(),
   B1: b1Images,
  B2: [...b2Images, ...b2Grafiken]
 };
@@ -83,12 +85,16 @@ function getAdminImageModels() {
 
 export function ImageTrainingScreen({
   setActiveTab,
-  userLevel,
   selectedLevel,
+  setSelectedLevel,
   navigationContext,
   clearNavigationContext,
 }) {
-  const level = selectedLevel || userLevel || getUserLevel();
+  const { level, setLevel } = useAdminLearningLevel({
+    selectedLevel,
+    setSelectedLevel,
+    navigationLevel: navigationContext?.level,
+  });
   const labels = getScreenLabels(getUserLanguage());
   const [selectedImage, setSelectedImage] = useState(null);
   const [showPremiumHint, setShowPremiumHint] = useState(false);
@@ -292,9 +298,7 @@ useEffect(() => {
           : 'Wähle ein Bild und lerne einfache Sätze für die Beschreibung.'}
       </p>
 
-      <select style={inputStyle} value={level} disabled>
-        <option value={level}>{level}</option>
-      </select>
+      <LearningLevelSelector level={level} onChange={setLevel} inputStyle={inputStyle} />
 
       {showPremiumHint && (
         <div style={premiumHintStyle}>

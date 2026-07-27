@@ -1,0 +1,449 @@
+{
+  "version": 1,
+  "level": "A2",
+  "library_type": "guided_reading",
+  "models_count": 10,
+  "questions_per_model": 4,
+  "models": [
+    {
+      "model_id": "A2-L-001",
+      "title": "Maria arbeitet im Supermarkt",
+      "text": "Maria wohnt in Wien und arbeitet in einem Supermarkt in der Nähe ihres Hauses. Jeden Morgen steht sie um sechs Uhr auf und frühstückt mit Kaffee und Brot. Um sieben Uhr fährt sie mit dem Bus zur Arbeit. Ihre Schicht beginnt um acht Uhr und endet um vier Uhr nachmittags. Im Supermarkt hilft Maria den Kunden an der Kasse und räumt auch die Regale ein. Sie mag ihre Kollegen und den Kontakt mit den Menschen. Am Nachmittag kauft sie oft frisches Gemüse und Brot für zu Hause ein. Am Wochenende trifft sie ihre Freundinnen oder geht spazieren im Park. Maria findet, dass die Arbeit anstrengend ist, aber sie ist zufrieden mit ihrem Leben in Wien.",
+      "words": ["der Supermarkt", "die Schicht", "der Bus", "das Gemüse", "die Kasse"],
+      "verbs": ["wohnen", "arbeiten", "fahren", "helfen", "einkaufen"],
+      "grammar": ["mit dem Bus", "um acht Uhr", "in der Nähe"],
+      "mistakes": ["❌ Sie fährt mit Bus.", "✅ Sie fährt mit dem Bus."],
+      "tip": "Achten Sie auf Orte, Verkehrsmittel und Uhrzeiten im Text.",
+      "questions": [
+        {
+          "question_id": "A2-L-001-Q1",
+          "type": "single_choice",
+          "category": "comprehension",
+          "text": "Wo arbeitet Maria?",
+          "options": ["In einem Supermarkt", "In einer Bäckerei", "In einer Schule"],
+          "correct_answer": "In einem Supermarkt"
+        },
+        {
+          "question_id": "A2-L-001-Q2",
+          "type": "single_choice",
+          "category": "comprehension",
+          "text": "Wann beginnt ihre Schicht?",
+          "options": ["Um 7 Uhr", "Um 8 Uhr", "Um 16 Uhr"],
+          "correct_answer": "Um 8 Uhr"
+        },
+        {
+          "question_id": "A2-L-001-Q3",
+          "type": "single_choice",
+          "category": "language",
+          "text": "Welche Präposition passt? Maria fährt ___ dem Bus zur Arbeit.",
+          "options": ["mit", "in", "auf"],
+          "correct_answer": "mit"
+        },
+        {
+          "question_id": "A2-L-001-Q4",
+          "type": "true_false",
+          "category": "language",
+          "text": "Richtig: „Sie fährt mit dem Bus.“",
+          "options": ["Richtig", "Falsch"],
+          "correct_answer": "Richtig"
+        }
+      ]
+    },
+    {
+      "model_id": "A2-L-002",
+      "title": "Kurze Nachricht",
+      "text": "Hallo Sara, hier ist Anna. Ich komme heute leider später zu dir. Der Bus hat große Verspätung, weil es einen Unfall auf der Straße gab. Ich warte noch am Bahnhof und hoffe, dass der nächste Bus bald kommt. Wenn alles gut geht, bin ich um achtzehn Uhr bei dir. Dann können wir zusammen kochen und einen Film schauen. Es tut mir leid wegen der Verspätung. Bitte fang nicht ohne mich mit dem Essen an. Ich bringe einen Salat mit. Bis später, Anna.",
+      "words": ["die Verspätung", "der Bus", "der Unfall", "der Bahnhof", "der Salat"],
+      "verbs": ["kommen", "warten", "kochen", "bringen", "hoffen"],
+      "grammar": ["weil-Satz", "um 18 Uhr", "zu dir"],
+      "mistakes": ["❌ Ich komme später zu Sara.", "✅ Ich komme später zu dir."],
+      "tip": "Bei Nachrichten achten Sie auf Zeit, Ort und Grund.",
+      "questions": [
+        {
+          "question_id": "A2-L-002-Q1",
+          "type": "single_choice",
+          "category": "comprehension",
+          "text": "Warum kommt Anna später?",
+          "options": ["Der Bus hat Verspätung", "Anna ist krank", "Sara hat keine Zeit"],
+          "correct_answer": "Der Bus hat Verspätung"
+        },
+        {
+          "question_id": "A2-L-002-Q2",
+          "type": "single_choice",
+          "category": "comprehension",
+          "text": "Wann will Anna bei Sara sein?",
+          "options": ["Um 17 Uhr", "Um 18 Uhr", "Um 19 Uhr"],
+          "correct_answer": "Um 18 Uhr"
+        },
+        {
+          "question_id": "A2-L-002-Q3",
+          "type": "single_choice",
+          "category": "language",
+          "text": "Welche Präposition passt? Anna wartet ___ dem Bahnhof.",
+          "options": ["am", "im", "zum"],
+          "correct_answer": "am"
+        },
+        {
+          "question_id": "A2-L-002-Q4",
+          "type": "true_false",
+          "category": "language",
+          "text": "Richtig: „Ich komme später zu dir.“",
+          "options": ["Richtig", "Falsch"],
+          "correct_answer": "Richtig"
+        }
+      ]
+    },
+    {
+      "model_id": "A2-L-003",
+      "title": "Zimmeranzeige",
+      "text": "Kleines, helles Zimmer in Wien, 15 Quadratmeter, ab 1. März frei. Die Wohnung liegt in der Nähe der U-Bahn und des Supermarkts. In der Küche kann man den Herd und den Kühlschrank benutzen. Das Bad wird mit einer Mitbewohnerin geteilt. Die Miete beträgt 420 Euro warm pro Monat, inklusive Heizung und Internet. Haustiere sind leider nicht erlaubt. Raucher bitte nicht anrufen. Für Fragen oder Besichtigungen erreichen Sie Frau Berger unter der Telefonnummer 0660 1234567. Die Anzeige gilt nur für eine Person. Ein Wohnzimmer steht allen Mitbewohnern zur Verfügung.",
+      "words": ["das Zimmer", "die Miete", "die U-Bahn", "die Mitbewohnerin", "die Besichtigung"],
+      "verbs": ["liegen", "benutzen", "betragen", "erreichen", "teilen"],
+      "grammar": ["in der Nähe", "pro Monat", "unter der Nummer"],
+      "mistakes": ["❌ Das Zimmer hat 15 m² groß.", "✅ Das Zimmer hat 15 Quadratmeter."],
+      "tip": "Bei Anzeigen suchen Sie Zahlen, Kosten und Regeln.",
+      "questions": [
+        {
+          "question_id": "A2-L-003-Q1",
+          "type": "single_choice",
+          "category": "comprehension",
+          "text": "Wie viel kostet das Zimmer?",
+          "options": ["320 Euro warm", "420 Euro warm", "520 Euro warm"],
+          "correct_answer": "420 Euro warm"
+        },
+        {
+          "question_id": "A2-L-003-Q2",
+          "type": "single_choice",
+          "category": "comprehension",
+          "text": "Ab wann ist das Zimmer frei?",
+          "options": ["Ab 1. Februar", "Ab 1. März", "Ab 1. April"],
+          "correct_answer": "Ab 1. März"
+        },
+        {
+          "question_id": "A2-L-003-Q3",
+          "type": "single_choice",
+          "category": "language",
+          "text": "Welcher Artikel passt? Ich wohne in ___ kleinen Zimmer.",
+          "options": ["einem", "einer", "einen"],
+          "correct_answer": "einem"
+        },
+        {
+          "question_id": "A2-L-003-Q4",
+          "type": "true_false",
+          "category": "language",
+          "text": "Richtig: „Die Wohnung liegt in der Nähe der U-Bahn.“",
+          "options": ["Richtig", "Falsch"],
+          "correct_answer": "Richtig"
+        }
+      ]
+    },
+    {
+      "model_id": "A2-L-004",
+      "title": "Einladung zur Party",
+      "text": "Liebe Freunde, am Samstag feiere ich meinen Geburtstag bei mir zu Hause. Die Party beginnt um achtzehn Uhr und dauert bis etwa zweiundzwanzig Uhr. Bitte bringt etwas zu trinken mit, zum Beispiel Saft, Wasser oder eine Flasche Wein. Ich koche Suppe und mache einen Kuchen. Wenn ihr möchtet, könnt ihr auch einen kleinen Salat mitbringen. Die Wohnung ist in der Gartenstraße zwölf, im zweiten Stock. Der Aufzug ist leider kaputt, also müsst ihr die Treppe nehmen. Ich freue mich sehr auf euch und hoffe, dass viele Zeit haben. Bitte gebt mir bis Freitag Bescheid, ob ihr kommt. Liebe Grüße, Lisa",
+      "words": ["die Party", "der Geburtstag", "die Treppe", "der Kuchen", "die Einladung"],
+      "verbs": ["feiern", "beginnen", "mitbringen", "kochen", "freuen"],
+      "grammar": ["bei mir zu Hause", "bis Freitag", "etwas mitbringen"],
+      "mistakes": ["❌ Ich freue mich auf dich alle.", "✅ Ich freue mich auf euch."],
+      "tip": "Achten Sie auf Uhrzeit, Ort und was die Gäste mitbringen sollen.",
+      "questions": [
+        {
+          "question_id": "A2-L-004-Q1",
+          "type": "single_choice",
+          "category": "comprehension",
+          "text": "Wann beginnt die Party?",
+          "options": ["Am Freitag um 18 Uhr", "Am Samstag um 18 Uhr", "Am Sonntag um 20 Uhr"],
+          "correct_answer": "Am Samstag um 18 Uhr"
+        },
+        {
+          "question_id": "A2-L-004-Q2",
+          "type": "single_choice",
+          "category": "comprehension",
+          "text": "Was sollen die Gäste mitbringen?",
+          "options": ["Nur Geschenke", "Etwas zu trinken", "Nur Kuchen"],
+          "correct_answer": "Etwas zu trinken"
+        },
+        {
+          "question_id": "A2-L-004-Q3",
+          "type": "single_choice",
+          "category": "language",
+          "text": "Welche Wortstellung ist richtig?",
+          "options": ["Ich koche heute Suppe.", "Ich heute koche Suppe.", "Koche ich heute Suppe."],
+          "correct_answer": "Ich koche heute Suppe."
+        },
+        {
+          "question_id": "A2-L-004-Q4",
+          "type": "true_false",
+          "category": "language",
+          "text": "Richtig: „Bitte bringt etwas zu trinken mit.“",
+          "options": ["Richtig", "Falsch"],
+          "correct_answer": "Richtig"
+        }
+      ]
+    },
+    {
+      "model_id": "A2-L-005",
+      "title": "Termin beim Hausarzt",
+      "text": "Sehr geehrte Patientinnen und Patienten, unsere Ordination bleibt am Mittwoch wegen einer Fortbildung geschlossen. Am Donnerstag sind wir wieder von acht bis zwölf Uhr und von vierzehn bis achtzehn Uhr für Sie da. Bitte bringen Sie zu jedem Termin Ihre e-card und einen Lichtbildausweis mit. Wenn Sie einen Termin nicht wahrnehmen können, rufen Sie bitte mindestens vierundzwanzig Stunden vorher an und sagen den Termin ab. Für akute Beschwerden gibt es eine Sprechstunde ohne Termin jeden Morgen von sieben bis acht Uhr. Die Ordination liegt direkt neben der Apotheke am Hauptplatz. Bei Fragen erreichen Sie uns telefonisch unter 01 234 56 78.",
+      "words": ["die Ordination", "der Termin", "die e-card", "die Apotheke", "die Sprechstunde"],
+      "verbs": ["bleiben", "mitbringen", "absagen", "erreichen", "liegen"],
+      "grammar": ["von ... bis", "wegen + Genitiv", "mindestens"],
+      "mistakes": ["❌ Ich rufe in die Ordination an.", "✅ Ich rufe in der Ordination an."],
+      "tip": "Bei offiziellen Texten notieren Sie Öffnungszeiten und Pflichten.",
+      "questions": [
+        {
+          "question_id": "A2-L-005-Q1",
+          "type": "single_choice",
+          "category": "comprehension",
+          "text": "Warum ist die Ordination am Mittwoch geschlossen?",
+          "options": ["Wegen einer Fortbildung", "Wegen eines Feiertags", "Wegen Renovierung"],
+          "correct_answer": "Wegen einer Fortbildung"
+        },
+        {
+          "question_id": "A2-L-005-Q2",
+          "type": "single_choice",
+          "category": "comprehension",
+          "text": "Was muss man zum Termin mitbringen?",
+          "options": ["Nur Geld", "e-card und Ausweis", "Nur Versicherungspapier"],
+          "correct_answer": "e-card und Ausweis"
+        },
+        {
+          "question_id": "A2-L-005-Q3",
+          "type": "single_choice",
+          "category": "language",
+          "text": "Welcher Kasus passt? Ich rufe in ___ Ordination an.",
+          "options": ["der", "die", "den"],
+          "correct_answer": "der"
+        },
+        {
+          "question_id": "A2-L-005-Q4",
+          "type": "true_false",
+          "category": "language",
+          "text": "Richtig: „Bitte bringen Sie Ihre e-card mit.“",
+          "options": ["Richtig", "Falsch"],
+          "correct_answer": "Richtig"
+        }
+      ]
+    },
+    {
+      "model_id": "A2-L-006",
+      "title": "Deutschkurs Anzeige",
+      "text": "Deutschkurs A2 am Abend in Graz. Der Kurs beginnt am fünfzehnten Oktober und findet jeden Dienstag und Donnerstag von achtzehn bis zwanzig Uhr statt. In kleinen Gruppen üben wir Sprechen, Hören, Lesen und Schreiben für den Alltag in Österreich. Die Kursleiterin spricht Deutsch und Englisch. Am Ende des Kurses erhalten die Teilnehmer ein Zertifikat. Die Kursgebühr beträgt zweihundertachtzig Euro für zehn Wochen. Materialien sind im Preis enthalten. Die Anmeldung ist bis zum zehnten Oktober online oder persönlich im Sprachzentrum möglich. Das Sprachzentrum liegt in der Herrengasse fünf, im ersten Stock. Für eine Probestunde können Sie ohne Anmeldung kommen.",
+      "words": ["der Deutschkurs", "die Kursgebühr", "das Zertifikat", "die Anmeldung", "die Probestunde"],
+      "verbs": ["beginnen", "üben", "betragen", "anmelden", "erhalten"],
+      "grammar": ["jeden Dienstag", "im Preis enthalten", "bis zum"],
+      "mistakes": ["❌ Ich interessiere mich für den Kurs.", "✅ Ich interessiere mich für diesen Kurs."],
+      "tip": "Suchen Sie Datum, Preis, Ort und Kurszeiten.",
+      "questions": [
+        {
+          "question_id": "A2-L-006-Q1",
+          "type": "single_choice",
+          "category": "comprehension",
+          "text": "An welchen Tagen findet der Kurs statt?",
+          "options": ["Montag und Mittwoch", "Dienstag und Donnerstag", "Freitag und Samstag"],
+          "correct_answer": "Dienstag und Donnerstag"
+        },
+        {
+          "question_id": "A2-L-006-Q2",
+          "type": "single_choice",
+          "category": "comprehension",
+          "text": "Wie viel kostet der Kurs?",
+          "options": ["180 Euro", "280 Euro", "380 Euro"],
+          "correct_answer": "280 Euro"
+        },
+        {
+          "question_id": "A2-L-006-Q3",
+          "type": "single_choice",
+          "category": "language",
+          "text": "Welche Präposition passt? Die Anmeldung ist bis ___ 10. Oktober möglich.",
+          "options": ["zum", "am", "im"],
+          "correct_answer": "zum"
+        },
+        {
+          "question_id": "A2-L-006-Q4",
+          "type": "true_false",
+          "category": "language",
+          "text": "Richtig: „Der Kurs findet jeden Dienstag statt.“",
+          "options": ["Richtig", "Falsch"],
+          "correct_answer": "Richtig"
+        }
+      ]
+    },
+    {
+      "model_id": "A2-L-007",
+      "title": "Stellenanzeige Verkäuferin",
+      "text": "Unser Supermarkt in Linz sucht ab sofort eine freundliche Verkäuferin für die Abteilung Obst und Gemüse. Sie arbeiten dreißig Stunden pro Woche, meistens vormittags von sieben bis dreizehn Uhr. Zu Ihren Aufgaben gehören die Beratung der Kunden, das Auffüllen der Regale und die Kontrolle der Frische. Wir bieten eine faire Bezahlung, kostenlose Uniform und gute Kollegen. Vorkenntnisse im Verkauf sind von Vorteil, aber nicht notwendig. Deutschkenntnisse auf A2-Niveau werden vorausgesetzt. Bewerbungen mit Lebenslauf senden Sie bitte per E-Mail an jobs@frischmarkt.at oder bringen Sie sie persönlich in der Filiale am Bahnhofplatz vorbei. Ein Vorstellungsgespräch findet in der kommenden Woche statt.",
+      "words": ["die Verkäuferin", "die Abteilung", "der Lebenslauf", "die Bezahlung", "das Vorstellungsgespräch"],
+      "verbs": ["suchen", "arbeiten", "bieten", "senden", "finden"],
+      "grammar": ["ab sofort", "pro Woche", "per E-Mail"],
+      "mistakes": ["❌ Ich schicke meine Bewerbung an die Firma.", "✅ Ich sende meine Bewerbung an die Firma."],
+      "tip": "Bei Jobanzeigen lesen Sie Arbeitszeit, Aufgaben und Bewerbungsweg.",
+      "questions": [
+        {
+          "question_id": "A2-L-007-Q1",
+          "type": "single_choice",
+          "category": "comprehension",
+          "text": "In welcher Abteilung wird gesucht?",
+          "options": ["Obst und Gemüse", "Bäckerei", "Kasse"],
+          "correct_answer": "Obst und Gemüse"
+        },
+        {
+          "question_id": "A2-L-007-Q2",
+          "type": "single_choice",
+          "category": "comprehension",
+          "text": "Wie viele Stunden pro Woche sind geplant?",
+          "options": ["20 Stunden", "30 Stunden", "40 Stunden"],
+          "correct_answer": "30 Stunden"
+        },
+        {
+          "question_id": "A2-L-007-Q3",
+          "type": "single_choice",
+          "category": "language",
+          "text": "Welche Präposition passt? Ich sende die Bewerbung ___ E-Mail.",
+          "options": ["per", "mit", "auf"],
+          "correct_answer": "per"
+        },
+        {
+          "question_id": "A2-L-007-Q4",
+          "type": "true_false",
+          "category": "language",
+          "text": "Richtig: „Deutschkenntnisse auf A2-Niveau werden vorausgesetzt.“",
+          "options": ["Richtig", "Falsch"],
+          "correct_answer": "Richtig"
+        }
+      ]
+    },
+    {
+      "model_id": "A2-L-008",
+      "title": "Im Restaurant",
+      "text": "Willkommen im Restaurant „Zur Linde“. Heute empfehlen wir die Tomatensuppe mit frischem Brot für fünf Euro fünfzig. Als Hauptgericht gibt es Hühnerschnitzel mit Pommes oder Gemüsepfanne mit Reis für zwölf Euro neunzig. Für Vegetarier haben wir einen Salatteller mit Käse und Ei für neun Euro achtzig. Kinder bis zwölf Jahre erhalten alle Hauptgerichte zum halben Preis. Getränke wie Wasser, Saft und Apfelschorle kosten zwischen zwei und drei Euro. Desserts sind hausgemacht: Apfelstrudel mit Vanillesauce kostet vier Euro zwanzig. Unser Restaurant ist täglich von elf bis zweiundzwanzig Uhr geöffnet, außer montags. Reservierungen nehmen wir telefonisch unter 0316 445566 entgegen.",
+      "words": ["das Hauptgericht", "die Tomatensuppe", "der Apfelstrudel", "die Reservierung", "der Preis"],
+      "verbs": ["empfehlen", "kosten", "erhalten", "öffnen", "reservieren"],
+      "grammar": ["für + Akkusativ", "zwischen ... und", "außer montags"],
+      "mistakes": ["❌ Ich bestelle eine Suppe.", "✅ Ich bestelle eine Tomatensuppe."],
+      "tip": "Bei Speisekarten achten Sie auf Gerichte, Preise und Öffnungszeiten.",
+      "questions": [
+        {
+          "question_id": "A2-L-008-Q1",
+          "type": "single_choice",
+          "category": "comprehension",
+          "text": "Wann ist das Restaurant montags?",
+          "options": ["Geöffnet", "Geschlossen", "Nur abends geöffnet"],
+          "correct_answer": "Geschlossen"
+        },
+        {
+          "question_id": "A2-L-008-Q2",
+          "type": "single_choice",
+          "category": "comprehension",
+          "text": "Was kostet der Apfelstrudel?",
+          "options": ["3,20 Euro", "4,20 Euro", "5,50 Euro"],
+          "correct_answer": "4,20 Euro"
+        },
+        {
+          "question_id": "A2-L-008-Q3",
+          "type": "single_choice",
+          "category": "language",
+          "text": "Welcher Kasus passt? Ich bestelle eine Suppe ___ fünf Euro.",
+          "options": ["für", "mit", "um"],
+          "correct_answer": "für"
+        },
+        {
+          "question_id": "A2-L-008-Q4",
+          "type": "true_false",
+          "category": "language",
+          "text": "Richtig: „Kinder erhalten Hauptgerichte zum halben Preis.“",
+          "options": ["Richtig", "Falsch"],
+          "correct_answer": "Richtig"
+        }
+      ]
+    },
+    {
+      "model_id": "A2-L-009",
+      "title": "Wochenendausflug",
+      "text": "Liebe Kursgruppe, am kommenden Samstag machen wir einen Ausflug in die Steiermark. Wir treffen uns um acht Uhr vor dem Hauptbahnhof in Graz. Der Bus fährt um halb neun los und kommt gegen zwölf Uhr in einem kleinen Weinort an. Dort besichtigen wir eine alte Burg und machen eine kurze Wanderung. Bitte tragen Sie bequeme Schuhe und nehmen Sie eine Wasserflasche mit. Bei schlechtem Wetter nehmen wir Regenjacken und Schirme mit. Das Mittagessen in einem Gasthaus ist im Preis von fünfzehn Euro enthalten. Wir sind gegen neunzehn Uhr wieder in Graz. Wer nicht mitfahren kann, soll sich bis Donnerstag bei der Kursleiterin melden. Ich freue mich auf einen schönen Tag mit euch.",
+      "words": ["der Ausflug", "die Wanderung", "die Wasserflasche", "die Burg", "das Wetter"],
+      "verbs": ["treffen", "besichtigen", "mitnehmen", "melden", "mitfahren"],
+      "grammar": ["um halb neun", "bei schlechtem Wetter", "im Preis enthalten"],
+      "mistakes": ["❌ Ich nehme eine Jacke mit.", "✅ Ich nehme eine Regenjacke mit."],
+      "tip": "Notieren Sie Treffpunkt, Zeit und was man mitbringen soll.",
+      "questions": [
+        {
+          "question_id": "A2-L-009-Q1",
+          "type": "single_choice",
+          "category": "comprehension",
+          "text": "Wo ist der Treffpunkt?",
+          "options": ["Vor dem Hauptbahnhof", "In der Schule", "Am See"],
+          "correct_answer": "Vor dem Hauptbahnhof"
+        },
+        {
+          "question_id": "A2-L-009-Q2",
+          "type": "single_choice",
+          "category": "comprehension",
+          "text": "Was ist im Preis enthalten?",
+          "options": ["Der Bus", "Das Mittagessen", "Die Burgführung"],
+          "correct_answer": "Das Mittagessen"
+        },
+        {
+          "question_id": "A2-L-009-Q3",
+          "type": "single_choice",
+          "category": "language",
+          "text": "Welche Präposition passt? Wir treffen uns ___ acht Uhr.",
+          "options": ["um", "am", "im"],
+          "correct_answer": "um"
+        },
+        {
+          "question_id": "A2-L-009-Q4",
+          "type": "true_false",
+          "category": "language",
+          "text": "Richtig: „Bitte nehmen Sie eine Wasserflasche mit.“",
+          "options": ["Richtig", "Falsch"],
+          "correct_answer": "Richtig"
+        }
+      ]
+    },
+    {
+      "model_id": "A2-L-010",
+      "title": "Fahrrad zu verkaufen",
+      "text": "Zu verkaufen: Citybike, drei Jahre alt, Farbe blau, mit Korb vorne und Licht. Das Fahrrad hat sieben Gänge und neue Bremsen. Es wurde im Frühling gewartet und fährt sehr gut. Ich verkaufe es, weil ich bald ins Ausland ziehe und keinen Platz mehr habe. Der Preis ist einhundertfünfzig Euro, Verhandlungsbasis. Abholung ist in Salzburg, Stadtteil Lehen, jederzeit nach telefonischer Absprache möglich. Eine kurze Probefahrt ist kein Problem. Zubehör wie Schloss und Helm kann gegen Aufpreis dazugekauft werden. Bei Interesse rufen Sie bitte Herrn Novak an: 0664 9876543. Nur ernsthafte Anfragen, bitte keine Nachrichten spät in der Nacht.",
+      "words": ["das Fahrrad", "die Bremsen", "der Preis", "die Probefahrt", "das Schloss"],
+      "verbs": ["verkaufen", "ziehen", "abholen", "kaufen", "rufen"],
+      "grammar": ["weil-Satz", "zu verkaufen", "gegen Aufpreis"],
+      "mistakes": ["❌ Ich verkaufe mein Fahrrad für 150 Euro.", "✅ Ich verkaufe das Fahrrad für 150 Euro."],
+      "tip": "Bei Kleinanzeigen achten Sie auf Preis, Zustand und Kontakt.",
+      "questions": [
+        {
+          "question_id": "A2-L-010-Q1",
+          "type": "single_choice",
+          "category": "comprehension",
+          "text": "Warum verkauft der Verkäufer das Fahrrad?",
+          "options": ["Es ist kaputt", "Er zieht ins Ausland", "Er braucht ein neues Modell"],
+          "correct_answer": "Er zieht ins Ausland"
+        },
+        {
+          "question_id": "A2-L-010-Q2",
+          "type": "single_choice",
+          "category": "comprehension",
+          "text": "Wie viel kostet das Fahrrad?",
+          "options": ["100 Euro", "150 Euro", "200 Euro"],
+          "correct_answer": "150 Euro"
+        },
+        {
+          "question_id": "A2-L-010-Q3",
+          "type": "single_choice",
+          "category": "language",
+          "text": "Welche Verbform passt? Ich verkaufe es, weil ich bald ins Ausland ___.",
+          "options": ["ziehe", "zieht", "ziehen"],
+          "correct_answer": "ziehe"
+        },
+        {
+          "question_id": "A2-L-010-Q4",
+          "type": "true_false",
+          "category": "language",
+          "text": "Richtig: „Eine Probefahrt ist möglich.“",
+          "options": ["Richtig", "Falsch"],
+          "correct_answer": "Richtig"
+        }
+      ]
+    }
+  ]
+}
