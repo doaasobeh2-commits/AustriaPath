@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { getA2SchreibenEvaluation } from '../../../data/a2SchreibenEvaluationCatalog.js';
+import { isA2WeeklyPlanEmailTask } from '../../../data/utils/a2WeeklyPlanEmailRuntime.js';
 import { isB1SchreibenResponseReady } from '../../../data/utils/b1SchreibenTaskParser.js';
 import { B1_BILD_TASK_PROMPT } from '../../../data/utils/b1WeeklyPlanCoachTaskAdapter.js';
 import { useWeeklyPlanSpeechRecognition } from '../../hooks/useWeeklyPlanSpeechRecognition.js';
@@ -324,7 +325,7 @@ export function WritingExercisePanel({
           )}
           <div style={weeklyQuestionBoxStyle}>
             <p style={{ ...weeklyMutedStyle, fontWeight: 700, margin: '0 0 8px' }}>
-              Inhaltspunkte (Stichpunkte)
+              {isA2WeeklyPlanEmailTask(task) ? 'Aufgabe' : 'Inhaltspunkte (Stichpunkte)'}
             </p>
             <ul style={{ margin: 0, paddingLeft: '18px' }}>
               {schreibenMeta.taskPoints.map((point) => (

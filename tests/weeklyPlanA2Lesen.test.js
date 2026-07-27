@@ -116,7 +116,7 @@ describe('Single Lesen screen integration', () => {
   it('uses A2LesenGuidedPanel inside LesenScreen without hardcoded A2 demo', () => {
     const lesenScreen = readSrc('src/app/screens/LesenScreen.jsx');
     expect(lesenScreen).toMatch(/A2LesenGuidedPanel/);
-    expect(lesenScreen).toMatch(/pickRandomA2LesenModel/);
+    expect(lesenScreen).toMatch(/a2LesenModels/);
     expect(lesenScreen).toMatch(/canonicalModelId/);
     expect(lesenScreen).toMatch(/a2LesenCatalog/);
     expect(lesenScreen).not.toMatch(/lesenModels\s*=\s*\{/);

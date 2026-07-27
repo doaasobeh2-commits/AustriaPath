@@ -20,7 +20,13 @@ function InfoBox({ title, items = [] }) {
  * - coach: step-by-step questions with score, corrections, mistakes, and tips
  * - practice: all questions visible, submit without revealing answers or coaching feedback
  */
-export function A2LesenGuidedPanel({ model, mode = 'practice', onComplete, onRestart }) {
+export function A2LesenGuidedPanel({
+  model,
+  mode = 'practice',
+  onComplete,
+  onRestart,
+  hidePracticeSubmit = false,
+}) {
   const questionsRef = useRef(null);
   const isCoachMode = mode === 'coach';
   const [step, setStep] = useState('read');
@@ -153,14 +159,16 @@ export function A2LesenGuidedPanel({ model, mode = 'practice', onComplete, onRes
           </div>
         </div>
       ))}
-      <button
-        type="button"
-        style={primaryButtonStyle}
-        onClick={submitPractice}
-        disabled={!allAnswered}
-      >
-        Antworten abschicken
-      </button>
+      {!hidePracticeSubmit && (
+        <button
+          type="button"
+          style={primaryButtonStyle}
+          onClick={submitPractice}
+          disabled={!allAnswered}
+        >
+          Antworten abschicken
+        </button>
+      )}
     </div>
   );
 
@@ -192,7 +200,7 @@ export function A2LesenGuidedPanel({ model, mode = 'practice', onComplete, onRes
 
         {!isCoachMode && step === 'questions' && renderPracticeQuestions()}
 
-        {!isCoachMode && step === 'submitted' && (
+        {!isCoachMode && !hidePracticeSubmit && step === 'submitted' && (
           <div style={boxStyle}>
             <h2>Übung abgeschlossen</h2>
             <p style={mutedStyle}>

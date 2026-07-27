@@ -56,7 +56,7 @@ export function validateWeeklyPlanLibraryIntegrity() {
       errors.push(`${task.id} has invalid activityName: ${task.activityName}`);
     }
 
-    if (!weeklyPlanTaskNavigation[task.id]) {
+    if (!weeklyPlanTaskNavigation[task.id] && !task.emailLibraryId) {
       errors.push(`${task.id} missing weeklyPlanTaskNavigation entry`);
     }
 

@@ -24,6 +24,12 @@ import { PremiumExamScreen } from "./screens/PremiumExamScreen.jsx";
 import { HorenScreen } from "./screens/HorenScreen";
 import { B2ModelScreen } from "./screens/B2ModelsScreen";
 import WeeklyPlanSetupScreen from "./screens/WeeklyPlanSetupScreen.jsx";
+import B1WeeklyPlanSetupScreen from "./screens/B1WeeklyPlanSetupScreen.jsx";
+import B1WeeklyPlanPreviewScreen from "./screens/B1WeeklyPlanPreviewScreen.jsx";
+import WeeklyPlanHomeScreen from "./screens/WeeklyPlanHomeScreen.jsx";
+import TrainingPlanDashboardScreen from "./screens/TrainingPlanDashboardScreen.jsx";
+import CoachExerciseScreen from "./screens/CoachExerciseScreen.jsx";
+import WeeklyCompletionScreen from "./screens/WeeklyCompletionScreen.jsx";
 import PlacementTestScreen from "./screens/PlacementTestScreen";
 import AISessionScreen from "./screens/AISessionScreen";
 import PremiumExamSessionScreen from "./screens/PremiumExamSessionScreen";
@@ -616,18 +622,32 @@ export default function App() {
             <WeeklyPlanSetupScreen setActiveTab={setActiveTabGuarded} />
           )}
 
-          {guardedTab === "weeklySession" && (
-            <AISessionScreen
-              sessionType="weekly_plan"
-              mode="weekly_plan"
-              title="KI-Wochentraining"
-              level="B1"
-              onBack={() => setActiveTabGuarded("profile")}
-              onFinish={() => {
-                alert("Training beendet");
-                setActiveTabGuarded("profile");
-              }}
+          {guardedTab === "b1WeeklyPlanSetup" && (
+            <B1WeeklyPlanSetupScreen setActiveTab={setActiveTabGuarded} />
+          )}
+
+          {guardedTab === "b1WeeklyPlanPreview" && (
+            <B1WeeklyPlanPreviewScreen setActiveTab={setActiveTabGuarded} />
+          )}
+
+          {guardedTab === "weeklyPlanHome" && (
+            <WeeklyPlanHomeScreen setActiveTab={setActiveTabGuarded} />
+          )}
+
+          {guardedTab === "trainingPlanDashboard" && (
+            <TrainingPlanDashboardScreen setActiveTab={setActiveTabGuarded} />
+          )}
+
+          {guardedTab === "coachExercise" && (
+            <CoachExerciseScreen
+              setActiveTab={setActiveTabGuarded}
+              setNavigationContext={setNavigationContext}
+              setSelectedLevel={setSelectedLevel}
             />
+          )}
+
+          {guardedTab === "weeklyCompletion" && (
+            <WeeklyCompletionScreen setActiveTab={setActiveTabGuarded} />
           )}
 
           {guardedTab === "aiSession" &&
@@ -640,34 +660,30 @@ export default function App() {
                 return <ProfileScreen setActiveTab={setActiveTabGuarded} />;
               }
 
+              if (session.sessionType === "weekly_plan" || session.mode === "weekly_plan") {
+                return <WeeklyPlanHomeScreen setActiveTab={setActiveTabGuarded} />;
+              }
+
               return (
                 <AISessionScreen
-                  sessionType={session.sessionType || "weekly_plan"}
-                  mode={session.mode || "weekly_plan"}
-                  title={session.title || "KI-Wochentraining"}
+                  sessionType={session.sessionType || "ai_exam"}
+                  mode={session.mode || "exam"}
+                  title={session.title || "AI Sprechtraining"}
                   level={session.level || "B1"}
                   parts={session.parts || []}
                   onBack={() => setActiveTabGuarded("profile")}
                   onFinish={(report) => {
-                    const savedPlan = readJsonStorage("austriaPathWeeklyPlan", null);
-
-                    if (savedPlan) {
-                      const updatedPlan = {
-                        ...savedPlan,
-                        sessionReports: [
-                          ...(savedPlan.sessionReports || []),
-                          {
-                            ...report,
-                            finishedAt: new Date().toISOString(),
-                          },
-                        ],
-                      };
-
-                      localStorage.setItem(
-                        "austriaPathWeeklyPlan",
-                        JSON.stringify(updatedPlan)
-                      );
-                    }
+                    const oldReports = readJsonStorage("austriaPathAIReports", []) || [];
+                    localStorage.setItem(
+                      "austriaPathAIReports",
+                      JSON.stringify([
+                        {
+                          ...report,
+                          finishedAt: report?.finishedAt || new Date().toISOString(),
+                        },
+                        ...oldReports,
+                      ])
+                    );
 
                     alert("Training beendet. Bericht wurde im Profil gespeichert.");
                     setActiveTabGuarded("profile");

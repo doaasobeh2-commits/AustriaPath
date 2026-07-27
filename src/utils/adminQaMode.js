@@ -27,3 +27,39 @@ export function disableAdminQaMode() {
 
 /** Learner-facing marker when evaluation was skipped in admin QA */
 export const ADMIN_QA_NOT_EVALUATED = "not evaluated / QA only";
+
+/** Visible label on Weekly Plan screens during admin QA */
+export const ADMIN_QA_BADGE_LABEL = "Admin QA";
+
+/**
+ * Admin-only bypass for Weekly Plan subscription / Coming Soon gates.
+ * Requires approved admin account + Learner QA mode (isAdminPreview).
+ * Does not grant subscriptions or modify subscription metadata.
+ */
+export function canAccessWeeklyPlanAdminQa(user = getCurrentUser()) {
+  return isAdminQaMode(user);
+}
+
+/**
+ * Weekly Plan setup levels unlocked for admin QA (B2 stays Coming Soon in UI).
+ * @returns {string[]|null}
+ */
+export function getWeeklyPlanAdminQaAccessibleLevels(user = getCurrentUser()) {
+  return canAccessWeeklyPlanAdminQa(user) ? ["A2", "B1"] : null;
+}
+
+/**
+ * Subscription screen action for premium plan cards (Weekly Plan gate only).
+ * @param {object|null|undefined} user
+ * @param {{ type?: string, id?: string }} plan
+ * @returns {"open_weekly_plan_setup"|"coming_soon"|null}
+ */
+export function resolveWeeklyPlanSubscriptionGate(user, plan) {
+  const type = plan?.type || plan?.id;
+  if (type !== "weekly_plan" && type !== "weekly-plan") {
+    return null;
+  }
+  return canAccessWeeklyPlanAdminQa(user)
+    ? "open_weekly_plan_setup"
+    : "coming_soon";
+}

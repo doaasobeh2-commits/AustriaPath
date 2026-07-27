@@ -14,7 +14,7 @@ describe('LesenScreen hooks order', () => {
   it('uses the A2 guided catalog inside LesenScreen', () => {
     expect(source).toMatch(/a2LesenCatalog/);
     expect(source).toMatch(/A2LesenGuidedPanel/);
-    expect(source).toMatch(/pickRandomA2LesenModel/);
+    expect(source).toMatch(/a2LesenModels/);
     expect(source).toMatch(/useAdminLearningLevel/);
     expect(source).toMatch(/LearningLevelSelector/);
   });

@@ -2,6 +2,8 @@ import { weeklyPlanA2ImageTasks } from './a2ImageTaskCatalog.js';
 import { weeklyPlanA2AufgabeLoesenTasks } from './weeklyPlanA2AufgabeLoesenTasks.js';
 import { weeklyPlanA2HorenTasks } from './weeklyPlanA2HorenTasks.js';
 import { weeklyPlanA2LesenTasks } from './weeklyPlanA2LesenTasks.js';
+import { weeklyPlanA2EmailTasks } from './weeklyPlanA2EmailTasks.js';
+import { isA2WeeklyPlanEmailTask } from './utils/a2WeeklyPlanEmailRuntime.js';
 import { weeklyPlanLibraryCatalogTasks } from './weeklyPlanLibraryCatalogTasks.js';
 
 export const selfIntroductionTasks = {
@@ -457,6 +459,7 @@ export const weeklyPlanLibrary = [
   ...weeklyPlanA2HorenTasks,
   ...weeklyPlanA2LesenTasks,
   ...weeklyPlanA2AufgabeLoesenTasks,
+  ...weeklyPlanA2EmailTasks,
   ...weeklyPlanLibraryCatalogTasks,
 ];
 
@@ -642,31 +645,51 @@ export function getWeeklyPlanTaskById(taskId) {
 const A2_BALANCED_DAY_SKILLS = ['lesen', 'hoeren', 'bildbeschreibung', 'aufgabe_loesen'];
 
 /**
+ * Even plan days include Schreiben from weeklyPlanA2EmailLibrary instead of Aufgabe lösen.
+ * @param {number} planIndex
+ */
+function skillsForA2PlanDay(planIndex) {
+  if (planIndex % 2 === 0) {
+    return ['lesen', 'hoeren', 'bildbeschreibung', 'schreiben'];
+  }
+  return A2_BALANCED_DAY_SKILLS;
+}
+
+/**
  * Build balanced A2 daily plans: one Lesen, Hören, Bildbeschreibung, Aufgabe lösen per day.
  * @param {{ weaknesses?: string[], totalPlans?: number }} params
  */
 function planBalancedA2Week({ totalPlans = 7 } = {}) {
   const levelTasks = sortByPriority(weeklyPlanLibrary.filter((item) => item.level === 'A2'));
 
-  const skillPools = Object.fromEntries(
-    A2_BALANCED_DAY_SKILLS.map((skill) => {
-      const pool = sortByPriority(levelTasks.filter((item) => item.skill === skill));
-      return [skill, pool];
-    })
-  );
-
   const plans = [];
   for (let planIndex = 1; planIndex <= totalPlans; planIndex += 1) {
-    const planTasks = A2_BALANCED_DAY_SKILLS.map((skill) => {
-      const pool = skillPools[skill];
-      if (!pool.length) return null;
-      const pickIndex = (planIndex - 1) % pool.length;
-      const task = pool[pickIndex];
-      return {
-        ...task,
-        coachType: resolveCoachType(task),
-      };
-    }).filter(Boolean);
+    const daySkills = skillsForA2PlanDay(planIndex);
+    const skillPools = Object.fromEntries(
+      daySkills.map((skill) => {
+        const pool = sortByPriority(
+          levelTasks.filter((item) => {
+            if (item.skill !== skill) return false;
+            if (skill === 'schreiben') return isA2WeeklyPlanEmailTask(item);
+            return true;
+          })
+        );
+        return [skill, pool];
+      })
+    );
+
+    const planTasks = daySkills
+      .map((skill) => {
+        const pool = skillPools[skill];
+        if (!pool.length) return null;
+        const pickIndex = (planIndex - 1) % pool.length;
+        const task = pool[pickIndex];
+        return {
+          ...task,
+          coachType: resolveCoachType(task),
+        };
+      })
+      .filter(Boolean);
 
     plans.push(planTasks);
   }

@@ -9,7 +9,7 @@ import { getSmartPremiumMessage } from '../../data/smartPremiumMessages';
 import { isPremiumUser, trackSectionVisit } from '../../data/utils/premiumHint';
 import { getUserLanguage } from '../../utils/userPreferences';
 import { submitSpeakingWeeklyPlanExercise } from '../../data/utils/weeklyPlanGuidedCompletion.js';
-import { readWeeklyPlanHandoff } from '../../data/utils/weeklyPlanHandoff.js';
+import { readWeeklyPlanHandoff, isActiveWeeklyPlanExerciseHandoff } from '../../data/utils/weeklyPlanHandoff.js';
 import { AufgabeLoesenGuidedPanel } from './speaking/AufgabeLoesenGuidedPanel.jsx';
 import { useAdminLearningLevel } from '../hooks/useAdminLearningLevel.js';
 import { LearningLevelSelector } from '../components/LearningLevelSelector.jsx';
@@ -404,6 +404,11 @@ export function SpeakingScreen({
   const current = models[index];
   const sectionTitle = getTypeByLevel(level);
   const isGuidedAufgabeLoesen = Boolean(current?.isGuidedAufgabeLoesen);
+  const weeklyPlanHandoff = readWeeklyPlanHandoff();
+  const isCoachAufgabeSession =
+    isGuidedAufgabeLoesen &&
+    isActiveWeeklyPlanExerciseHandoff(weeklyPlanHandoff) &&
+    weeklyPlanHandoff?.canonicalTaskId === current?.canonicalId;
 
   const handleGuidedComplete = (payload) => {
     submitSpeakingWeeklyPlanExercise({
@@ -548,13 +553,15 @@ export function SpeakingScreen({
               Ihre Rolle: {current.learnerRole} · Partnerrolle: {current.partnerRole}
             </p>
 
-            <div style={{ marginTop: '16px' }}>
-              <AufgabeLoesenGuidedPanel
-                task={current.catalogTask}
-                onComplete={handleGuidedComplete}
-                onRestart={handleGuidedRestart}
-              />
-            </div>
+            {isCoachAufgabeSession && (
+              <div style={{ marginTop: '16px' }}>
+                <AufgabeLoesenGuidedPanel
+                  task={current.catalogTask}
+                  onComplete={handleGuidedComplete}
+                  onRestart={handleGuidedRestart}
+                />
+              </div>
+            )}
           </>
         ) : (
           <>

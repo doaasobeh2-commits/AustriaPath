@@ -1,0 +1,2698 @@
+{
+  "catalog": {
+    "id": "austriapath-weekly-plan-b1-hoeren",
+    "version": "1.0.0",
+    "level": "B1",
+    "language": "de",
+    "totalModels": 10,
+    "totalClips": 20,
+    "totalQuestions": 40,
+    "questionsPerClip": 2
+  },
+  "models": [
+    {
+      "id": "b1-wp-h-001",
+      "title": "Verspätung beim Arzttermin",
+      "topic": "Gesundheit und Termine",
+      "level": "B1",
+      "clips": [
+        {
+          "id": "b1-wp-h-001-clip-01",
+          "audio": "audio/weekly-plan/b1/hoeren/b1-wp-h-001-clip-01.mp3",
+          "title": "Anruf in der Arztpraxis",
+          "durationSeconds": 42,
+          "speakerType": "Dialog zwischen Patientin und Mitarbeiterin einer Arztpraxis",
+          "speakers": [
+            {
+              "id": "speaker-1",
+              "role": "Patientin",
+              "gender": "female",
+              "ageRange": "30-40",
+              "voiceStyle": "leicht gestresst, aber höflich",
+              "speakingSpeed": "normal"
+            },
+            {
+              "id": "speaker-2",
+              "role": "Praxisassistentin",
+              "gender": "female",
+              "ageRange": "40-50",
+              "voiceStyle": "ruhig, freundlich und professionell",
+              "speakingSpeed": "normal"
+            }
+          ],
+          "background": {
+            "location": "Arztpraxis",
+            "sounds": [
+              "leises Telefonklingeln im Hintergrund",
+              "gedämpfte Stimmen aus dem Wartezimmer",
+              "gelegentliches Tippen auf einer Tastatur"
+            ],
+            "noiseLevel": "low"
+          },
+          "audioDirection": {
+            "style": "natürliches Telefongespräch",
+            "pace": "normal",
+            "clarity": "klar, aber nicht künstlich langsam",
+            "pauses": [
+              {
+                "after": "Guten Morgen, hier spricht Nadine Keller.",
+                "durationMs": 450
+              },
+              {
+                "after": "Mein Termin ist eigentlich um zehn Uhr.",
+                "durationMs": 500
+              },
+              {
+                "after": "Dann verschieben wir Ihren Termin auf halb elf.",
+                "durationMs": 450
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "speaker": "Patientin",
+              "text": "Guten Morgen, hier spricht Nadine Keller. Ich habe heute einen Termin bei Frau Doktor Weber."
+            },
+            {
+              "speaker": "Praxisassistentin",
+              "text": "Guten Morgen, Frau Keller. Einen Moment bitte. Ja, ich sehe Ihren Termin. Er ist um zehn Uhr."
+            },
+            {
+              "speaker": "Patientin",
+              "text": "Genau. Leider steht mein Bus im Stau, und ich werde ungefähr zwanzig Minuten später kommen."
+            },
+            {
+              "speaker": "Praxisassistentin",
+              "text": "Das ist kein Problem. Frau Doktor Weber behandelt gerade noch einen anderen Patienten."
+            },
+            {
+              "speaker": "Patientin",
+              "text": "Das ist gut. Muss ich trotzdem noch einmal einen neuen Termin vereinbaren?"
+            },
+            {
+              "speaker": "Praxisassistentin",
+              "text": "Nein, das ist nicht nötig. Dann verschieben wir Ihren Termin einfach auf halb elf."
+            },
+            {
+              "speaker": "Patientin",
+              "text": "Vielen Dank. Ich versuche, spätestens um halb elf da zu sein."
+            },
+            {
+              "speaker": "Praxisassistentin",
+              "text": "In Ordnung. Bitte melden Sie sich gleich am Empfang, wenn Sie ankommen."
+            }
+          ],
+          "questions": [
+            {
+              "id": "b1-wp-h-001-clip-01-q01",
+              "type": "single_choice",
+              "question": "Warum kommt Frau Keller später zum Termin?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Weil sie den Termin vergessen hat."
+                },
+                {
+                  "id": "B",
+                  "text": "Weil ihr Bus im Stau steht."
+                },
+                {
+                  "id": "C",
+                  "text": "Weil die Ärztin noch nicht in der Praxis ist."
+                },
+                {
+                  "id": "D",
+                  "text": "Weil sie zuerst zur Arbeit fahren muss."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Ihr Bus steht im Stau."
+            },
+            {
+              "id": "b1-wp-h-001-clip-01-q02",
+              "type": "single_choice",
+              "question": "Wann soll Frau Keller jetzt in der Praxis sein?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Um zehn Uhr."
+                },
+                {
+                  "id": "B",
+                  "text": "Um zehn Uhr fünfzehn."
+                },
+                {
+                  "id": "C",
+                  "text": "Um halb elf."
+                },
+                {
+                  "id": "D",
+                  "text": "Um elf Uhr."
+                }
+              ],
+              "correctAnswer": "C",
+              "answerText": "Der Termin wird auf halb elf verschoben."
+            }
+          ]
+        },
+        {
+          "id": "b1-wp-h-001-clip-02",
+          "audio": "audio/weekly-plan/b1/hoeren/b1-wp-h-001-clip-02.mp3",
+          "title": "Nachricht auf der Mailbox",
+          "durationSeconds": 38,
+          "speakerType": "Mailbox-Nachricht einer Arztpraxis",
+          "speakers": [
+            {
+              "id": "speaker-1",
+              "role": "Praxisassistent",
+              "gender": "male",
+              "ageRange": "35-45",
+              "voiceStyle": "freundlich, sachlich und deutlich",
+              "speakingSpeed": "normal"
+            }
+          ],
+          "background": {
+            "location": "ruhiges Büro in einer Arztpraxis",
+            "sounds": [
+              "sehr leises Tastaturgeräusch",
+              "entferntes Öffnen einer Tür",
+              "leichte Raumakustik"
+            ],
+            "noiseLevel": "very_low"
+          },
+          "audioDirection": {
+            "style": "natürliche Mailbox-Nachricht",
+            "pace": "normal",
+            "clarity": "deutlich mit natürlichen Satzpausen",
+            "pauses": [
+              {
+                "after": "Hier ist die Gemeinschaftspraxis am Stadtpark.",
+                "durationMs": 550
+              },
+              {
+                "after": "Ihr Termin am Donnerstag muss leider verschoben werden.",
+                "durationMs": 550
+              },
+              {
+                "after": "Alternativ hätten wir Freitag um neun Uhr dreißig frei.",
+                "durationMs": 500
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "speaker": "Praxisassistent",
+              "text": "Guten Tag, Herr Baumann. Hier ist die Gemeinschaftspraxis am Stadtpark."
+            },
+            {
+              "speaker": "Praxisassistent",
+              "text": "Ihr Termin am Donnerstag um vierzehn Uhr muss leider verschoben werden, weil Doktor Huber an diesem Nachmittag nicht in der Praxis ist."
+            },
+            {
+              "speaker": "Praxisassistent",
+              "text": "Wir könnten Ihnen am selben Tag einen früheren Termin um elf Uhr anbieten."
+            },
+            {
+              "speaker": "Praxisassistent",
+              "text": "Alternativ hätten wir Freitag um neun Uhr dreißig frei."
+            },
+            {
+              "speaker": "Praxisassistent",
+              "text": "Bitte rufen Sie uns bis morgen Mittag zurück und teilen Sie uns mit, welcher Termin für Sie besser passt."
+            },
+            {
+              "speaker": "Praxisassistent",
+              "text": "Unsere Telefonnummer ist null zwei sieben vier zwei, sechs eins fünf, acht drei null. Vielen Dank."
+            }
+          ],
+          "questions": [
+            {
+              "id": "b1-wp-h-001-clip-02-q01",
+              "type": "single_choice",
+              "question": "Warum wird der ursprüngliche Termin verschoben?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Weil Herr Baumann krank ist."
+                },
+                {
+                  "id": "B",
+                  "text": "Weil die Praxis am Donnerstag geschlossen bleibt."
+                },
+                {
+                  "id": "C",
+                  "text": "Weil Doktor Huber am Nachmittag nicht in der Praxis ist."
+                },
+                {
+                  "id": "D",
+                  "text": "Weil der Termin falsch eingetragen wurde."
+                }
+              ],
+              "correctAnswer": "C",
+              "answerText": "Doktor Huber ist am Donnerstagnachmittag nicht in der Praxis."
+            },
+            {
+              "id": "b1-wp-h-001-clip-02-q02",
+              "type": "single_choice",
+              "question": "Bis wann soll Herr Baumann die Praxis zurückrufen?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Noch heute Abend."
+                },
+                {
+                  "id": "B",
+                  "text": "Bis morgen Mittag."
+                },
+                {
+                  "id": "C",
+                  "text": "Bis Donnerstagmorgen."
+                },
+                {
+                  "id": "D",
+                  "text": "Bis Freitag um neun Uhr dreißig."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Er soll bis morgen Mittag zurückrufen."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b1-wp-h-002",
+      "title": "Wohnungssuche und Besichtigung",
+      "topic": "Wohnen",
+      "level": "B1",
+      "clips": [
+        {
+          "id": "b1-wp-h-002-clip-01",
+          "audio": "audio/weekly-plan/b1/hoeren/b1-wp-h-002-clip-01.mp3",
+          "title": "Anruf zur Wohnungsbesichtigung",
+          "durationSeconds": 44,
+          "speakerType": "Dialog zwischen Wohnungssucher und Maklerin",
+          "speakers": [
+            {
+              "id": "speaker-1",
+              "role": "Wohnungssucher",
+              "gender": "male",
+              "ageRange": "25-35",
+              "voiceStyle": "interessiert und höflich",
+              "speakingSpeed": "normal"
+            },
+            {
+              "id": "speaker-2",
+              "role": "Maklerin",
+              "gender": "female",
+              "ageRange": "35-45",
+              "voiceStyle": "professionell und freundlich",
+              "speakingSpeed": "normal"
+            }
+          ],
+          "background": {
+            "location": "Immobilienmaklerbüro",
+            "sounds": [
+              "leises Telefonklingeln",
+              "gedämpftes Gespräch im Nebenraum",
+              "Tippen auf einer Tastatur"
+            ],
+            "noiseLevel": "low"
+          },
+          "audioDirection": {
+            "style": "natürliches Telefongespräch",
+            "pace": "normal",
+            "clarity": "klar und verständlich",
+            "pauses": [
+              {
+                "after": "Guten Tag, hier ist Thomas Berger.",
+                "durationMs": 450
+              },
+              {
+                "after": "Die Wohnung in der Linzer Straße interessiert mich.",
+                "durationMs": 500
+              },
+              {
+                "after": "Am Mittwoch um sechzehn Uhr wäre das möglich.",
+                "durationMs": 450
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "speaker": "Wohnungssucher",
+              "text": "Guten Tag, hier ist Thomas Berger. Ich habe Ihre Anzeige für eine Zwei-Zimmer-Wohnung in Wien gesehen."
+            },
+            {
+              "speaker": "Maklerin",
+              "text": "Guten Tag, Herr Berger. Ja, die Wohnung in der Linzer Straße ist noch verfügbar."
+            },
+            {
+              "speaker": "Wohnungssucher",
+              "text": "Die Wohnung in der Linzer Straße interessiert mich. Kann ich sie diese Woche besichtigen?"
+            },
+            {
+              "speaker": "Maklerin",
+              "text": "Natürlich. Am Mittwoch um sechzehn Uhr wäre das möglich. Die Wohnung liegt im dritten Stock."
+            },
+            {
+              "speaker": "Wohnungssucher",
+              "text": "Perfekt. Gibt es eine Hausverwaltung, die ich vorher anrufen muss?"
+            },
+            {
+              "speaker": "Maklerin",
+              "text": "Nein, das ist nicht nötig. Ich treffe Sie direkt vor dem Haus und bringe den Schlüssel mit."
+            },
+            {
+              "speaker": "Wohnungssucher",
+              "text": "Gut, dann sehen wir uns am Mittwoch um sechzehn Uhr. Vielen Dank."
+            },
+            {
+              "speaker": "Maklerin",
+              "text": "Sehr gerne. Falls Sie sich verspäten, rufen Sie bitte kurz an. Auf Wiederhören."
+            }
+          ],
+          "questions": [
+            {
+              "id": "b1-wp-h-002-clip-01-q01",
+              "type": "single_choice",
+              "question": "Welche Wohnung möchte Herr Berger besichtigen?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Eine Wohnung in der Praterstraße."
+                },
+                {
+                  "id": "B",
+                  "text": "Eine Wohnung in der Linzer Straße."
+                },
+                {
+                  "id": "C",
+                  "text": "Eine Wohnung in der Mariahilfer Straße."
+                },
+                {
+                  "id": "D",
+                  "text": "Eine Wohnung in der Donaustraße."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Er interessiert sich für die Wohnung in der Linzer Straße."
+            },
+            {
+              "id": "b1-wp-h-002-clip-01-q02",
+              "type": "single_choice",
+              "question": "Wann findet die Besichtigung statt?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Am Dienstag um vierzehn Uhr."
+                },
+                {
+                  "id": "B",
+                  "text": "Am Mittwoch um sechzehn Uhr."
+                },
+                {
+                  "id": "C",
+                  "text": "Am Donnerstag um zehn Uhr."
+                },
+                {
+                  "id": "D",
+                  "text": "Am Freitag um achtzehn Uhr."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Die Besichtigung ist am Mittwoch um sechzehn Uhr."
+            }
+          ]
+        },
+        {
+          "id": "b1-wp-h-002-clip-02",
+          "audio": "audio/weekly-plan/b1/hoeren/b1-wp-h-002-clip-02.mp3",
+          "title": "Mailbox-Nachricht zur Terminänderung",
+          "durationSeconds": 40,
+          "speakerType": "Mailbox-Nachricht einer Immobilienmaklerin",
+          "speakers": [
+            {
+              "id": "speaker-1",
+              "role": "Maklerin",
+              "gender": "female",
+              "ageRange": "35-45",
+              "voiceStyle": "freundlich und sachlich",
+              "speakingSpeed": "normal"
+            }
+          ],
+          "background": {
+            "location": "ruhiges Büro eines Maklerbüros",
+            "sounds": [
+              "sehr leises Tippen",
+              "entferntes Klingeln eines Telefons",
+              "leichte Raumakustik"
+            ],
+            "noiseLevel": "very_low"
+          },
+          "audioDirection": {
+            "style": "natürliche Mailbox-Nachricht",
+            "pace": "normal",
+            "clarity": "deutlich mit natürlichen Satzpausen",
+            "pauses": [
+              {
+                "after": "Hier spricht Sabine Roth von der Firma Stadtwohnungen.",
+                "durationMs": 550
+              },
+              {
+                "after": "Ihre Besichtigung am Mittwoch muss leider verschoben werden.",
+                "durationMs": 550
+              },
+              {
+                "after": "Alternativ wäre Freitag um neun Uhr möglich.",
+                "durationMs": 500
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "speaker": "Maklerin",
+              "text": "Guten Tag, Frau Leitner. Hier spricht Sabine Roth von der Firma Stadtwohnungen."
+            },
+            {
+              "speaker": "Maklerin",
+              "text": "Ihre Besichtigung am Mittwoch um sechzehn Uhr muss leider verschoben werden, weil der Eigentümer an diesem Tag nicht in Wien ist."
+            },
+            {
+              "speaker": "Maklerin",
+              "text": "Wir könnten Ihnen stattdessen Donnerstag um siebzehn Uhr anbieten."
+            },
+            {
+              "speaker": "Maklerin",
+              "text": "Alternativ wäre Freitag um neun Uhr möglich."
+            },
+            {
+              "speaker": "Maklerin",
+              "text": "Bitte rufen Sie uns bis heute Abend zurück und sagen Sie uns, welcher Termin für Sie passt."
+            },
+            {
+              "speaker": "Maklerin",
+              "text": "Unsere Nummer ist null eins vier drei, acht zwei vier fünf, neun null eins. Vielen Dank."
+            }
+          ],
+          "questions": [
+            {
+              "id": "b1-wp-h-002-clip-02-q01",
+              "type": "single_choice",
+              "question": "Warum wird die Besichtigung verschoben?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Weil die Wohnung schon verkauft ist."
+                },
+                {
+                  "id": "B",
+                  "text": "Weil der Eigentümer am Mittwoch nicht in Wien ist."
+                },
+                {
+                  "id": "C",
+                  "text": "Weil Frau Leitner den Termin abgesagt hat."
+                },
+                {
+                  "id": "D",
+                  "text": "Weil das Büro am Mittwoch geschlossen ist."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Der Eigentümer ist am Mittwoch nicht in Wien."
+            },
+            {
+              "id": "b1-wp-h-002-clip-02-q02",
+              "type": "single_choice",
+              "question": "Bis wann soll Frau Leitner zurückrufen?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Bis morgen Mittag."
+                },
+                {
+                  "id": "B",
+                  "text": "Bis heute Abend."
+                },
+                {
+                  "id": "C",
+                  "text": "Bis Donnerstagmorgen."
+                },
+                {
+                  "id": "D",
+                  "text": "Bis Freitag um neun Uhr."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Sie soll bis heute Abend zurückrufen."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b1-wp-h-003",
+      "title": "Probleme am Arbeitsplatz",
+      "topic": "Arbeit und Beruf",
+      "level": "B1",
+      "clips": [
+        {
+          "id": "b1-wp-h-003-clip-01",
+          "audio": "audio/weekly-plan/b1/hoeren/b1-wp-h-003-clip-01.mp3",
+          "title": "Gespräch mit der Vorgesetzten",
+          "durationSeconds": 46,
+          "speakerType": "Dialog zwischen Mitarbeiter und Vorgesetzterin",
+          "speakers": [
+            {
+              "id": "speaker-1",
+              "role": "Mitarbeiter",
+              "gender": "male",
+              "ageRange": "30-40",
+              "voiceStyle": "etwas nervös, aber höflich",
+              "speakingSpeed": "normal"
+            },
+            {
+              "id": "speaker-2",
+              "role": "Vorgesetzte",
+              "gender": "female",
+              "ageRange": "45-55",
+              "voiceStyle": "ruhig und verständnisvoll",
+              "speakingSpeed": "normal"
+            }
+          ],
+          "background": {
+            "location": "Büro eines mittelständischen Unternehmens",
+            "sounds": [
+              "gedämpfte Gespräche im Hintergrund",
+              "leises Druckergeräusch",
+              "gelegentliches Klingeln eines Telefons"
+            ],
+            "noiseLevel": "low"
+          },
+          "audioDirection": {
+            "style": "natürliches Gespräch am Arbeitsplatz",
+            "pace": "normal",
+            "clarity": "klar und professionell",
+            "pauses": [
+              {
+                "after": "Guten Morgen, Frau Schmid.",
+                "durationMs": 450
+              },
+              {
+                "after": "Mein Kind ist krank und ich muss heute früher gehen.",
+                "durationMs": 500
+              },
+              {
+                "after": "Dann können Sie um vierzehn Uhr das Büro verlassen.",
+                "durationMs": 450
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "speaker": "Mitarbeiter",
+              "text": "Guten Morgen, Frau Schmid. Könnte ich kurz mit Ihnen sprechen?"
+            },
+            {
+              "speaker": "Vorgesetzte",
+              "text": "Natürlich, Herr Popovic. Was gibt es?"
+            },
+            {
+              "speaker": "Mitarbeiter",
+              "text": "Mein Kind ist krank und ich muss heute früher gehen, um es vom Kindergarten abzuholen."
+            },
+            {
+              "speaker": "Vorgesetzte",
+              "text": "Das verstehe ich. Wann müsstest du denn weg sein?"
+            },
+            {
+              "speaker": "Mitarbeiter",
+              "text": "Am liebsten um vierzehn Uhr. Ich würde die restlichen Aufgaben morgen früh erledigen."
+            },
+            {
+              "speaker": "Vorgesetzte",
+              "text": "Dann können Sie um vierzehn Uhr das Büro verlassen. Bitte informieren Sie noch Ihre Kollegen."
+            },
+            {
+              "speaker": "Mitarbeiter",
+              "text": "Vielen Dank, Frau Schmid. Ich schicke Ihnen noch eine kurze E-Mail."
+            },
+            {
+              "speaker": "Vorgesetzte",
+              "text": "In Ordnung. Ich wünsche Ihrem Kind gute Besserung."
+            }
+          ],
+          "questions": [
+            {
+              "id": "b1-wp-h-003-clip-01-q01",
+              "type": "single_choice",
+              "question": "Warum möchte Herr Popovic früher gehen?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Weil er einen Arzttermin hat."
+                },
+                {
+                  "id": "B",
+                  "text": "Weil sein Kind krank ist."
+                },
+                {
+                  "id": "C",
+                  "text": "Weil er zu einem Meeting muss."
+                },
+                {
+                  "id": "D",
+                  "text": "Weil er einen Feiertag hat."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Sein Kind ist krank und er muss es abholen."
+            },
+            {
+              "id": "b1-wp-h-003-clip-01-q02",
+              "type": "single_choice",
+              "question": "Wann darf Herr Popovic das Büro verlassen?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Um dreizehn Uhr."
+                },
+                {
+                  "id": "B",
+                  "text": "Um vierzehn Uhr."
+                },
+                {
+                  "id": "C",
+                  "text": "Um fünfzehn Uhr."
+                },
+                {
+                  "id": "D",
+                  "text": "Um sechzehn Uhr."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Er kann um vierzehn Uhr gehen."
+            }
+          ]
+        },
+        {
+          "id": "b1-wp-h-003-clip-02",
+          "audio": "audio/weekly-plan/b1/hoeren/b1-wp-h-003-clip-02.mp3",
+          "title": "Durchsage im Betrieb",
+          "durationSeconds": 38,
+          "speakerType": "Betriebsdurchsage einer Firma",
+          "speakers": [
+            {
+              "id": "speaker-1",
+              "role": "Sekretärin",
+              "gender": "female",
+              "ageRange": "40-50",
+              "voiceStyle": "deutlich und sachlich",
+              "speakingSpeed": "normal"
+            }
+          ],
+          "background": {
+            "location": "Produktionshalle mit Lautsprecher",
+            "sounds": [
+              "leises Maschinenlärm im Hintergrund",
+              "kurzes Echo durch den Lautsprecher",
+              "entferntes Rollen eines Wagens"
+            ],
+            "noiseLevel": "medium"
+          },
+          "audioDirection": {
+            "style": "klare Betriebsdurchsage",
+            "pace": "etwas langsamer als normal",
+            "clarity": "sehr deutlich",
+            "pauses": [
+              {
+                "after": "Achtung, liebe Mitarbeiterinnen und Mitarbeiter.",
+                "durationMs": 550
+              },
+              {
+                "after": "Am Freitag findet eine Schulung im Schulungsraum statt.",
+                "durationMs": 550
+              },
+              {
+                "after": "Die Teilnahme ist für alle Abteilungen verpflichtend.",
+                "durationMs": 500
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "speaker": "Sekretärin",
+              "text": "Achtung, liebe Mitarbeiterinnen und Mitarbeiter. Hier ist eine wichtige Mitteilung."
+            },
+            {
+              "speaker": "Sekretärin",
+              "text": "Am Freitag findet eine Schulung im Schulungsraum statt. Sie beginnt um neun Uhr."
+            },
+            {
+              "speaker": "Sekretärin",
+              "text": "Thema ist die neue Software für die Zeiterfassung. Die Teilnahme ist für alle Abteilungen verpflichtend."
+            },
+            {
+              "speaker": "Sekretärin",
+              "text": "Bitte bringen Sie Ihren Laptop mit. Die Schulung dauert etwa zwei Stunden."
+            },
+            {
+              "speaker": "Sekretärin",
+              "text": "Wer am Freitag nicht arbeitet, meldet sich bitte bei Frau Hartmann im Sekretariat."
+            },
+            {
+              "speaker": "Sekretärin",
+              "text": "Vielen Dank und einen guten Arbeitstag."
+            }
+          ],
+          "questions": [
+            {
+              "id": "b1-wp-h-003-clip-02-q01",
+              "type": "single_choice",
+              "question": "Worum geht es in der Schulung?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Um eine neue Software für die Zeiterfassung."
+                },
+                {
+                  "id": "B",
+                  "text": "Um Sicherheit im Betrieb."
+                },
+                {
+                  "id": "C",
+                  "text": "Um die Firmenstrategie."
+                },
+                {
+                  "id": "D",
+                  "text": "Um die Kantinenpreise."
+                }
+              ],
+              "correctAnswer": "A",
+              "answerText": "Es geht um die neue Zeiterfassungssoftware."
+            },
+            {
+              "id": "b1-wp-h-003-clip-02-q02",
+              "type": "single_choice",
+              "question": "Was sollen die Mitarbeiter zur Schulung mitbringen?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Ihren Laptop."
+                },
+                {
+                  "id": "B",
+                  "text": "Ihren Arbeitsausweis."
+                },
+                {
+                  "id": "C",
+                  "text": "Ihre Unterlagen aus dem letzten Jahr."
+                },
+                {
+                  "id": "D",
+                  "text": "Eine schriftliche Bestätigung."
+                }
+              ],
+              "correctAnswer": "A",
+              "answerText": "Sie sollen ihren Laptop mitbringen."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b1-wp-h-004",
+      "title": "Zugausfall und alternative Verbindung",
+      "topic": "Reisen und Verkehr",
+      "level": "B1",
+      "clips": [
+        {
+          "id": "b1-wp-h-004-clip-01",
+          "audio": "audio/weekly-plan/b1/hoeren/b1-wp-h-004-clip-01.mp3",
+          "title": "Durchsage am Bahnsteig",
+          "durationSeconds": 41,
+          "speakerType": "Bahnhofsdurchsage",
+          "speakers": [
+            {
+              "id": "speaker-1",
+              "role": "Ansager",
+              "gender": "female",
+              "ageRange": "35-45",
+              "voiceStyle": "deutlich und sachlich",
+              "speakingSpeed": "normal"
+            }
+          ],
+          "background": {
+            "location": "Bahnhof Wien Hauptbahnhof",
+            "sounds": [
+              "Ansage über Lautsprecher mit leichtem Echo",
+              "entferntes Zugsignal",
+              "Passanten im Hintergrund"
+            ],
+            "noiseLevel": "medium"
+          },
+          "audioDirection": {
+            "style": "typische Bahnhofsdurchsage",
+            "pace": "etwas langsamer",
+            "clarity": "sehr deutlich",
+            "pauses": [
+              {
+                "after": "Achtung auf Bahnsteig vier.",
+                "durationMs": 550
+              },
+              {
+                "after": "Der Zug nach Salzburg fällt heute aus.",
+                "durationMs": 550
+              },
+              {
+                "after": "Bitte nutzen Sie den Ersatzzug ab Bahnsteig sieben.",
+                "durationMs": 500
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "speaker": "Ansager",
+              "text": "Achtung auf Bahnsteig vier. Information für Fahrgäste nach Salzburg."
+            },
+            {
+              "speaker": "Ansager",
+              "text": "Der Zug nach Salzburg mit Abfahrt um dreizehn Uhr fünfzehn fällt heute wegen einer technischen Störung aus."
+            },
+            {
+              "speaker": "Ansager",
+              "text": "Bitte nutzen Sie den Ersatzzug ab Bahnsteig sieben. Er fährt um dreizehn Uhr dreißig."
+            },
+            {
+              "speaker": "Ansager",
+              "text": "Der Ersatzzug hält auch in Linz und Attnang-Puchheim."
+            },
+            {
+              "speaker": "Ansager",
+              "text": "Wir bitten um Ihr Verständnis und danken für Ihre Geduld."
+            }
+          ],
+          "questions": [
+            {
+              "id": "b1-wp-h-004-clip-01-q01",
+              "type": "single_choice",
+              "question": "Warum fällt der Zug nach Salzburg aus?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Wegen eines Streiks."
+                },
+                {
+                  "id": "B",
+                  "text": "Wegen einer technischen Störung."
+                },
+                {
+                  "id": "C",
+                  "text": "Wegen schlechter Wetterbedingungen."
+                },
+                {
+                  "id": "D",
+                  "text": "Wegen eines Feiertags."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Der Zug fällt wegen einer technischen Störung aus."
+            },
+            {
+              "id": "b1-wp-h-004-clip-01-q02",
+              "type": "single_choice",
+              "question": "Von welchem Bahnsteig fährt der Ersatzzug?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Von Bahnsteig vier."
+                },
+                {
+                  "id": "B",
+                  "text": "Von Bahnsteig fünf."
+                },
+                {
+                  "id": "C",
+                  "text": "Von Bahnsteig sieben."
+                },
+                {
+                  "id": "D",
+                  "text": "Von Bahnsteig neun."
+                }
+              ],
+              "correctAnswer": "C",
+              "answerText": "Der Ersatzzug fährt von Bahnsteig sieben."
+            }
+          ]
+        },
+        {
+          "id": "b1-wp-h-004-clip-02",
+          "audio": "audio/weekly-plan/b1/hoeren/b1-wp-h-004-clip-02.mp3",
+          "title": "Gespräch am Informationsschalter",
+          "durationSeconds": 48,
+          "speakerType": "Dialog zwischen Fahrgast und Mitarbeiterin am Schalter",
+          "speakers": [
+            {
+              "id": "speaker-1",
+              "role": "Fahrgast",
+              "gender": "female",
+              "ageRange": "25-35",
+              "voiceStyle": "leicht gestresst, aber höflich",
+              "speakingSpeed": "normal"
+            },
+            {
+              "id": "speaker-2",
+              "role": "Schaltermitarbeiterin",
+              "gender": "female",
+              "ageRange": "30-40",
+              "voiceStyle": "freundlich und hilfsbereit",
+              "speakingSpeed": "normal"
+            }
+          ],
+          "background": {
+            "location": "Informationsschalter im Bahnhof",
+            "sounds": [
+              "gedämpfte Durchsagen",
+              "Passanten im Hintergrund",
+              "leises Klingeln am Schalter"
+            ],
+            "noiseLevel": "medium"
+          },
+          "audioDirection": {
+            "style": "natürliches Gespräch am Schalter",
+            "pace": "normal",
+            "clarity": "klar",
+            "pauses": [
+              {
+                "after": "Guten Tag. Ich muss nach Innsbruck fahren.",
+                "durationMs": 450
+              },
+              {
+                "after": "Der Zug um fünfzehn Uhr ist schon voll.",
+                "durationMs": 500
+              },
+              {
+                "after": "Dann nehme ich den Bus um sechzehn Uhr zwanzig.",
+                "durationMs": 450
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "speaker": "Fahrgast",
+              "text": "Guten Tag. Ich muss nach Innsbruck fahren, aber der Zug um fünfzehn Uhr ist schon voll."
+            },
+            {
+              "speaker": "Schaltermitarbeiterin",
+              "text": "Ja, der Regionalzug ist heute sehr stark besetzt. Haben Sie schon den nächsten Zug geprüft?"
+            },
+            {
+              "speaker": "Fahrgast",
+              "text": "Der nächste Zug ist erst um siebzehn Uhr vierzig. Das ist zu spät für mich."
+            },
+            {
+              "speaker": "Schaltermitarbeiterin",
+              "text": "Dann kann ich Ihnen einen Bus empfehlen. Er fährt um sechzehn Uhr zwanzig vom Busbahnhof."
+            },
+            {
+              "speaker": "Fahrgast",
+              "text": "Dann nehme ich den Bus um sechzehn Uhr zwanzig. Brauche ich dafür ein extra Ticket?"
+            },
+            {
+              "speaker": "Schaltermitarbeiterin",
+              "text": "Nein, Ihr Zugticket gilt auch für den Ersatzbus. Ich drucke Ihnen eine Bestätigung."
+            },
+            {
+              "speaker": "Fahrgast",
+              "text": "Vielen Dank für die Hilfe."
+            },
+            {
+              "speaker": "Schaltermitarbeiterin",
+              "text": "Gerne. Der Busbahnhof ist gleich neben dem Hauptbahnhof. Gute Fahrt."
+            }
+          ],
+          "questions": [
+            {
+              "id": "b1-wp-h-004-clip-02-q01",
+              "type": "single_choice",
+              "question": "Warum kann die Fahrgastin den Zug um fünfzehn Uhr nicht nehmen?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Weil der Zug ausfällt."
+                },
+                {
+                  "id": "B",
+                  "text": "Weil der Zug schon voll ist."
+                },
+                {
+                  "id": "C",
+                  "text": "Weil sie kein Ticket hat."
+                },
+                {
+                  "id": "D",
+                  "text": "Weil der Zug von einem anderen Bahnsteig fährt."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Der Zug um fünfzehn Uhr ist schon voll."
+            },
+            {
+              "id": "b1-wp-h-004-clip-02-q02",
+              "type": "single_choice",
+              "question": "Wann fährt der Ersatzbus nach Innsbruck?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Um fünfzehn Uhr dreißig."
+                },
+                {
+                  "id": "B",
+                  "text": "Um sechzehn Uhr zwanzig."
+                },
+                {
+                  "id": "C",
+                  "text": "Um siebzehn Uhr vierzig."
+                },
+                {
+                  "id": "D",
+                  "text": "Um achtzehn Uhr zehn."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Der Bus fährt um sechzehn Uhr zwanzig."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b1-wp-h-005",
+      "title": "Reklamation im Geschäft",
+      "topic": "Einkaufen und Kundenservice",
+      "level": "B1",
+      "clips": [
+        {
+          "id": "b1-wp-h-005-clip-01",
+          "audio": "audio/weekly-plan/b1/hoeren/b1-wp-h-005-clip-01.mp3",
+          "title": "Reklamation am Kundenschalter",
+          "durationSeconds": 45,
+          "speakerType": "Dialog zwischen Kunde und Verkäuferin",
+          "speakers": [
+            {
+              "id": "speaker-1",
+              "role": "Kunde",
+              "gender": "male",
+              "ageRange": "40-50",
+              "voiceStyle": "verärgert, aber höflich",
+              "speakingSpeed": "normal"
+            },
+            {
+              "id": "speaker-2",
+              "role": "Verkäuferin",
+              "gender": "female",
+              "ageRange": "25-35",
+              "voiceStyle": "freundlich und professionell",
+              "speakingSpeed": "normal"
+            }
+          ],
+          "background": {
+            "location": "Elektrofachgeschäft",
+            "sounds": [
+              "leises Kassenläuten",
+              "gedämpfte Gespräche im Geschäft",
+              "gelegentliches Piepen an der Kasse"
+            ],
+            "noiseLevel": "low"
+          },
+          "audioDirection": {
+            "style": "natürliches Gespräch im Geschäft",
+            "pace": "normal",
+            "clarity": "klar",
+            "pauses": [
+              {
+                "after": "Guten Tag. Ich habe letzte Woche einen Kühlschrank gekauft.",
+                "durationMs": 450
+              },
+              {
+                "after": "Er macht seit zwei Tagen ein lautes Geräusch.",
+                "durationMs": 500
+              },
+              {
+                "after": "Wir schicken einen Techniker zu Ihnen nach Hause.",
+                "durationMs": 450
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "speaker": "Kunde",
+              "text": "Guten Tag. Ich habe letzte Woche einen Kühlschrank bei Ihnen gekauft."
+            },
+            {
+              "speaker": "Verkäuferin",
+              "text": "Guten Tag. Haben Sie die Rechnung dabei?"
+            },
+            {
+              "speaker": "Kunde",
+              "text": "Ja, hier ist sie. Er macht seit zwei Tagen ein lautes Geräusch und kühlt nicht richtig."
+            },
+            {
+              "speaker": "Verkäuferin",
+              "text": "Das tut mir leid. Wir schicken einen Techniker zu Ihnen nach Hause."
+            },
+            {
+              "speaker": "Kunde",
+              "text": "Wann könnte der Techniker kommen? Ich brauche den Kühlschrank jeden Tag."
+            },
+            {
+              "speaker": "Verkäuferin",
+              "text": "Der Techniker kann morgen zwischen zehn und zwölf Uhr vorbeikommen. Passt das für Sie?"
+            },
+            {
+              "speaker": "Kunde",
+              "text": "Ja, das passt. Muss ich etwas bezahlen, wenn der Kühlschrank noch in der Garantie ist?"
+            },
+            {
+              "speaker": "Verkäuferin",
+              "text": "Nein, die Reparatur ist kostenlos. Bitte halten Sie die Rechnung bereit."
+            }
+          ],
+          "questions": [
+            {
+              "id": "b1-wp-h-005-clip-01-q01",
+              "type": "single_choice",
+              "question": "Was ist das Problem mit dem Kühlschrank?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Er ist zu klein."
+                },
+                {
+                  "id": "B",
+                  "text": "Er macht ein lautes Geräusch und kühlt nicht richtig."
+                },
+                {
+                  "id": "C",
+                  "text": "Er hat einen beschädigten Türgriff."
+                },
+                {
+                  "id": "D",
+                  "text": "Er wurde falsch geliefert."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Er macht ein lautes Geräusch und kühlt nicht richtig."
+            },
+            {
+              "id": "b1-wp-h-005-clip-01-q02",
+              "type": "single_choice",
+              "question": "Wann kann der Techniker kommen?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Heute Nachmittag."
+                },
+                {
+                  "id": "B",
+                  "text": "Morgen zwischen zehn und zwölf Uhr."
+                },
+                {
+                  "id": "C",
+                  "text": "Am Freitag um vierzehn Uhr."
+                },
+                {
+                  "id": "D",
+                  "text": "Nächste Woche Montag."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Der Techniker kann morgen zwischen zehn und zwölf Uhr kommen."
+            }
+          ]
+        },
+        {
+          "id": "b1-wp-h-005-clip-02",
+          "audio": "audio/weekly-plan/b1/hoeren/b1-wp-h-005-clip-02.mp3",
+          "title": "Mailbox-Nachricht zur Reparatur",
+          "durationSeconds": 39,
+          "speakerType": "Mailbox-Nachricht eines Technikers",
+          "speakers": [
+            {
+              "id": "speaker-1",
+              "role": "Techniker",
+              "gender": "male",
+              "ageRange": "35-45",
+              "voiceStyle": "freundlich und sachlich",
+              "speakingSpeed": "normal"
+            }
+          ],
+          "background": {
+            "location": "ruhiges Büro einer Reparaturfirma",
+            "sounds": [
+              "sehr leises Tippen",
+              "entferntes Telefonklingeln",
+              "leichte Raumakustik"
+            ],
+            "noiseLevel": "very_low"
+          },
+          "audioDirection": {
+            "style": "natürliche Mailbox-Nachricht",
+            "pace": "normal",
+            "clarity": "deutlich mit natürlichen Satzpausen",
+            "pauses": [
+              {
+                "after": "Hier spricht Markus Gruber von der Firma ElektroFix.",
+                "durationMs": 550
+              },
+              {
+                "after": "Ich komme morgen zu Ihrer Reparatur.",
+                "durationMs": 550
+              },
+              {
+                "after": "Bitte stellen Sie sicher, dass jemand zu Hause ist.",
+                "durationMs": 500
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "speaker": "Techniker",
+              "text": "Guten Tag, Frau Dorn. Hier spricht Markus Gruber von der Firma ElektroFix."
+            },
+            {
+              "speaker": "Techniker",
+              "text": "Ich komme morgen zu Ihrer Reparatur. Wegen eines anderen Termins kann ich nicht um zehn Uhr kommen."
+            },
+            {
+              "speaker": "Techniker",
+              "text": "Ich werde stattdessen um elf Uhr dreißig bei Ihnen sein."
+            },
+            {
+              "speaker": "Techniker",
+              "text": "Bitte stellen Sie sicher, dass jemand zu Hause ist und der Kühlschrank frei zugänglich ist."
+            },
+            {
+              "speaker": "Techniker",
+              "text": "Falls der Termin nicht passt, rufen Sie bitte bis heute Abend zurück."
+            },
+            {
+              "speaker": "Techniker",
+              "text": "Unsere Nummer ist null eins zwei zwei, vier fünf sechs, sieben acht neun null. Vielen Dank."
+            }
+          ],
+          "questions": [
+            {
+              "id": "b1-wp-h-005-clip-02-q01",
+              "type": "single_choice",
+              "question": "Warum ändert sich der Termin?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Weil Frau Dorn den Termin abgesagt hat."
+                },
+                {
+                  "id": "B",
+                  "text": "Weil der Techniker einen anderen Termin hat."
+                },
+                {
+                  "id": "C",
+                  "text": "Weil das Ersatzteil noch nicht da ist."
+                },
+                {
+                  "id": "D",
+                  "text": "Weil die Firma geschlossen ist."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Der Techniker hat einen anderen Termin."
+            },
+            {
+              "id": "b1-wp-h-005-clip-02-q02",
+              "type": "single_choice",
+              "question": "Wann wird der Techniker jetzt kommen?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Um zehn Uhr."
+                },
+                {
+                  "id": "B",
+                  "text": "Um zehn Uhr dreißig."
+                },
+                {
+                  "id": "C",
+                  "text": "Um elf Uhr dreißig."
+                },
+                {
+                  "id": "D",
+                  "text": "Um zwölf Uhr."
+                }
+              ],
+              "correctAnswer": "C",
+              "answerText": "Er kommt um elf Uhr dreißig."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b1-wp-h-006",
+      "title": "Elternabend in der Schule",
+      "topic": "Schule und Familie",
+      "level": "B1",
+      "clips": [
+        {
+          "id": "b1-wp-h-006-clip-01",
+          "audio": "audio/weekly-plan/b1/hoeren/b1-wp-h-006-clip-01.mp3",
+          "title": "Gespräch zwischen Eltern",
+          "durationSeconds": 43,
+          "speakerType": "Dialog zwischen zwei Eltern",
+          "speakers": [
+            {
+              "id": "speaker-1",
+              "role": "Mutter",
+              "gender": "female",
+              "ageRange": "35-45",
+              "voiceStyle": "freundlich und interessiert",
+              "speakingSpeed": "normal"
+            },
+            {
+              "id": "speaker-2",
+              "role": "Vater",
+              "gender": "male",
+              "ageRange": "40-50",
+              "voiceStyle": "ruhig und aufmerksam",
+              "speakingSpeed": "normal"
+            }
+          ],
+          "background": {
+            "location": "Schulhof vor dem Eingang",
+            "sounds": [
+              "Kinder im Hintergrund",
+              "entferntes Klingeln",
+              "gelegentliches Lachen"
+            ],
+            "noiseLevel": "medium"
+          },
+          "audioDirection": {
+            "style": "natürliches Gespräch im Alltag",
+            "pace": "normal",
+            "clarity": "klar",
+            "pauses": [
+              {
+                "after": "Hast du die E-Mail vom Elternabend gelesen?",
+                "durationMs": 450
+              },
+              {
+                "after": "Der Elternabend ist am Donnerstag um achtzehn Uhr dreißig.",
+                "durationMs": 500
+              },
+              {
+                "after": "Dann treffen wir uns vor dem Klassenraum 3A.",
+                "durationMs": 450
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "speaker": "Mutter",
+              "text": "Guten Tag, Herr Fischer. Hast du die E-Mail vom Elternabend gelesen?"
+            },
+            {
+              "speaker": "Vater",
+              "text": "Ja, aber ich habe nur gesehen, dass er am Donnerstag ist. Wann genau?"
+            },
+            {
+              "speaker": "Mutter",
+              "text": "Der Elternabend ist am Donnerstag um achtzehn Uhr dreißig im Klassenraum 3A."
+            },
+            {
+              "speaker": "Vater",
+              "text": "Ach so, nicht um achtzehn Uhr. Meine Frau kann leider nicht kommen."
+            },
+            {
+              "speaker": "Mutter",
+              "text": "Das ist kein Problem. Die Lehrerin möchte auch über die Schulausflüge sprechen."
+            },
+            {
+              "speaker": "Vater",
+              "text": "Dann treffen wir uns vor dem Klassenraum 3A. Ich bringe meine Tochter erst zum Fußballtraining."
+            },
+            {
+              "speaker": "Mutter",
+              "text": "Gut, bis Donnerstag dann."
+            },
+            {
+              "speaker": "Vater",
+              "text": "Bis Donnerstag. Schönen Tag noch."
+            }
+          ],
+          "questions": [
+            {
+              "id": "b1-wp-h-006-clip-01-q01",
+              "type": "single_choice",
+              "question": "Wann beginnt der Elternabend?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Am Mittwoch um achtzehn Uhr."
+                },
+                {
+                  "id": "B",
+                  "text": "Am Donnerstag um achtzehn Uhr dreißig."
+                },
+                {
+                  "id": "C",
+                  "text": "Am Donnerstag um neunzehn Uhr."
+                },
+                {
+                  "id": "D",
+                  "text": "Am Freitag um achtzehn Uhr."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Der Elternabend beginnt am Donnerstag um achtzehn Uhr dreißig."
+            },
+            {
+              "id": "b1-wp-h-006-clip-01-q02",
+              "type": "single_choice",
+              "question": "Wo findet der Elternabend statt?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "In der Turnhalle."
+                },
+                {
+                  "id": "B",
+                  "text": "Im Klassenraum 3A."
+                },
+                {
+                  "id": "C",
+                  "text": "Im Sekretariat."
+                },
+                {
+                  "id": "D",
+                  "text": "In der Aula."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Er findet im Klassenraum 3A statt."
+            }
+          ]
+        },
+        {
+          "id": "b1-wp-h-006-clip-02",
+          "audio": "audio/weekly-plan/b1/hoeren/b1-wp-h-006-clip-02.mp3",
+          "title": "Durchsage in der Schule",
+          "durationSeconds": 37,
+          "speakerType": "Schuldurchsage",
+          "speakers": [
+            {
+              "id": "speaker-1",
+              "role": "Sekretärin",
+              "gender": "female",
+              "ageRange": "45-55",
+              "voiceStyle": "deutlich und freundlich",
+              "speakingSpeed": "normal"
+            }
+          ],
+          "background": {
+            "location": "Schulgebäude mit Lautsprecher",
+            "sounds": [
+              "Lautsprecher mit leichtem Echo",
+              "entfernte Kinderstimmen",
+              "kurzes Klingeln"
+            ],
+            "noiseLevel": "medium"
+          },
+          "audioDirection": {
+            "style": "klare Schuldurchsage",
+            "pace": "etwas langsamer",
+            "clarity": "sehr deutlich",
+            "pauses": [
+              {
+                "after": "Liebe Eltern und Schülerinnen und Schüler.",
+                "durationMs": 550
+              },
+              {
+                "after": "Der Elternabend am Donnerstag beginnt später.",
+                "durationMs": 550
+              },
+              {
+                "after": "Bitte kommen Sie direkt in den Klassenraum 3A.",
+                "durationMs": 500
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "speaker": "Sekretärin",
+              "text": "Liebe Eltern und Schülerinnen und Schüler. Hier ist eine wichtige Information."
+            },
+            {
+              "speaker": "Sekretärin",
+              "text": "Der Elternabend am Donnerstag beginnt später. Er startet nicht um achtzehn Uhr, sondern um achtzehn Uhr dreißig."
+            },
+            {
+              "speaker": "Sekretärin",
+              "text": "Bitte kommen Sie direkt in den Klassenraum 3A im ersten Stock."
+            },
+            {
+              "speaker": "Sekretärin",
+              "text": "Die Lehrerin wird über die Schulausflüge und die neuen Hausaufgabenregeln informieren."
+            },
+            {
+              "speaker": "Sekretärin",
+              "text": "Wir bitten um Ihr Verständnis und danken Ihnen."
+            }
+          ],
+          "questions": [
+            {
+              "id": "b1-wp-h-006-clip-02-q01",
+              "type": "single_choice",
+              "question": "Was wird auf dem Elternabend besprochen?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Die Schulausflüge und Hausaufgabenregeln."
+                },
+                {
+                  "id": "B",
+                  "text": "Die neuen Schuluniformen."
+                },
+                {
+                  "id": "C",
+                  "text": "Die Schließung der Schule."
+                },
+                {
+                  "id": "D",
+                  "text": "Die Wahlen der Elternvertretung."
+                }
+              ],
+              "correctAnswer": "A",
+              "answerText": "Es geht um Schulausflüge und Hausaufgabenregeln."
+            },
+            {
+              "id": "b1-wp-h-006-clip-02-q02",
+              "type": "single_choice",
+              "question": "Wo sollen die Eltern hingehen?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "In die Turnhalle."
+                },
+                {
+                  "id": "B",
+                  "text": "Ins Sekretariat."
+                },
+                {
+                  "id": "C",
+                  "text": "In den Klassenraum 3A."
+                },
+                {
+                  "id": "D",
+                  "text": "In die Aula."
+                }
+              ],
+              "correctAnswer": "C",
+              "answerText": "Sie sollen in den Klassenraum 3A gehen."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b1-wp-h-007",
+      "title": "Anmeldung zu einem Deutschkurs",
+      "topic": "Bildung und Weiterbildung",
+      "level": "B1",
+      "clips": [
+        {
+          "id": "b1-wp-h-007-clip-01",
+          "audio": "audio/weekly-plan/b1/hoeren/b1-wp-h-007-clip-01.mp3",
+          "title": "Anruf in der Sprachschule",
+          "durationSeconds": 47,
+          "speakerType": "Dialog zwischen Kursteilnehmer und Mitarbeiterin einer Sprachschule",
+          "speakers": [
+            {
+              "id": "speaker-1",
+              "role": "Kursteilnehmer",
+              "gender": "female",
+              "ageRange": "25-35",
+              "voiceStyle": "interessiert und höflich",
+              "speakingSpeed": "normal"
+            },
+            {
+              "id": "speaker-2",
+              "role": "Sprachschulmitarbeiterin",
+              "gender": "female",
+              "ageRange": "30-40",
+              "voiceStyle": "freundlich und professionell",
+              "speakingSpeed": "normal"
+            }
+          ],
+          "background": {
+            "location": "Sprachschule",
+            "sounds": [
+              "leises Telefonklingeln",
+              "gedämpfte Gespräche aus einem Kursraum",
+              "Tippen auf einer Tastatur"
+            ],
+            "noiseLevel": "low"
+          },
+          "audioDirection": {
+            "style": "natürliches Telefongespräch",
+            "pace": "normal",
+            "clarity": "klar",
+            "pauses": [
+              {
+                "after": "Guten Tag, hier ist Elena Vasile.",
+                "durationMs": 450
+              },
+              {
+                "after": "Ich möchte mich für den Deutschkurs B1 anmelden.",
+                "durationMs": 500
+              },
+              {
+                "after": "Der Kurs ist montags und mittwochs von neun bis zwölf Uhr.",
+                "durationMs": 450
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "speaker": "Kursteilnehmer",
+              "text": "Guten Tag, hier ist Elena Vasile. Ich möchte mich für den Deutschkurs B1 anmelden."
+            },
+            {
+              "speaker": "Sprachschulmitarbeiterin",
+              "text": "Guten Tag, Frau Vasile. Der nächste B1-Kurs beginnt am ersten März."
+            },
+            {
+              "speaker": "Kursteilnehmer",
+              "text": "Wann genau findet der Kurs statt? Ich arbeite bis fünfzehn Uhr."
+            },
+            {
+              "speaker": "Sprachschulmitarbeiterin",
+              "text": "Der Kurs ist montags und mittwochs von neun bis zwölf Uhr. Passt das für Sie?"
+            },
+            {
+              "speaker": "Kursteilnehmer",
+              "text": "Nein, das passt leider nicht. Gibt es auch einen Abendkurs?"
+            },
+            {
+              "speaker": "Sprachschulmitarbeiterin",
+              "text": "Ja, der Abendkurs ist dienstags und donnerstags von achtzehn bis zwanzig Uhr dreißig."
+            },
+            {
+              "speaker": "Kursteilnehmer",
+              "text": "Das ist perfekt. Was muss ich zur Anmeldung mitbringen?"
+            },
+            {
+              "speaker": "Sprachschulmitarbeiterin",
+              "text": "Bitte bringen Sie Ihren Pass, eine Meldebestätigung und den letzten Deutschkursnachweis mit."
+            }
+          ],
+          "questions": [
+            {
+              "id": "b1-wp-h-007-clip-01-q01",
+              "type": "single_choice",
+              "question": "Welchen Kurs möchte Frau Vasile besuchen?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Einen A2-Kurs."
+                },
+                {
+                  "id": "B",
+                  "text": "Einen B1-Kurs."
+                },
+                {
+                  "id": "C",
+                  "text": "Einen B2-Kurs."
+                },
+                {
+                  "id": "D",
+                  "text": "Einen Integrationskurs."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Sie möchte den B1-Kurs besuchen."
+            },
+            {
+              "id": "b1-wp-h-007-clip-01-q02",
+              "type": "single_choice",
+              "question": "Wann findet der Abendkurs statt?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Montags und mittwochs von neun bis zwölf Uhr."
+                },
+                {
+                  "id": "B",
+                  "text": "Dienstags und donnerstags von achtzehn bis zwanzig Uhr dreißig."
+                },
+                {
+                  "id": "C",
+                  "text": "Freitags von vierzehn bis sechzehn Uhr."
+                },
+                {
+                  "id": "D",
+                  "text": "Samstags von zehn bis dreizehn Uhr."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Der Abendkurs ist dienstags und donnerstags von achtzehn bis zwanzig Uhr dreißig."
+            }
+          ]
+        },
+        {
+          "id": "b1-wp-h-007-clip-02",
+          "audio": "audio/weekly-plan/b1/hoeren/b1-wp-h-007-clip-02.mp3",
+          "title": "Mailbox-Nachricht zu fehlenden Unterlagen",
+          "durationSeconds": 41,
+          "speakerType": "Mailbox-Nachricht einer Sprachschule",
+          "speakers": [
+            {
+              "id": "speaker-1",
+              "role": "Sprachschulmitarbeiter",
+              "gender": "male",
+              "ageRange": "30-40",
+              "voiceStyle": "freundlich und sachlich",
+              "speakingSpeed": "normal"
+            }
+          ],
+          "background": {
+            "location": "ruhiges Büro einer Sprachschule",
+            "sounds": [
+              "sehr leises Tippen",
+              "entferntes Klingeln",
+              "leichte Raumakustik"
+            ],
+            "noiseLevel": "very_low"
+          },
+          "audioDirection": {
+            "style": "natürliche Mailbox-Nachricht",
+            "pace": "normal",
+            "clarity": "deutlich mit natürlichen Satzpausen",
+            "pauses": [
+              {
+                "after": "Hier ist die Sprachschule Dialog in Graz.",
+                "durationMs": 550
+              },
+              {
+                "after": "Für Ihre Anmeldung fehlen noch Unterlagen.",
+                "durationMs": 550
+              },
+              {
+                "after": "Bitte bringen Sie die Dokumente bis Freitag vorbei.",
+                "durationMs": 500
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "speaker": "Sprachschulmitarbeiter",
+              "text": "Guten Tag, Frau Vasile. Hier ist die Sprachschule Dialog in Graz."
+            },
+            {
+              "speaker": "Sprachschulmitarbeiter",
+              "text": "Für Ihre Anmeldung fehlen noch Unterlagen. Wir haben Ihren Pass erhalten, aber nicht die Meldebestätigung."
+            },
+            {
+              "speaker": "Sprachschulmitarbeiter",
+              "text": "Ohne diese Dokumente können wir Ihre Anmeldung leider nicht abschließen."
+            },
+            {
+              "speaker": "Sprachschulmitarbeiter",
+              "text": "Bitte bringen Sie die Meldebestätigung bis Freitag um sechzehn Uhr ins Sekretariat."
+            },
+            {
+              "speaker": "Sprachschulmitarbeiter",
+              "text": "Alternativ können Sie sie per E-Mail an info@dialog-graz.at senden."
+            },
+            {
+              "speaker": "Sprachschulmitarbeiter",
+              "text": "Vielen Dank und auf Wiederhören."
+            }
+          ],
+          "questions": [
+            {
+              "id": "b1-wp-h-007-clip-02-q01",
+              "type": "single_choice",
+              "question": "Welches Dokument fehlt noch?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Der Pass."
+                },
+                {
+                  "id": "B",
+                  "text": "Die Meldebestätigung."
+                },
+                {
+                  "id": "C",
+                  "text": "Der Deutschkursnachweis."
+                },
+                {
+                  "id": "D",
+                  "text": "Die Rechnung."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Die Meldebestätigung fehlt noch."
+            },
+            {
+              "id": "b1-wp-h-007-clip-02-q02",
+              "type": "single_choice",
+              "question": "Bis wann soll Frau Vasile die Unterlagen bringen?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Bis heute Abend."
+                },
+                {
+                  "id": "B",
+                  "text": "Bis morgen Mittag."
+                },
+                {
+                  "id": "C",
+                  "text": "Bis Freitag um sechzehn Uhr."
+                },
+                {
+                  "id": "D",
+                  "text": "Bis Montagmorgen."
+                }
+              ],
+              "correctAnswer": "C",
+              "answerText": "Sie soll die Unterlagen bis Freitag um sechzehn Uhr bringen."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b1-wp-h-008",
+      "title": "Veranstaltung im Stadtzentrum",
+      "topic": "Freizeit und Kultur",
+      "level": "B1",
+      "clips": [
+        {
+          "id": "b1-wp-h-008-clip-01",
+          "audio": "audio/weekly-plan/b1/hoeren/b1-wp-h-008-clip-01.mp3",
+          "title": "Radiomeldung zur Veranstaltung",
+          "durationSeconds": 40,
+          "speakerType": "Radioansage",
+          "speakers": [
+            {
+              "id": "speaker-1",
+              "role": "Radiomoderator",
+              "gender": "male",
+              "ageRange": "35-45",
+              "voiceStyle": "freundlich und informativ",
+              "speakingSpeed": "normal"
+            }
+          ],
+          "background": {
+            "location": "Radiostudio",
+            "sounds": [
+              "leise Studioatmosphäre",
+              "kurzer Jingle am Anfang",
+              "sehr leises Hintergrundgeräusch"
+            ],
+            "noiseLevel": "very_low"
+          },
+          "audioDirection": {
+            "style": "typische Radioansage",
+            "pace": "normal",
+            "clarity": "deutlich",
+            "pauses": [
+              {
+                "after": "Dieses Wochenende findet im Stadtzentrum ein Fest statt.",
+                "durationMs": 550
+              },
+              {
+                "after": "Am Samstag beginnt das Fest um vierzehn Uhr.",
+                "durationMs": 550
+              },
+              {
+                "after": "Der Eintritt ist für alle Besucher kostenlos.",
+                "durationMs": 500
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "speaker": "Radiomoderator",
+              "text": "Guten Morgen. Hier sind die Tipps für das Wochenende in Salzburg."
+            },
+            {
+              "speaker": "Radiomoderator",
+              "text": "Dieses Wochenende findet im Stadtzentrum ein Fest statt. Es heißt Sommer in der Altstadt."
+            },
+            {
+              "speaker": "Radiomoderator",
+              "text": "Am Samstag beginnt das Fest um vierzehn Uhr auf dem Kapitelplatz."
+            },
+            {
+              "speaker": "Radiomoderator",
+              "text": "Es gibt Live-Musik, Stände mit regionalen Speisen und Workshops für Kinder."
+            },
+            {
+              "speaker": "Radiomoderator",
+              "text": "Der Eintritt ist für alle Besucher kostenlos. Am Sonntag endet das Fest um zwanzig Uhr."
+            }
+          ],
+          "questions": [
+            {
+              "id": "b1-wp-h-008-clip-01-q01",
+              "type": "single_choice",
+              "question": "Wo findet das Fest statt?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Auf dem Hauptbahnhof."
+                },
+                {
+                  "id": "B",
+                  "text": "Auf dem Kapitelplatz."
+                },
+                {
+                  "id": "C",
+                  "text": "In der Universität."
+                },
+                {
+                  "id": "D",
+                  "text": "Im Stadtpark."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Das Fest findet auf dem Kapitelplatz statt."
+            },
+            {
+              "id": "b1-wp-h-008-clip-01-q02",
+              "type": "single_choice",
+              "question": "Was ist beim Fest kostenlos?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Das Essen."
+                },
+                {
+                  "id": "B",
+                  "text": "Die Workshops."
+                },
+                {
+                  "id": "C",
+                  "text": "Der Eintritt."
+                },
+                {
+                  "id": "D",
+                  "text": "Die Live-Musik extra."
+                }
+              ],
+              "correctAnswer": "C",
+              "answerText": "Der Eintritt ist kostenlos."
+            }
+          ]
+        },
+        {
+          "id": "b1-wp-h-008-clip-02",
+          "audio": "audio/weekly-plan/b1/hoeren/b1-wp-h-008-clip-02.mp3",
+          "title": "Freunde planen den Besuch",
+          "durationSeconds": 49,
+          "speakerType": "Dialog zwischen zwei Freunden",
+          "speakers": [
+            {
+              "id": "speaker-1",
+              "role": "Freundin",
+              "gender": "female",
+              "ageRange": "20-30",
+              "voiceStyle": "entspannt und freundlich",
+              "speakingSpeed": "normal"
+            },
+            {
+              "id": "speaker-2",
+              "role": "Freund",
+              "gender": "male",
+              "ageRange": "20-30",
+              "voiceStyle": "interessiert und aktiv",
+              "speakingSpeed": "normal"
+            }
+          ],
+          "background": {
+            "location": "Café im Stadtzentrum",
+            "sounds": [
+              "gedämpfte Caféatmosphäre",
+              "leises Klirren von Tassen",
+              "entfernte Gespräche"
+            ],
+            "noiseLevel": "low"
+          },
+          "audioDirection": {
+            "style": "natürliches Gespräch unter Freunden",
+            "pace": "normal",
+            "clarity": "klar",
+            "pauses": [
+              {
+                "after": "Hast du gehört, dass am Samstag ein Fest ist?",
+                "durationMs": 450
+              },
+              {
+                "after": "Wir könnten um fünfzehn Uhr am Kapitelplatz treffen.",
+                "durationMs": 500
+              },
+              {
+                "after": "Dann schauen wir zuerst die Live-Musik an.",
+                "durationMs": 450
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "speaker": "Freundin",
+              "text": "Hast du gehört, dass am Samstag ein Fest im Stadtzentrum ist?"
+            },
+            {
+              "speaker": "Freund",
+              "text": "Ja, Sommer in der Altstadt. Ich würde gerne hingehen."
+            },
+            {
+              "speaker": "Freundin",
+              "text": "Wir könnten um fünfzehn Uhr am Kapitelplatz treffen. Dann haben wir noch Zeit."
+            },
+            {
+              "speaker": "Freund",
+              "text": "Fünfzehn Uhr ist gut. Ich muss vorher noch kurz einkaufen."
+            },
+            {
+              "speaker": "Freundin",
+              "text": "Dann schauen wir zuerst die Live-Musik an. Danach können wir etwas essen."
+            },
+            {
+              "speaker": "Freund",
+              "text": "Perfekt. Ich bringe meine Kamera mit. Der Eintritt ist kostenlos, oder?"
+            },
+            {
+              "speaker": "Freundin",
+              "text": "Ja, genau. Wir müssen nur früh genug da sein, weil es voll werden kann."
+            },
+            {
+              "speaker": "Freund",
+              "text": "Alles klar. Bis Samstag um fünfzehn Uhr am Kapitelplatz."
+            }
+          ],
+          "questions": [
+            {
+              "id": "b1-wp-h-008-clip-02-q01",
+              "type": "single_choice",
+              "question": "Wann wollen die Freunde sich treffen?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Um vierzehn Uhr."
+                },
+                {
+                  "id": "B",
+                  "text": "Um fünfzehn Uhr."
+                },
+                {
+                  "id": "C",
+                  "text": "Um sechzehn Uhr."
+                },
+                {
+                  "id": "D",
+                  "text": "Um siebzehn Uhr."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Sie treffen sich um fünfzehn Uhr."
+            },
+            {
+              "id": "b1-wp-h-008-clip-02-q02",
+              "type": "single_choice",
+              "question": "Was möchten sie zuerst machen?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Etwas essen."
+                },
+                {
+                  "id": "B",
+                  "text": "Die Live-Musik anschauen."
+                },
+                {
+                  "id": "C",
+                  "text": "An einem Workshop teilnehmen."
+                },
+                {
+                  "id": "D",
+                  "text": "Fotos vom Stadtpark machen."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Sie möchten zuerst die Live-Musik anschauen."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b1-wp-h-009",
+      "title": "Nachbarschaft und Hausordnung",
+      "topic": "Nachbarschaft und Alltag",
+      "level": "B1",
+      "clips": [
+        {
+          "id": "b1-wp-h-009-clip-01",
+          "audio": "audio/weekly-plan/b1/hoeren/b1-wp-h-009-clip-01.mp3",
+          "title": "Gespräch mit der Nachbarin",
+          "durationSeconds": 44,
+          "speakerType": "Dialog zwischen zwei Nachbarn",
+          "speakers": [
+            {
+              "id": "speaker-1",
+              "role": "Nachbar",
+              "gender": "male",
+              "ageRange": "50-60",
+              "voiceStyle": "freundlich und besorgt",
+              "speakingSpeed": "normal"
+            },
+            {
+              "id": "speaker-2",
+              "role": "Nachbarin",
+              "gender": "female",
+              "ageRange": "55-65",
+              "voiceStyle": "ruhig und erklärend",
+              "speakingSpeed": "normal"
+            }
+          ],
+          "background": {
+            "location": "Treppenhaus eines Wohnhauses",
+            "sounds": [
+              "leises Echo im Treppenhaus",
+              "entferntes Schließen einer Tür",
+              "gedämpfte Schritte"
+            ],
+            "noiseLevel": "low"
+          },
+          "audioDirection": {
+            "style": "natürliches Gespräch im Treppenhaus",
+            "pace": "normal",
+            "clarity": "klar",
+            "pauses": [
+              {
+                "after": "Guten Morgen, Frau Krammer.",
+                "durationMs": 450
+              },
+              {
+                "after": "In der Hausordnung steht, dass Ruhezeiten gelten.",
+                "durationMs": 500
+              },
+              {
+                "after": "Ab zwanzig Uhr soll man keine laute Musik hören.",
+                "durationMs": 450
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "speaker": "Nachbar",
+              "text": "Guten Morgen, Frau Krammer. Ich wollte kurz etwas fragen."
+            },
+            {
+              "speaker": "Nachbarin",
+              "text": "Guten Morgen, Herr Steiner. Was gibt es?"
+            },
+            {
+              "speaker": "Nachbar",
+              "text": "Letzte Nacht war wieder laute Musik aus Ihrer Wohnung zu hören."
+            },
+            {
+              "speaker": "Nachbarin",
+              "text": "Oh, das tut mir leid. Mein Enkel war zu Besuch. In der Hausordnung steht, dass Ruhezeiten gelten."
+            },
+            {
+              "speaker": "Nachbar",
+              "text": "Genau. Ab zwanzig Uhr soll man keine laute Musik hören."
+            },
+            {
+              "speaker": "Nachbarin",
+              "text": "Das stimmt. Wir haben die Musik schon um halb zehn ausgemacht."
+            },
+            {
+              "speaker": "Nachbar",
+              "text": "Vielleicht war es doch noch zu laut. Könnten Sie das in Zukunft beachten?"
+            },
+            {
+              "speaker": "Nachbarin",
+              "text": "Natürlich. Ich erkläre es auch meinem Enkel. Danke für den Hinweis."
+            }
+          ],
+          "questions": [
+            {
+              "id": "b1-wp-h-009-clip-01-q01",
+              "type": "single_choice",
+              "question": "Warum spricht Herr Steiner mit Frau Krammer?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Wegen einer offenen Rechnung."
+                },
+                {
+                  "id": "B",
+                  "text": "Wegen lauter Musik in der Nacht."
+                },
+                {
+                  "id": "C",
+                  "text": "Wegen eines kaputten Briefkastens."
+                },
+                {
+                  "id": "D",
+                  "text": "Wegen einer Wohnungsbesichtigung."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Er spricht wegen lauter Musik in der Nacht."
+            },
+            {
+              "id": "b1-wp-h-009-clip-01-q02",
+              "type": "single_choice",
+              "question": "Ab wann gilt laut Hausordnung Ruhezeit?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Ab neunzehn Uhr."
+                },
+                {
+                  "id": "B",
+                  "text": "Ab zwanzig Uhr."
+                },
+                {
+                  "id": "C",
+                  "text": "Ab einundzwanzig Uhr."
+                },
+                {
+                  "id": "D",
+                  "text": "Ab zweiundzwanzig Uhr."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Ab zwanzig Uhr gilt Ruhezeit."
+            }
+          ]
+        },
+        {
+          "id": "b1-wp-h-009-clip-02",
+          "audio": "audio/weekly-plan/b1/hoeren/b1-wp-h-009-clip-02.mp3",
+          "title": "Mitteilung der Hausverwaltung",
+          "durationSeconds": 42,
+          "speakerType": "Ansage der Hausverwaltung",
+          "speakers": [
+            {
+              "id": "speaker-1",
+              "role": "Hausverwalter",
+              "gender": "male",
+              "ageRange": "40-50",
+              "voiceStyle": "sachlich und deutlich",
+              "speakingSpeed": "normal"
+            }
+          ],
+          "background": {
+            "location": "Treppenhaus mit Lautsprecher",
+            "sounds": [
+              "Lautsprecher mit leichtem Echo",
+              "entferntes Klingeln einer Tür",
+              "gedämpfte Schritte"
+            ],
+            "noiseLevel": "low"
+          },
+          "audioDirection": {
+            "style": "formelle Hausmitteilung",
+            "pace": "etwas langsamer",
+            "clarity": "sehr deutlich",
+            "pauses": [
+              {
+                "after": "Liebe Bewohnerinnen und Bewohner des Hauses Sonnengasse.",
+                "durationMs": 550
+              },
+              {
+                "after": "Am nächsten Montag wird das Treppenhaus renoviert.",
+                "durationMs": 550
+              },
+              {
+                "after": "Bitte benutzen Sie in dieser Zeit den Hintereingang.",
+                "durationMs": 500
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "speaker": "Hausverwalter",
+              "text": "Liebe Bewohnerinnen und Bewohner des Hauses Sonnengasse. Hier ist eine Mitteilung der Hausverwaltung."
+            },
+            {
+              "speaker": "Hausverwalter",
+              "text": "Am nächsten Montag wird das Treppenhaus renoviert. Die Arbeiten beginnen um acht Uhr."
+            },
+            {
+              "speaker": "Hausverwalter",
+              "text": "Der Haupteingang ist von acht bis vierzehn Uhr nicht benutzbar."
+            },
+            {
+              "speaker": "Hausverwalter",
+              "text": "Bitte benutzen Sie in dieser Zeit den Hintereingang in der Gasse."
+            },
+            {
+              "speaker": "Hausverwalter",
+              "text": "Wir bitten um Ihr Verständnis. Bei Fragen melden Sie sich im Verwaltungsbüro."
+            }
+          ],
+          "questions": [
+            {
+              "id": "b1-wp-h-009-clip-02-q01",
+              "type": "single_choice",
+              "question": "Was wird am Montag renoviert?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Die Garage."
+                },
+                {
+                  "id": "B",
+                  "text": "Das Treppenhaus."
+                },
+                {
+                  "id": "C",
+                  "text": "Die Heizung."
+                },
+                {
+                  "id": "D",
+                  "text": "Die Briefkästen."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Das Treppenhaus wird renoviert."
+            },
+            {
+              "id": "b1-wp-h-009-clip-02-q02",
+              "type": "single_choice",
+              "question": "Welchen Eingang sollen die Bewohner benutzen?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Den Haupteingang."
+                },
+                {
+                  "id": "B",
+                  "text": "Den Hintereingang."
+                },
+                {
+                  "id": "C",
+                  "text": "Den Kellerzugang."
+                },
+                {
+                  "id": "D",
+                  "text": "Den Eingang zur Garage."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Sie sollen den Hintereingang benutzen."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b1-wp-h-010",
+      "title": "Behördentermin und fehlende Unterlagen",
+      "topic": "Behörden und wichtige Termine",
+      "level": "B1",
+      "clips": [
+        {
+          "id": "b1-wp-h-010-clip-01",
+          "audio": "audio/weekly-plan/b1/hoeren/b1-wp-h-010-clip-01.mp3",
+          "title": "Gespräch im Amt",
+          "durationSeconds": 50,
+          "speakerType": "Dialog zwischen Bürger und Sachbearbeiterin",
+          "speakers": [
+            {
+              "id": "speaker-1",
+              "role": "Bürger",
+              "gender": "male",
+              "ageRange": "30-40",
+              "voiceStyle": "etwas nervös, aber höflich",
+              "speakingSpeed": "normal"
+            },
+            {
+              "id": "speaker-2",
+              "role": "Sachbearbeiterin",
+              "gender": "female",
+              "ageRange": "40-50",
+              "voiceStyle": "ruhig und professionell",
+              "speakingSpeed": "normal"
+            }
+          ],
+          "background": {
+            "location": "Magistrat, Wartebereich",
+            "sounds": [
+              "gedämpfte Gespräche",
+              "gelegentliches Klingeln",
+              "leises Tippen am Schalter"
+            ],
+            "noiseLevel": "low"
+          },
+          "audioDirection": {
+            "style": "natürliches Gespräch im Amt",
+            "pace": "normal",
+            "clarity": "klar",
+            "pauses": [
+              {
+                "after": "Guten Morgen. Ich habe einen Termin zur Aufenthaltserlaubnis.",
+                "durationMs": 450
+              },
+              {
+                "after": "Leider fehlt noch Ihre aktuelle Meldebestätigung.",
+                "durationMs": 500
+              },
+              {
+                "after": "Dann können wir den Termin heute nicht abschließen.",
+                "durationMs": 450
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "speaker": "Bürger",
+              "text": "Guten Morgen. Ich habe einen Termin zur Aufenthaltserlaubnis. Mein Name ist Amir Haddad."
+            },
+            {
+              "speaker": "Sachbearbeiterin",
+              "text": "Guten Morgen, Herr Haddad. Bitte nehmen Sie Platz. Haben Sie alle Unterlagen dabei?"
+            },
+            {
+              "speaker": "Bürger",
+              "text": "Ja, hier sind mein Pass, der Arbeitsvertrag und die Krankenversicherung."
+            },
+            {
+              "speaker": "Sachbearbeiterin",
+              "text": "Danke. Leider fehlt noch Ihre aktuelle Meldebestätigung. Die ist nicht mehr als drei Monate alt."
+            },
+            {
+              "speaker": "Bürger",
+              "text": "Oh, ich habe nur die alte Bestätigung mitgebracht. Kann ich sie später nachreichen?"
+            },
+            {
+              "speaker": "Sachbearbeiterin",
+              "text": "Dann können wir den Termin heute nicht abschließen. Bitte bringen Sie die neue Meldebestätigung innerhalb von zwei Wochen."
+            },
+            {
+              "speaker": "Bürger",
+              "text": "Muss ich dafür einen neuen Termin vereinbaren?"
+            },
+            {
+              "speaker": "Sachbearbeiterin",
+              "text": "Nein, Sie können die Unterlagen direkt im Schalter einreichen. Wir melden uns dann per Post."
+            }
+          ],
+          "questions": [
+            {
+              "id": "b1-wp-h-010-clip-01-q01",
+              "type": "single_choice",
+              "question": "Welches Dokument fehlt?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Der Pass."
+                },
+                {
+                  "id": "B",
+                  "text": "Der Arbeitsvertrag."
+                },
+                {
+                  "id": "C",
+                  "text": "Die aktuelle Meldebestätigung."
+                },
+                {
+                  "id": "D",
+                  "text": "Die Krankenversicherung."
+                }
+              ],
+              "correctAnswer": "C",
+              "answerText": "Die aktuelle Meldebestätigung fehlt."
+            },
+            {
+              "id": "b1-wp-h-010-clip-01-q02",
+              "type": "single_choice",
+              "question": "Wie kann Herr Haddad die fehlende Unterlage nachreichen?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Nur mit einem neuen Termin."
+                },
+                {
+                  "id": "B",
+                  "text": "Per E-Mail an eine private Adresse."
+                },
+                {
+                  "id": "C",
+                  "text": "Direkt im Schalter innerhalb von zwei Wochen."
+                },
+                {
+                  "id": "D",
+                  "text": "Nur per Post aus einem anderen Land."
+                }
+              ],
+              "correctAnswer": "C",
+              "answerText": "Er kann die Unterlagen direkt im Schalter einreichen."
+            }
+          ]
+        },
+        {
+          "id": "b1-wp-h-010-clip-02",
+          "audio": "audio/weekly-plan/b1/hoeren/b1-wp-h-010-clip-02.mp3",
+          "title": "Mailbox-Nachricht zum Termin",
+          "durationSeconds": 43,
+          "speakerType": "Mailbox-Nachricht eines Amtes",
+          "speakers": [
+            {
+              "id": "speaker-1",
+              "role": "Sachbearbeiter",
+              "gender": "male",
+              "ageRange": "35-45",
+              "voiceStyle": "freundlich und sachlich",
+              "speakingSpeed": "normal"
+            }
+          ],
+          "background": {
+            "location": "ruhiges Büro im Magistrat",
+            "sounds": [
+              "sehr leises Tippen",
+              "entferntes Telefonklingeln",
+              "leichte Raumakustik"
+            ],
+            "noiseLevel": "very_low"
+          },
+          "audioDirection": {
+            "style": "natürliche Mailbox-Nachricht",
+            "pace": "normal",
+            "clarity": "deutlich mit natürlichen Satzpausen",
+            "pauses": [
+              {
+                "after": "Hier spricht das Magistrat Wien, Abteilung Aufenthalt.",
+                "durationMs": 550
+              },
+              {
+                "after": "Ihr Termin am Mittwoch muss verschoben werden.",
+                "durationMs": 550
+              },
+              {
+                "after": "Alternativ wäre Freitag um vierzehn Uhr möglich.",
+                "durationMs": 500
+              }
+            ]
+          },
+          "transcript": [
+            {
+              "speaker": "Sachbearbeiter",
+              "text": "Guten Tag, Herr Haddad. Hier spricht das Magistrat Wien, Abteilung Aufenthalt."
+            },
+            {
+              "speaker": "Sachbearbeiter",
+              "text": "Ihr Termin am Mittwoch um elf Uhr muss verschoben werden, weil Ihre Sachbearbeiterin an diesem Tag krank ist."
+            },
+            {
+              "speaker": "Sachbearbeiter",
+              "text": "Wir können Ihnen stattdessen Donnerstag um zehn Uhr dreißig anbieten."
+            },
+            {
+              "speaker": "Sachbearbeiter",
+              "text": "Alternativ wäre Freitag um vierzehn Uhr möglich."
+            },
+            {
+              "speaker": "Sachbearbeiter",
+              "text": "Bitte rufen Sie uns bis morgen zurück und bestätigen Sie den neuen Termin."
+            },
+            {
+              "speaker": "Sachbearbeiter",
+              "text": "Bringen Sie bitte auch die neue Meldebestätigung mit. Vielen Dank."
+            }
+          ],
+          "questions": [
+            {
+              "id": "b1-wp-h-010-clip-02-q01",
+              "type": "single_choice",
+              "question": "Warum wird der Termin verschoben?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Weil Herr Haddad zu spät kommt."
+                },
+                {
+                  "id": "B",
+                  "text": "Weil die Sachbearbeiterin krank ist."
+                },
+                {
+                  "id": "C",
+                  "text": "Weil das Amt geschlossen ist."
+                },
+                {
+                  "id": "D",
+                  "text": "Weil die Unterlagen verloren gegangen sind."
+                }
+              ],
+              "correctAnswer": "B",
+              "answerText": "Die Sachbearbeiterin ist krank."
+            },
+            {
+              "id": "b1-wp-h-010-clip-02-q02",
+              "type": "single_choice",
+              "question": "Was soll Herr Haddad zum neuen Termin mitbringen?",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "Einen neuen Pass."
+                },
+                {
+                  "id": "B",
+                  "text": "Einen neuen Arbeitsvertrag."
+                },
+                {
+                  "id": "C",
+                  "text": "Die neue Meldebestätigung."
+                },
+                {
+                  "id": "D",
+                  "text": "Eine schriftliche Bestätigung vom Arbeitgeber."
+                }
+              ],
+              "correctAnswer": "C",
+              "answerText": "Er soll die neue Meldebestätigung mitbringen."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

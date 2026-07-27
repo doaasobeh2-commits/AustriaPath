@@ -1,26 +1,32 @@
 import React, { useMemo } from 'react';
 import { isAdminAccount } from '../../config/authConfig';
 import { getCurrentUser } from '../userAccess';
-import { buildWeeklySession } from '../../data/weeklyPlanLibrary';
 import { buildPremiumExamParts } from '../../data/premiumExamBuilder';
 import { readJsonStorage } from '../../security/secureStorage';
 import { AI_SESSION_STORAGE_KEY } from '../../constants/storageKeys';
 import { isAdminQaMode } from '../../utils/adminQaMode.js';
+import {
+  getWeeklyPlanEntryCard,
+  isCoachV1Plan,
+  loadWeeklyPlan,
+} from '../../data/utils/weeklyPlanCoachState.js';
+import { setWeeklyPlanHandoff } from '../../data/utils/weeklyPlanHandoff.js';
 export function ProfileScreen({ setActiveTab }) {
   const placementProfile = useMemo(() => {
     return readJsonStorage('austriaPathPlacementProfile', null);
   }, []);
 
-  const weeklyPlan = useMemo(() => {
-    return readJsonStorage('austriaPathWeeklyPlan', null);
-  }, []);
+  const weeklyPlan = useMemo(() => loadWeeklyPlan(), []);
+
+  const weeklyEntry = useMemo(() => getWeeklyPlanEntryCard(weeklyPlan), [weeklyPlan]);
 
   const premiumExams = useMemo(() => {
     return readJsonStorage('austriaPathPremiumExams', []) || [];
   }, []);
 
   const reports = useMemo(() => {
-    return readJsonStorage('austriaPathAIReports', []) || [];
+    const all = readJsonStorage('austriaPathAIReports', []) || [];
+    return all.filter((report) => report.sessionType !== 'weekly_plan');
   }, []);
 
  const currentUser = getCurrentUser() || {};
@@ -52,133 +58,15 @@ const targetLevel =
     learnerReport,
     hasAIResult,
   });
-  const calendarPlan = buildCalendarPlan(hasAIResult, placementProfile, weeklyPlan);
   const exams = buildPremiumExamCards(premiumExams, level);
 
- const openWeeklySession = (item, index) => {
-  const focus = item.focus || 'selbstvorstellung';
-  const cleanLevel = level?.replace('+', '') || 'B1';
-
-  const sessionTasks = buildWeeklySession({
-  level: cleanLevel,
-  weaknesses: weeklyPlan?.weaknesses || [focus],
-  maxMinutes: item.duration || 20,
-});
-
-const parts = sessionTasks.length
-  ? sessionTasks.map((sessionItem) =>
-      convertWeeklyTaskToAISessionPart(sessionItem.task)
-    )
-  : [
-      {
-        type: 'self_intro',
-        label: 'Sprechen',
-        title: item.title || 'Selbstvorstellung',
-        instruction: 'Bitte stellen Sie sich kurz vor.',
-        points: ['Name', 'Herkunft', 'Wohnort', 'Familie', 'Freizeit'],
-      },
-    ];
-
-  localStorage.setItem(
-    AI_SESSION_STORAGE_KEY,
-    JSON.stringify({
-      sessionType: 'weekly_plan',
-      mode: 'weekly_plan',
-      title: `KI-Wochentraining · ${item.title}`,
-      level: cleanLevel,
-      parts,
-      appointmentIndex: index,
-      focus,
-      duration: item.duration || 20,
-      startedAt: new Date().toISOString(),
-    })
-  );
-
-  setActiveTab('aiSession');
-};
-function convertWeeklyTaskToAISessionPart(task) {
-  const base = {
-    label: skillLabel(task.skill),
-    title: task.title,
-    instruction: task.task || task.title,
-  };
-
-  if (task.type === 'listening') {
-    return {
-      ...base,
-      type: 'listening',
-      audioText: task.audioText,
-      questions: normalizeQuestions(task.questions),
-    };
-  }
-
-  if (task.type === 'reading') {
-    return {
-      ...base,
-      type: 'reading',
-      text: task.text,
-      questions: normalizeQuestions(task.questions),
-    };
-  }
-
-  if (task.type === 'speaking') {
-    return {
-      ...base,
-      type:
-        task.skill === 'bildbeschreibung'
-          ? 'image'
-          : task.skill === 'planung'
-          ? 'planning'
-          : 'self_intro',
-      points: task.followUps || ['Antworten Sie frei.'],
-      preparationSeconds: task.skill === 'planung' ? 10 : undefined,
-    };
-  }
-
-  if (task.type === 'writing') {
-    return {
-      ...base,
-      type: task.skill === 'schreiben' ? 'writing' : 'grammar',
-    };
-  }
-
-  return {
-    ...base,
-    type: 'grammar',
-  };
-}
-
-function normalizeQuestions(questions = []) {
-  return questions.map((q) => {
-    if (q.answerMode === 'trueFalse') {
-      return {
-        q: q.q,
-        options: ['richtig', 'falsch'],
-      };
+  const openWeeklyEntry = () => {
+    if (weeklyEntry.tab === 'trainingPlanDashboard' && weeklyEntry.planIndex) {
+      setWeeklyPlanHandoff({ planIndex: weeklyEntry.planIndex, view: 'dashboard' });
     }
-
-    return {
-      q: q.q,
-      options: q.options || ['Antwort schreiben'],
-    };
-  });
-}
-
-function skillLabel(skill) {
-  const labels = {
-    selbstvorstellung: 'Sprechen',
-    bildbeschreibung: 'Bildbeschreibung',
-    planung: 'Planung',
-    hoeren: 'Hören',
-    lesen: 'Lesen',
-    schreiben: 'Schreiben',
-    grammatik: 'Grammatik',
-    satzbau: 'Satzbau',
-    konnektoren: 'Konnektoren',
+    setActiveTab(weeklyEntry.tab);
   };
 
-  return labels[skill] || 'Training';
-}
 const getPremiumSchedule = () => {
   try {
     return JSON.parse(localStorage.getItem('austriaPathPremiumSchedule') || '[]');
@@ -395,59 +283,33 @@ return (
       <div style={planCardStyle}>
   <div style={planIntroStyle}>
     <div>
-      <h2 style={{ margin: 0 }}>🎯 Persönlicher Lernplan</h2>
-      <p style={mutedStyle}>
-        {weeklyPlan
-          ? 'Dein gespeicherter Wochenplan ist bereit.'
-          : hasAIResult
-            ? 'Erstelle einen Wochenplan auf Basis deines Einstufungstests.'
-            : 'Erstelle einen Wochenplan auf Basis deines gespeicherten Niveaus.'}
-      </p>
+      <h2 style={{ margin: 0 }}>🎯 KI-Wochenplan</h2>
+      <p style={mutedStyle}>{weeklyEntry.message}</p>
     </div>
-
     <div style={calendarIconStyle}>📅</div>
   </div>
 
-  {!weeklyPlan && (
+  <button
+    type="button"
+    style={createPlanButtonStyle}
+    onClick={openWeeklyEntry}
+  >
+    {weeklyEntry.kind === 'none' || weeklyEntry.kind === 'legacy' ? '➕ ' : '▶ '}
+    {weeklyEntry.cta}
+  </button>
+
+  {isCoachV1Plan(weeklyPlan) && (
     <button
-      style={createPlanButtonStyle}
-      onClick={() => setActiveTab('weeklyPlanSetup')}
+      type="button"
+      style={{ ...createPlanButtonStyle, backgroundColor: '#ffffff', color: '#2563eb', border: '1px solid #bfdbfe', marginTop: '10px' }}
+      onClick={() => setActiveTab('weeklyPlanHome')}
     >
-      ➕ Wochenplan erstellen
+      Wochenplan öffnen
     </button>
   )}
 
-       <div style={calendarGridStyle}>
-  {calendarPlan.map((item, index) => (
-    <div key={item.day} style={calendarItemStyle}>
-      <div style={{ ...calendarDotStyle, background: item.color }} />
-      <strong style={{ color: item.color }}>{item.day}</strong>
-      <div style={calendarIconSmallStyle}>{item.icon}</div>
-
-      <p style={{ margin: '6px 0 0', fontWeight: 700 }}>
-        {item.title}
-      </p>
-
-      <p style={smallTextStyle}>{item.text}</p>
-
-      <p style={smallTextStyle}>
-        ⏱️ {item.duration || 20} Min.
-      </p>
-
-      {weeklyPlan && (
-        <button
-          type="button"
-          style={startMiniButtonStyle}
-          onClick={() => openWeeklySession(item, index)}
-        >
-          ▶ Starten
-        </button>
-      )}
-    </div>
-  ))}
-</div>
         <div style={tipStyle}>
-          💡 Übe regelmäßig in kleinen Einheiten. So erreichst du dein nächstes Niveau sicherer.
+          💡 Übe in deinem eigenen Tempo. Jeder Trainingsplan hat vier kurze Übungen.
         </div>
       </div>
 
@@ -586,7 +448,7 @@ return (
     <div style={reportCardStyle}>
       <strong>Noch keine Berichte</strong>
       <p style={mutedStyle}>
-        Nach einer AI-Trainingseinheit oder Wochenplan-Sitzung erscheinen hier deine Ergebnisse.
+        Nach einer AI-Trainingseinheit erscheinen hier deine Ergebnisse.
       </p>
     </div>
   )}

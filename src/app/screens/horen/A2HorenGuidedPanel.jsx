@@ -7,13 +7,35 @@ import {
 /**
  * Guided A2 Hören — audio and questions on one screen per clip block.
  */
-export function A2HorenGuidedPanel({ model, onComplete, onRestart }) {
-  const [answers, setAnswers] = useState({});
-  const [clip1Unlocked, setClip1Unlocked] = useState(false);
-  const [clip2Unlocked, setClip2Unlocked] = useState(false);
+
+function isSameSessionState(left, right) {
+  if (!left || !right) return false;
+  return (
+    left.phase === right.phase &&
+    left.clip1Unlocked === right.clip1Unlocked &&
+    left.clip2Unlocked === right.clip2Unlocked &&
+    JSON.stringify(left.answers ?? {}) === JSON.stringify(right.answers ?? {})
+  );
+}
+
+export function A2HorenGuidedPanel({
+  model,
+  onComplete,
+  onRestart,
+  persistedState,
+  onPersistState,
+}) {
+  const [answers, setAnswers] = useState(() => persistedState?.answers ?? {});
+  const [clip1Unlocked, setClip1Unlocked] = useState(() => persistedState?.clip1Unlocked ?? false);
+  const [clip2Unlocked, setClip2Unlocked] = useState(() => persistedState?.clip2Unlocked ?? false);
   const [audioPlaying, setAudioPlaying] = useState(false);
-  const [phase, setPhase] = useState('practice');
+  const [phase, setPhase] = useState(() => persistedState?.phase ?? 'practice');
   const audioRef = useRef(null);
+  const onPersistStateRef = useRef(onPersistState);
+
+  useEffect(() => {
+    onPersistStateRef.current = onPersistState;
+  }, [onPersistState]);
 
   const clips = model?.clips || [];
   const clip1 = clips[0];
@@ -32,12 +54,15 @@ export function A2HorenGuidedPanel({ model, onComplete, onRestart }) {
   useEffect(() => () => stopAudio(), [stopAudio]);
 
   useEffect(() => {
-    setAnswers({});
-    setClip1Unlocked(false);
-    setClip2Unlocked(false);
-    setPhase('practice');
-    stopAudio();
-  }, [model?.model_id, stopAudio]);
+    const nextState = {
+      answers,
+      clip1Unlocked,
+      clip2Unlocked,
+      phase,
+    };
+    if (isSameSessionState(persistedState, nextState)) return;
+    onPersistStateRef.current?.(nextState);
+  }, [answers, clip1Unlocked, clip2Unlocked, phase, persistedState]);
 
   const playClip = useCallback(
     (clip, onUnlocked) => {

@@ -185,7 +185,8 @@ describe('weekly plan retry behavior', () => {
     const horenScreen = readSrc('src/app/screens/HorenScreen.jsx');
     expect(horenScreen).toMatch(/weeklyPlanModelId/);
     expect(horenScreen).toMatch(/handleA2Restart/);
-    expect(horenScreen).toMatch(/getA2HorenModel\(weeklyPlanModelId\)/);
+    expect(horenScreen).toMatch(/getA2HorenModel\(handoff\.canonicalModelId\)/);
+    expect(horenScreen).toMatch(/clearA2ModelSession/);
   });
 
   it('keeps assigned Aufgabe lösen task on guided restart', () => {
@@ -195,11 +196,15 @@ describe('weekly plan retry behavior', () => {
     expect(speakingScreen).toMatch(/onRestart=\{handleGuidedRestart\}/);
   });
 
-  it('keeps Home Trainer random retry behavior', () => {
+  it('uses model selector defaults on free Home Trainer pages', () => {
     const lesenScreen = readSrc('src/app/screens/LesenScreen.jsx');
-    expect(lesenScreen).toMatch(/pickRandomA2LesenModel\(\)/);
+    expect(lesenScreen).toMatch(/Lesemodell auswählen/);
+    expect(lesenScreen).toMatch(/a2LesenModels\[0\]/);
+    expect(lesenScreen).not.toMatch(/pickRandomA2LesenModel\(\)/);
     const horenScreen = readSrc('src/app/screens/HorenScreen.jsx');
-    expect(horenScreen).toMatch(/pickRandomA2HorenModel\(\)/);
+    expect(horenScreen).toMatch(/Hörmodell auswählen/);
+    expect(horenScreen).toMatch(/a2HorenModels\[0\]/);
+    expect(horenScreen).not.toMatch(/pickRandomA2HorenModel\(\)/);
   });
 });
 
@@ -228,13 +233,15 @@ describe('A2 Bildbeschreibung weekly task UI', () => {
 });
 
 describe('balanced A2 four-stage daily plans', () => {
-  it('generates one Lesen, Hören, Bildbeschreibung, and Aufgabe lösen per day', () => {
+  it('generates one Lesen, Hören, Bildbeschreibung, and fourth skill per day', () => {
     const plans = planWeek({ level: 'A2', weaknesses: [], totalPlans: 7, exercisesPerPlan: 4 });
     expect(plans).toHaveLength(7);
     plans.forEach((day, index) => {
       expect(day, `plan ${index + 1}`).toHaveLength(4);
       const skills = day.map((task) => task.skill);
-      expect(skills).toEqual(['lesen', 'hoeren', 'bildbeschreibung', 'aufgabe_loesen']);
+      const planIndex = index + 1;
+      const fourthSkill = planIndex % 2 === 0 ? 'schreiben' : 'aufgabe_loesen';
+      expect(skills).toEqual(['lesen', 'hoeren', 'bildbeschreibung', fourthSkill]);
       expect(new Set(skills).size).toBe(4);
     });
   });
@@ -247,6 +254,7 @@ describe('balanced A2 four-stage daily plans', () => {
     expect(plans[0][3].id).toBe('a2-al-001');
     expect(plans[1][0].id).toBe('a2-lesen-002');
     expect(plans[1][1].id).toBe('a2-hoeren-002');
+    expect(plans[1][3].id).toBe('A2-EM-002');
   });
 });
 

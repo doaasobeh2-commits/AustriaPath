@@ -8,8 +8,8 @@ import { getScreenLabels } from '../../i18n/screenLabels';
 import { useAdminLearningLevel } from '../hooks/useAdminLearningLevel.js';
 import { LearningLevelSelector } from '../components/LearningLevelSelector.jsx';
 import {
+  a2LesenModels,
   getA2LesenModel,
-  pickRandomA2LesenModel,
 } from '../../data/a2LesenCatalog.js';
 import { A2LesenGuidedPanel } from './lesen/A2LesenGuidedPanel.jsx';
 import { submitGuidedCatalogWeeklyPlanExercise } from '../../data/utils/weeklyPlanGuidedCompletion.js';
@@ -48,12 +48,18 @@ export function LesenScreen({
   const labels = getScreenLabels(getUserLanguage());
 
   const [showPremiumHint, setShowPremiumHint] = useState(false);
-  const [activeA2Model, setActiveA2Model] = useState(() => pickRandomA2LesenModel());
+  const [selectedModelId, setSelectedModelId] = useState(
+    () => a2LesenModels[0]?.model_id || null
+  );
   const [weeklyPlanModelId, setWeeklyPlanModelId] = useState(null);
 
   const language = getUserLanguage();
   const premiumMessage = getSmartPremiumMessage(language, 'lesen');
 
+  const activeA2Model = useMemo(
+    () => (selectedModelId ? getA2LesenModel(selectedModelId) : null),
+    [selectedModelId]
+  );
   const hasA2Catalog = useMemo(() => Boolean(activeA2Model), [activeA2Model]);
   const isWeeklyPlanCoachMode = useMemo(() => {
     const handoff = readWeeklyPlanHandoff();
@@ -72,18 +78,18 @@ export function LesenScreen({
 
     if (navigationContext?.canonicalModelId) {
       const linked = getA2LesenModel(navigationContext.canonicalModelId);
-      if (linked) setActiveA2Model(linked);
+      if (linked) setSelectedModelId(linked.model_id);
       clearNavigationContext?.();
       return;
     }
 
     if (handoff?.canonicalModelId) {
       const linked = getA2LesenModel(handoff.canonicalModelId);
-      if (linked) setActiveA2Model(linked);
+      if (linked) setSelectedModelId(linked.model_id);
       return;
     }
 
-    setActiveA2Model(pickRandomA2LesenModel());
+    setSelectedModelId(a2LesenModels[0]?.model_id || null);
   }, [level, navigationContext, clearNavigationContext]);
 
   useEffect(() => {
@@ -117,11 +123,11 @@ export function LesenScreen({
     if (weeklyPlanModelId) {
       const linked = getA2LesenModel(weeklyPlanModelId);
       if (linked) {
-        setActiveA2Model(linked);
+        setSelectedModelId(linked.model_id);
         return;
       }
     }
-    setActiveA2Model(pickRandomA2LesenModel());
+    setSelectedModelId(a2LesenModels[0]?.model_id || null);
   };
 
   if (level === 'B2') {
@@ -184,15 +190,42 @@ export function LesenScreen({
         level={level}
         onChange={(nextLevel) => {
           setLevel(nextLevel);
-          setActiveA2Model(pickRandomA2LesenModel());
+          setSelectedModelId(a2LesenModels[0]?.model_id || null);
         }}
         inputStyle={inputStyle}
       />
 
+      {a2LesenModels.length > 0 && (
+        <div>
+          <label
+            htmlFor="a2-lesen-model-select"
+            style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#334155' }}
+          >
+            Lesemodell auswählen
+          </label>
+          <select
+            id="a2-lesen-model-select"
+            style={selectStyle}
+            value={selectedModelId || ''}
+            onChange={(event) => {
+              setSelectedModelId(event.target.value);
+            }}
+          >
+            {a2LesenModels.map((item, modelIndex) => (
+              <option key={item.model_id} value={item.model_id}>
+                Modell {modelIndex + 1} — {item.title}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {activeA2Model ? (
         <A2LesenGuidedPanel
+          key={selectedModelId}
           model={activeA2Model}
           mode={isWeeklyPlanCoachMode ? 'coach' : 'practice'}
+          hidePracticeSubmit={!isWeeklyPlanCoachMode}
           onComplete={handleA2GuidedComplete}
           onRestart={handleA2Restart}
         />
@@ -231,6 +264,13 @@ const inputStyle = {
   fontSize: '15px',
   boxSizing: 'border-box',
   backgroundColor: '#ffffff',
+};
+
+const selectStyle = {
+  ...inputStyle,
+  appearance: 'auto',
+  WebkitAppearance: 'menulist',
+  cursor: 'pointer',
 };
 
 const boxStyle = {

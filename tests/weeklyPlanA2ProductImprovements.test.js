@@ -85,7 +85,7 @@ describe('A2 Lesen home vs weekly plan', () => {
     const screen = readSrc('src/app/screens/LesenScreen.jsx');
     expect(screen).toMatch(/isActiveWeeklyPlanExerciseHandoff/);
     expect(screen).toMatch(/mode=\{isWeeklyPlanCoachMode \? 'coach' : 'practice'\}/);
-    expect(screen).toMatch(/practiceOnly/);
+    expect(screen).toMatch(/hidePracticeSubmit/);
   });
 
   it('does not expose score or solutions in practice mode UI branch', () => {

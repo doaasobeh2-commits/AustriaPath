@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { b2Models } from '../../data/modelsB2';
 import { getSmartPremiumMessage } from '../../data/smartPremiumMessages';
 import { B1HorenScreen } from "./lesen/B1HorenScreen";
@@ -8,8 +8,8 @@ import { getUserLanguage } from '../../utils/userPreferences';
 import { useAdminLearningLevel } from '../hooks/useAdminLearningLevel.js';
 import { LearningLevelSelector } from '../components/LearningLevelSelector.jsx';
 import {
+  a2HorenModels,
   getA2HorenModel,
-  pickRandomA2HorenModel,
 } from '../../data/a2HorenCatalog.js';
 import { A2HorenGuidedPanel } from './horen/A2HorenGuidedPanel.jsx';
 import { submitGuidedCatalogWeeklyPlanExercise } from '../../data/utils/weeklyPlanGuidedCompletion.js';
@@ -113,7 +113,10 @@ export function HorenScreen({
   const [index, setIndex] = useState(0);
   const [showTranscript, setShowTranscript] = useState(false);
   const [showPremiumHint, setShowPremiumHint] = useState(false);
-  const [activeA2Model, setActiveA2Model] = useState(() => pickRandomA2HorenModel());
+  const [selectedModelId, setSelectedModelId] = useState(
+    () => a2HorenModels[0]?.model_id || null
+  );
+  const [modelSessions, setModelSessions] = useState({});
   const [weeklyPlanModelId, setWeeklyPlanModelId] = useState(null);
 
   
@@ -140,6 +143,29 @@ export function HorenScreen({
   const models = modelsByLevel[level] || [];
   const model = models[index];
 
+  const activeA2Model = useMemo(
+    () => (selectedModelId ? getA2HorenModel(selectedModelId) : null),
+    [selectedModelId]
+  );
+
+  const persistA2ModelSession = useCallback((modelId, sessionState) => {
+    if (!modelId || !sessionState) return;
+    setModelSessions((prev) => ({
+      ...prev,
+      [modelId]: sessionState,
+    }));
+  }, []);
+
+  const clearA2ModelSession = useCallback((modelId) => {
+    if (!modelId) return;
+    setModelSessions((prev) => {
+      if (!prev[modelId]) return prev;
+      const next = { ...prev };
+      delete next[modelId];
+      return next;
+    });
+  }, []);
+
   const language = getUserLanguage();
 
   const premiumMessage = getSmartPremiumMessage(language, 'hoeren');
@@ -154,16 +180,16 @@ export function HorenScreen({
     }
     if (navigationContext?.canonicalModelId) {
       const linked = getA2HorenModel(navigationContext.canonicalModelId);
-      if (linked) setActiveA2Model(linked);
+      if (linked) setSelectedModelId(linked.model_id);
       clearNavigationContext?.();
       return;
     }
     if (handoff?.canonicalModelId) {
       const linked = getA2HorenModel(handoff.canonicalModelId);
-      if (linked) setActiveA2Model(linked);
+      if (linked) setSelectedModelId(linked.model_id);
       return;
     }
-    setActiveA2Model(pickRandomA2HorenModel());
+    setSelectedModelId(a2HorenModels[0]?.model_id || null);
   }, [level, navigationContext, clearNavigationContext]);
 
   const handleA2GuidedComplete = ({ score, total }) => {
@@ -178,14 +204,9 @@ export function HorenScreen({
   };
 
   const handleA2Restart = () => {
-    if (weeklyPlanModelId) {
-      const linked = getA2HorenModel(weeklyPlanModelId);
-      if (linked) {
-        setActiveA2Model(linked);
-        return;
-      }
+    if (selectedModelId) {
+      clearA2ModelSession(selectedModelId);
     }
-    setActiveA2Model(pickRandomA2HorenModel());
   };
 
  useEffect(() => {
@@ -266,14 +287,45 @@ if (level === 'B1') {
           level={level}
           onChange={(nextLevel) => {
             setLevel(nextLevel);
-            setActiveA2Model(pickRandomA2HorenModel());
+            setSelectedModelId(a2HorenModels[0]?.model_id || null);
+            setModelSessions({});
           }}
           inputStyle={inputStyle}
         />
 
+        {a2HorenModels.length > 0 && (
+          <div>
+            <label
+              htmlFor="a2-horen-model-select"
+              style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#334155' }}
+            >
+              Hörmodell auswählen
+            </label>
+            <select
+              id="a2-horen-model-select"
+              style={selectStyle}
+              value={selectedModelId || ''}
+              onChange={(event) => {
+                setSelectedModelId(event.target.value);
+              }}
+            >
+              {a2HorenModels.map((item, modelIndex) => (
+                <option key={item.model_id} value={item.model_id}>
+                  Modell {modelIndex + 1} — {item.title}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {activeA2Model ? (
           <A2HorenGuidedPanel
+            key={selectedModelId}
             model={activeA2Model}
+            persistedState={modelSessions[selectedModelId]}
+            onPersistState={(sessionState) =>
+              persistA2ModelSession(activeA2Model.model_id, sessionState)
+            }
             onComplete={handleA2GuidedComplete}
             onRestart={handleA2Restart}
           />
@@ -473,6 +525,13 @@ const inputStyle = {
   fontSize: '15px',
   boxSizing: 'border-box',
   backgroundColor: '#ffffff'
+};
+
+const selectStyle = {
+  ...inputStyle,
+  appearance: 'auto',
+  WebkitAppearance: 'menulist',
+  cursor: 'pointer',
 };
 
 const boxStyle = {
