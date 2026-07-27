@@ -179,18 +179,8 @@ export function LesenScreen({
 }) {
   const level = selectedLevel || userLevel;
   const labels = getScreenLabels(getUserLanguage());
-  if (level === 'B2') {
-    return (
-      <B2LesenScreen
-        setActiveTab={setActiveTab}
-        navigationContext={navigationContext}
-        clearNavigationContext={clearNavigationContext}
-      />
-    );
-  }
-if (level === 'B1') {
-  return <B1LesenScreen setActiveTab={setActiveTab} />;
-}
+
+  // Hooks must run unconditionally before any early return (B1/B2).
   const [index, setIndex] = useState(0);
   const [showQuestions, setShowQuestions] = useState(false);
   const [showPremiumHint, setShowPremiumHint] = useState(false);
@@ -227,6 +217,20 @@ if (level === 'B1') {
       markPremiumHintShown(storageKey);
     }
   }, [models.length]);
+
+  if (level === 'B2') {
+    return (
+      <B2LesenScreen
+        setActiveTab={setActiveTab}
+        navigationContext={navigationContext}
+        clearNavigationContext={clearNavigationContext}
+      />
+    );
+  }
+
+  if (level === 'B1') {
+    return <B1LesenScreen setActiveTab={setActiveTab} />;
+  }
 
   return (
     <div style={pageStyle}>
