@@ -11,6 +11,7 @@ import {
   fetchPlacementEntitlementView,
   isPlacementPlan,
   resolvePlacementCtaState,
+  canAccessPlacementTest,
 } from "../src/utils/placementEntitlement.js";
 
 describe("Placement entitlement CTA", () => {
@@ -47,5 +48,20 @@ describe("Placement entitlement CTA", () => {
   it("does not treat other plans as Placement", () => {
     expect(isPlacementPlan({ id: "placement", type: "placement" })).toBe(true);
     expect(isPlacementPlan({ id: "ai-exam", type: "ai_exam" })).toBe(false);
+  });
+
+  it("blocks free users from opening Placement locally", () => {
+    expect(
+      canAccessPlacementTest({
+        permissions: { placementTest: false },
+        subscription: { remainingExams: 0 },
+      })
+    ).toBe(false);
+    expect(
+      canAccessPlacementTest({
+        permissions: { placementTest: true },
+        subscription: { remainingExams: 1 },
+      })
+    ).toBe(true);
   });
 });

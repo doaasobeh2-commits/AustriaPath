@@ -55,6 +55,7 @@ import MessagesScreen from "./screens/MessagesScreen.jsx";
 import { isTrialExpiredUser } from "../utils/accessStatus.js";
 import { isOnboardingComplete, markOnboardingComplete } from "../utils/userPreferences.js";
 import DailyLearningScreen from "./screens/DailyLearningScreen.jsx";
+import { canAccessPlacementTest } from "../utils/placementEntitlement.js";
 
 const AdminScreen = React.lazy(() =>
   import("./screens/AdminScreen").then((module) => ({ default: module.AdminScreen }))
@@ -244,6 +245,13 @@ export default function App() {
   };
 
   const guardedTab = getSafeTab(activeTab, currentUser);
+
+  useEffect(() => {
+    if (!isLoggedIn || guardedTab !== "placementTest") return;
+    if (canAccessPlacementTest(currentUser)) return;
+    alert("Coming Soon");
+    setActiveTabGuarded("premium");
+  }, [guardedTab, currentUser, isLoggedIn, setActiveTabGuarded]);
 
   if (legalView) {
     return (
@@ -587,7 +595,7 @@ export default function App() {
             <PremiumScheduleScreen setActiveTab={setActiveTabGuarded} />
           )}
 
-          {guardedTab === "placementTest" && (
+          {guardedTab === "placementTest" && canAccessPlacementTest(currentUser) && (
             <PlacementTestScreen setActiveTab={setActiveTabGuarded} />
           )}
 

@@ -3,6 +3,7 @@ import { a2Models } from '../../data/modelsA2';
 import { b1Models } from '../../data/modelsb1';
 import { b2Models } from '../../data/modelsB2';
 import { getPublishedAdminItems } from "../../utils/adminContent";
+import { canAccessPlacementTest } from '../../utils/placementEntitlement.js';
 
 export function PracticeScreen({
   setActiveTab,
@@ -211,7 +212,12 @@ export function PracticeScreen({
           <button
             onClick={() => {
               setShowPremiumHint(false);
-              setActiveTab('placementTest');
+              if (canAccessPlacementTest()) {
+                setActiveTab('placementTest');
+                return;
+              }
+              alert('Coming Soon');
+              setActiveTab('premium');
             }}
             style={premiumButtonStyle}
           >
