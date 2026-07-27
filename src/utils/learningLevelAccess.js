@@ -3,7 +3,6 @@
  * stored learner level is never mutated by admin navigation.
  */
 import { isAdminAccount } from '../config/authConfig.js';
-import { getCurrentUserAllowedLevels } from '../app/userAccess.js';
 import { getUserLevel } from './userPreferences.js';
 
 export const LEARNING_LEVELS = Object.freeze(['A2', 'B1', 'B2']);
@@ -39,7 +38,11 @@ export function getAccessibleLearningLevels(user) {
   if (user?.level) {
     return defaultAllowedLevelsForLevel(user.level);
   }
-  return getCurrentUserAllowedLevels();
+  const storedLevel = getUserLevel();
+  if (storedLevel && LEARNING_LEVELS.includes(storedLevel)) {
+    return defaultAllowedLevelsForLevel(storedLevel);
+  }
+  return ['A2'];
 }
 
 /**
