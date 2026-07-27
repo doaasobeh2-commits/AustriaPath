@@ -147,6 +147,17 @@ function resolveSourceRef(sourceRef) {
     return resolveWeeklyPlanTarget(mapped);
   }
 
+  if (file === "a2Planning") {
+    const planIndex = Number(sourceRef.planIndex);
+    if (!Number.isInteger(planIndex) || planIndex < 0) return null;
+    return {
+      tab: "planning",
+      buttonKey: "planning",
+      level: "A2",
+      planIndex,
+    };
+  }
+
   if (file === "b2LesenModels") {
     const modelIndex = b2LesenModels.findIndex((m) => m.id === sourceRef.modelId);
     if (modelIndex < 0) return null;

@@ -56,8 +56,8 @@ export const DAILY_LEARNING_SOURCE_REGISTRY = {
   ),
 
   "A2-041": akademie("A2", "verbs", 2),
-  "A2-042": { file: "weeklyPlanLibrary", taskId: "a2-planung-001" },
-  "A2-043": { file: "weeklyPlanLibrary", taskId: "a2-planung-001" },
+  "A2-042": { file: "a2Planning", planIndex: 0 },
+  "A2-043": { file: "a2Planning", planIndex: 0 },
   "A2-044": { file: "modelsA2", modelId: 4 },
   "A2-045": akademie("A2", "grammar", 5),
   "A2-046": akademie("A2", "mistakes", 8),
@@ -106,7 +106,7 @@ export const DAILY_LEARNING_SOURCE_REGISTRY = {
   "A2-087": { file: "weeklyPlanLibrary", taskId: "a2-hoeren-001" },
   "A2-088": { file: "modelsA2", modelId: 4 },
   "A2-089": { file: "weeklyPlanLibrary", taskId: "a2-grammatik-001" },
-  "A2-090": { file: "weeklyPlanLibrary", taskId: "a2-planung-001" },
+  "A2-090": { file: "a2Planning", planIndex: 0 },
 
   ...fill("B1", 1, 2, { file: "modelsb1", modelId: 1 }),
   ...fill("B1", 3, 4, { file: "modelsb1", modelId: 2 }),

@@ -189,8 +189,9 @@ describe("Placement provider evaluation", () => {
 
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
     expect(result.planningEvidenceLedger.items.finalState).toBe(expectedState);
-    expect(result.followUpQuestionId).toBe("picnic-reaction");
+    expect(result.followUpQuestionId).toBe("picnic-close");
     expect(result.followUpQuestionId).not.toBe("picnic-items");
+    expect(result.followUpQuestionId).not.toBe("picnic-reaction");
   });
 
   it("keeps empty Planning and short non-Planning answers on validation failure", async () => {

@@ -658,8 +658,8 @@ export const dailyLearningCards = [
     "recommended": "Ja, das klingt gut. Um 18 Uhr passt mir.",
     "reason": "„Das klingt gut\" ist die typische Zustimmungsformel, wenn jemand einen Vorschlag macht — genau so reagieren Planungsdialoge in AustriaPath.",
     "sourceRef": {
-      "file": "weeklyPlanLibrary",
-      "taskId": "a2-planung-001"
+      "file": "a2Planning",
+      "planIndex": 0
     }
   },
   {
@@ -673,8 +673,8 @@ export const dailyLearningCards = [
     "recommended": "Sollen wir am Sonntag in den Park fahren?",
     "reason": "„Sollen wir …?\" ist die natürliche Frage, um gemeinsam etwas zu planen — direkt aus den A2-Planungsaufgaben.",
     "sourceRef": {
-      "file": "weeklyPlanLibrary",
-      "taskId": "a2-planung-001"
+      "file": "a2Planning",
+      "planIndex": 0
     }
   },
   {
@@ -1404,8 +1404,8 @@ export const dailyLearningCards = [
     "recommended": "Soll ich etwas zum Essen oder Getränke mitbringen?",
     "reason": "Eine höfliche Frage mit konkreten Optionen — passend zur Geburtstagsfeier-Aufgabe aus weeklyPlanLibrary.",
     "sourceRef": {
-      "file": "weeklyPlanLibrary",
-      "taskId": "a2-planung-001"
+      "file": "a2Planning",
+      "planIndex": 0
     }
   },
   {
