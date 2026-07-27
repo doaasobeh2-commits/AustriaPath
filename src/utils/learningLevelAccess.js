@@ -32,7 +32,7 @@ export function getAccessibleLearningLevels(user) {
   if (canAccessAllLearningLevels(user)) {
     return [...LEARNING_LEVELS];
   }
-  if (user?.allowedLevels?.length) {
+  if (Array.isArray(user?.allowedLevels) && user.allowedLevels.length) {
     return user.allowedLevels.filter((level) => LEARNING_LEVELS.includes(level));
   }
   if (user?.level) {

@@ -57,6 +57,32 @@ describe('getAccessibleLearningLevels', () => {
   it('returns only A2 for normal A2 learner', () => {
     expect(getAccessibleLearningLevels(a2Learner)).toEqual(['A2']);
   });
+
+  it('filters explicit allowedLevels arrays from the API', () => {
+    const learner = {
+      role: 'student',
+      status: 'approved',
+      level: 'B1',
+      allowedLevels: ['A2', 'B1', 'INVALID'],
+    };
+    expect(getAccessibleLearningLevels(learner)).toEqual(['A2', 'B1']);
+  });
+
+  it('falls back to level defaults when allowedLevels is a PostgreSQL array literal string', () => {
+    const learner = {
+      role: 'student',
+      status: 'approved',
+      level: 'B1',
+      allowedLevels: '{A2,B1}',
+    };
+    expect(getAccessibleLearningLevels(learner)).toEqual(['A2', 'B1']);
+    expect(() => getAccessibleLearningLevels(learner)).not.toThrow();
+  });
+
+  it('falls back to level defaults when allowedLevels is missing', () => {
+    const learner = { role: 'student', status: 'approved', level: 'B1' };
+    expect(getAccessibleLearningLevels(learner)).toEqual(['A2', 'B1']);
+  });
 });
 
 describe('session-local admin level (no profile mutation)', () => {
