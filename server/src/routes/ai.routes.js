@@ -7,6 +7,7 @@ import { AppError } from "../middleware/errorHandler.js";
 import { env } from "../config/env.js";
 import { randomUUID } from "node:crypto";
 import { aiRateLimit, aiDailyRateLimit } from "../middleware/rateLimit.js";
+import { isAdminUser } from "../utils/adminAccess.js";
 
 const router = Router();
 
@@ -14,11 +15,14 @@ router.post("/completions", requireAuth, requireActiveAccess, aiRateLimit, aiDai
   try {
     const mode = req.body.mode || "conversational";
     const serviceType = req.body.context?.serviceType || mode;
-    const cost = AI_COSTS[serviceType] || AI_COSTS.llm_proposal || 1;
+    const adminBypass = isAdminUser(req.auth?.user);
+    const cost = adminBypass
+      ? 0
+      : AI_COSTS[serviceType] || AI_COSTS.llm_proposal || 1;
 
     const { rows } = await query(`SELECT ai_credits FROM users WHERE id = $1`, [req.auth.userId]);
     const balance = rows[0]?.ai_credits ?? 0;
-    if (balance < cost) {
+    if (!adminBypass && balance < cost) {
       throw new AppError("AI_CREDITS_EXHAUSTED", "Keine AI-Credits mehr verfügbar.", 402);
     }
 
@@ -58,28 +62,36 @@ router.post("/completions", requireAuth, requireActiveAccess, aiRateLimit, aiDai
     const completionId = randomUUID();
     let creditsRemaining = balance;
 
-    await withTransaction(async (q) => {
-      const locked = await q(`SELECT ai_credits FROM users WHERE id = $1 FOR UPDATE`, [req.auth.userId]);
-      const current = locked.rows[0]?.ai_credits ?? 0;
-      if (current < cost) {
-        throw new AppError("AI_CREDITS_EXHAUSTED", "Keine AI-Credits mehr verfügbar.", 402);
-      }
-      await q(
-        `UPDATE users SET ai_credits = ai_credits - $2, used_ai_credits = used_ai_credits + $2, last_ai_usage_at = NOW() WHERE id = $1`,
-        [req.auth.userId, cost]
-      );
-      creditsRemaining = current - cost;
-      await q(
-        `INSERT INTO ai_credits (user_id, amount, balance_after, reason, service_type)
-         VALUES ($1, $2, $3, 'llm_proposal', $4)`,
-        [req.auth.userId, -cost, creditsRemaining, serviceType]
-      );
-      await q(
+    if (cost > 0) {
+      await withTransaction(async (q) => {
+        const locked = await q(`SELECT ai_credits FROM users WHERE id = $1 FOR UPDATE`, [req.auth.userId]);
+        const current = locked.rows[0]?.ai_credits ?? 0;
+        if (current < cost) {
+          throw new AppError("AI_CREDITS_EXHAUSTED", "Keine AI-Credits mehr verfügbar.", 402);
+        }
+        await q(
+          `UPDATE users SET ai_credits = ai_credits - $2, used_ai_credits = used_ai_credits + $2, last_ai_usage_at = NOW() WHERE id = $1`,
+          [req.auth.userId, cost]
+        );
+        creditsRemaining = current - cost;
+        await q(
+          `INSERT INTO ai_credits (user_id, amount, balance_after, reason, service_type)
+           VALUES ($1, $2, $3, 'llm_proposal', $4)`,
+          [req.auth.userId, -cost, creditsRemaining, serviceType]
+        );
+        await q(
+          `INSERT INTO ai_completion_logs (user_id, mode, service_type, model_name, credits_charged, success)
+           VALUES ($1, $2::ai_gateway_mode, $3, $4, $5, TRUE)`,
+          [req.auth.userId, mode, serviceType, env.openaiModel, cost]
+        );
+      });
+    } else if (adminBypass) {
+      await query(
         `INSERT INTO ai_completion_logs (user_id, mode, service_type, model_name, credits_charged, success)
-         VALUES ($1, $2::ai_gateway_mode, $3, $4, $5, TRUE)`,
-        [req.auth.userId, mode, serviceType, env.openaiModel, cost]
+         VALUES ($1, $2::ai_gateway_mode, $3, $4, 0, TRUE)`,
+        [req.auth.userId, mode, serviceType, env.openaiModel]
       );
-    });
+    }
 
     if (mode === "llm_proposal") {
       success(res, { proposals, creditsUsed: cost, creditsRemaining, completionId });

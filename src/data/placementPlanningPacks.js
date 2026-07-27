@@ -249,9 +249,22 @@ export function selectCoveredAwareClosingMove(packOrId, conversation = [], extra
   );
 }
 
-export function selectNextPlanningMove(packOrId, conversation = [], proposed = null, extraConfirmedIds = []) {
+export const PLACEMENT_ADAPTIVE_PLANNING_MAX_EXAMINER_TURNS = 3;
+
+export function selectNextPlanningMove(packOrId, conversation = [], proposed = null, extraConfirmedIds = [], options = {}) {
   const pack=typeof packOrId === "string" ? getPlacementPlanningPack(packOrId) : packOrId;
   if(!pack) return null;
+  const maxExaminerTurns =
+    options.maxExaminerTurns ?? PLACEMENT_ADAPTIVE_PLANNING_MAX_EXAMINER_TURNS;
+  const answeredMoves = conversation.filter((turn) => turn?.moveId).length;
+  if (
+    Number.isFinite(maxExaminerTurns) &&
+    answeredMoves >= maxExaminerTurns - 1
+  ) {
+    const closing = selectCoveredAwareClosingMove(pack, conversation, extraConfirmedIds);
+    if (closing) return closing;
+    return null;
+  }
   const asked=new Set(conversation.map((t)=>t?.moveId).filter(Boolean));
   const ledger=buildPlanningEvidenceLedger(pack,conversation,extraConfirmedIds);
   const eligible=(m)=>{

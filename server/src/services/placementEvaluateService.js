@@ -11,6 +11,7 @@ import {
   getPlacementPlanningMove,
   getPlacementPlanningPack,
   planningTopicsFromLedger,
+  PLACEMENT_ADAPTIVE_PLANNING_MAX_EXAMINER_TURNS,
   selectNextPlanningMove,
 } from "../../../src/data/placementPlanningPacks.js";
 import { AppError } from "../middleware/errorHandler.js";
@@ -24,21 +25,32 @@ import {
 import {
   applyProductiveBandWithTaskSeparation,
   conversationUsedSimplifiedRephrase,
-  deriveBridgeProbeResult,
-  getBridgeQuestion,
   sanitizeExaminerSignals,
-  shouldOfferBridgeProbe,
   simplifiedRephraseForQuestion,
 } from "../../../src/data/utils/placementExaminerSignals.js";
 
-export const PLACEMENT_MAX_FOLLOWUPS = 2;
+export const PLACEMENT_SKILL_FOLLOWUP_LIMITS = Object.freeze({
+  selbstvorstellung: 2,
+  bildbeschreibung: 1,
+  planung: 2,
+  diskussion: 0,
+});
+export const PLACEMENT_MAX_FOLLOWUPS =
+  PLACEMENT_SKILL_FOLLOWUP_LIMITS.selbstvorstellung;
+
+export function getPlacementFollowUpLimit(skill) {
+  return PLACEMENT_SKILL_FOLLOWUP_LIMITS[skill] ?? 2;
+}
 export const PLACEMENT_EVAL_METHOD = "placement-ai-turn-v1";
+/** Bounded OpenAI wait for Placement evaluate-turn (ms). */
+export const PLACEMENT_OPENAI_TIMEOUT_MS = 60_000;
 
 const BANDS = new Set(["weak", "medium", "strong"]);
 const PRODUCTIVE_SKILLS = new Set([
   "selbstvorstellung",
   "bildbeschreibung",
   "planung",
+  "diskussion",
 ]);
 const FOLLOW_UP_SOURCES = new Set([
   "followUpRules",
@@ -664,7 +676,11 @@ export function sanitizePlacementEvaluation(
   // that already governs the closed move sequence.
   let semanticEvidenceConfirmed = [];
 
-  if (!planningPack && followUpCount >= PLACEMENT_MAX_FOLLOWUPS) {
+  const followUpLimit = planningPack
+    ? PLACEMENT_ADAPTIVE_PLANNING_MAX_EXAMINER_TURNS - 1
+    : getPlacementFollowUpLimit(model?.skill);
+
+  if (!planningPack && followUpCount >= followUpLimit) {
     needsFollowUp = false;
   }
 
@@ -673,7 +689,7 @@ export function sanitizePlacementEvaluation(
     !planningPack &&
     PRODUCTIVE_SKILLS.has(model?.skill) &&
     examinerSignals?.needsSimplifiedRephrase &&
-    followUpCount < PLACEMENT_MAX_FOLLOWUPS &&
+    followUpCount < followUpLimit &&
     currentQuestionText &&
     !conversationUsedSimplifiedRephrase(conversation.slice(0, -1), currentQuestionText)
   ) {
@@ -750,32 +766,6 @@ export function sanitizePlacementEvaluation(
       followUpQuestion = null;
       followUpQuestionId = null;
       followUpSource = null;
-    }
-  }
-
-  if (
-    model?.skill === "selbstvorstellung" &&
-    examinerSignals &&
-    !simplifiedRephraseUsed
-  ) {
-    if (conversation.some((turn) => turn?.bridgeProbe)) {
-      bridgeProbeResult = deriveBridgeProbeResult(examinerSignals, lastTranscript);
-    } else if (
-      shouldOfferBridgeProbe({
-        band,
-        examinerSignals,
-        conversation,
-        followUpCount,
-      }) &&
-      followUpCount < PLACEMENT_MAX_FOLLOWUPS &&
-      !needsFollowUp
-    ) {
-      const bridge = getBridgeQuestion(conversation);
-      needsFollowUp = true;
-      followUpQuestion = bridge.question;
-      followUpQuestionId = bridge.id;
-      followUpSource = "bridgeProbe";
-      bridgeProbeDue = true;
     }
   }
 
@@ -902,6 +892,8 @@ export function buildExaminerSystemPrompt(
   const productive = PRODUCTIVE_SKILLS.has(model?.skill);
   const lines = [
     "Du bist ausschließlich der AustriaPath Placement-Prüfer für EIN Placement-Modell.",
+    "Der Einstufungstest dauert etwa 4–5 Minuten. Sei wie ein menschlicher Prüfer: freundlich, nicht bestrafend, ohne unnötige Nachfragen.",
+    "Starte immer vorsichtig und erhöhe die Schwierigkeit nur bei klarer Evidenz. Ein einzelner Fehler rechtfertigt keine Abwertung.",
     "Du bewertest nur die aktuelle Lernenden-Antwort gegen die bereitgestellten Modellfelder.",
     "Bewerte dabei die GESAMTE bisherige Skill-Unterhaltung, nicht nur die letzte Antwort.",
     "voice_transcript ist automatische Spracherkennung und kann einzelne Erkennungsfehler enthalten. Behandle den Text als Evidenz, aber bestrafe wahrscheinliche Transkriptionsfehler nicht als Sprachfehler.",
@@ -972,6 +964,15 @@ export function buildExaminerSystemPrompt(
       "Erlaubte followUpQuestion-Werte (geschlossen — nur diese Texte):",
       JSON.stringify(allowedFollowUps)
     );
+    if (model?.skill === "bildbeschreibung") {
+      lines.push("Bildbeschreibung: höchstens EINE Nachfrage nach der Beschreibung — dann abschließen.");
+    } else if (model?.skill === "selbstvorstellung") {
+      lines.push(
+        "Selbstvorstellung: höchstens zwei Nachfragen (eine Pflicht, eine optionale Bestätigung nur bei unklarer Evidenz)."
+      );
+    } else if (model?.skill === "planung") {
+      lines.push("Planung: kurzes Bestätigungsgespräch (2–3 Prüferzüge), dann abschließen.");
+    }
   }
 
   if (isSelf) {
@@ -1031,22 +1032,43 @@ async function callOpenAiJson({ system, user }) {
     );
   }
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${env.openaiApiKey}`,
-    },
-    body: JSON.stringify({
-      model: env.openaiModel,
-      temperature: 0.2,
-      max_tokens: 500,
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-    }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    PLACEMENT_OPENAI_TIMEOUT_MS
+  );
+
+  let response;
+  try {
+    response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${env.openaiApiKey}`,
+      },
+      body: JSON.stringify({
+        model: env.openaiModel,
+        temperature: 0.2,
+        max_tokens: 500,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
+      }),
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new AppError(
+        "OPENAI_UPSTREAM_ERROR",
+        "AI-Dienst vorübergehend nicht verfügbar.",
+        504
+      );
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -1186,11 +1208,12 @@ export async function evaluatePlacementTurn({
     imageContext,
     fullConversation
   );
+  const followUpLimit = getPlacementFollowUpLimit(model?.skill);
   const userMsg = [
     "Lernenden-Antwort (Transkription/Text):",
     text,
-    `Bisherige Nachfragen in diesem Skill: ${count} (Maximum ${PLACEMENT_MAX_FOLLOWUPS}).`,
-    count >= PLACEMENT_MAX_FOLLOWUPS
+    `Bisherige Nachfragen in diesem Skill: ${count} (Maximum ${followUpLimit}).`,
+    count >= followUpLimit
       ? "Keine weitere Nachfrage erlaubt."
       : "Nachfrage nur wenn nötig und nur aus der erlaubten Liste.",
   ].join("\n");

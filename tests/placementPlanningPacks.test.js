@@ -13,6 +13,8 @@ import {
 } from "../src/data/placementPlanningPacks.js";
 import { getPlanningStep } from "../src/data/placementLogic.js";
 import { evaluatePlacementTurnOffline } from "../server/src/services/placementEvaluateService.js";
+
+const fullPackOptions = { maxExaminerTurns: 99 };
 import { buildEvidenceSummary } from "../src/data/utils/placementReport.js";
 
 describe("closed Placement Planning packs", () => {
@@ -98,7 +100,7 @@ describe("closed Placement Planning packs", () => {
       question: "Wann sollen wir den Ausflug machen?",
       transcript: "Am Samstag treffen wir uns am Bahnhof, weil dieser Treffpunkt praktisch ist, und fahren mit dem Zug.",
     }];
-    expect(selectNextPlanningMove("b1_planung_schwach", conversation).id).not.toBe("trip-meet");
+    expect(selectNextPlanningMove("b1_planung_schwach", conversation, null, [], fullPackOptions).id).not.toBe("trip-meet");
     const result = evaluatePlacementTurnOffline({
       modelId: "b1_planung_schwach",
       raw: { band: "medium", needsFollowUp: true, nextMoveId: "invented", coveredTopics: ["invented"] },
@@ -116,7 +118,7 @@ describe("closed Placement Planning packs", () => {
     const conversation = pack.mainMoves.slice(0, -1).map((move) => ({
       moveId: move.id, transcript: "Antwort ohne zusätzliche Information.",
     }));
-    expect(selectNextPlanningMove(pack, conversation).id).toBe(pack.finalMoveId);
+    expect(selectNextPlanningMove(pack, conversation, null, [], fullPackOptions).id).toBe(pack.finalMoveId);
   });
 
   it("never repeats a successfully evaluated weak move and still reaches the Picknick closing", () => {
@@ -126,7 +128,7 @@ describe("closed Placement Planning packs", () => {
       { moveId: "picnic-food", transcript: "Brot und Wasser." },
       { moveId: "picnic-items", transcript: "Nichts." },
     ];
-    const afterWeakItems = selectNextPlanningMove("a2_planung_picknick", weakItemsConversation);
+    const afterWeakItems = selectNextPlanningMove("a2_planung_picknick", weakItemsConversation, null, [], fullPackOptions);
     expect(afterWeakItems.id).toBe("picnic-reaction");
     expect(afterWeakItems.id).not.toBe("picnic-items");
 
@@ -134,7 +136,7 @@ describe("closed Placement Planning packs", () => {
       ...weakItemsConversation,
       { moveId: "picnic-reaction", transcript: "Nein." },
     ];
-    expect(selectNextPlanningMove("a2_planung_picknick", beforeClosing).id)
+    expect(selectNextPlanningMove("a2_planung_picknick", beforeClosing, null, [], fullPackOptions).id)
       .toBe("picnic-close");
   });
 
@@ -185,13 +187,13 @@ describe("closed Placement Planning packs", () => {
     // Regex alone does not recognize "ein paar Leute, die wir gut kennen" as guests.
     const baseline = buildPlanningEvidenceLedger("a2_planung_mittel", conversation);
     expect(baseline.guests.finalState).not.toBe("covered");
-    expect(selectNextPlanningMove("a2_planung_mittel", conversation).id).toBe("birthday-guests");
+    expect(selectNextPlanningMove("a2_planung_mittel", conversation, null, [], fullPackOptions).id).toBe("birthday-guests");
 
     // The provider validly recognized "guests" as covered from this same
     // unanticipated phrasing; the deterministic skip logic must honor it —
     // this never invents or reorders moves, it only marks an information
     // target already covered.
-    const next = selectNextPlanningMove("a2_planung_mittel", conversation, null, ["guests"]);
+    const next = selectNextPlanningMove("a2_planung_mittel", conversation, null, ["guests"], fullPackOptions);
     expect(next.id).not.toBe("birthday-guests");
   });
 
@@ -204,7 +206,7 @@ describe("closed Placement Planning packs", () => {
         semanticEvidenceConfirmed: ["guests"],
       },
     ];
-    expect(selectNextPlanningMove("a2_planung_mittel", conversation).id).not.toBe("birthday-guests");
+    expect(selectNextPlanningMove("a2_planung_mittel", conversation, null, [], fullPackOptions).id).not.toBe("birthday-guests");
   });
 
   it("keeps the mandatory reaction move eligible even if its evidence id is (invalidly) marked semantically confirmed", () => {
@@ -217,7 +219,7 @@ describe("closed Placement Planning packs", () => {
     // "reaction" is a mandatory move's own evidence id, not a regular
     // information topic — marking it "confirmed" must never fabricate the
     // scripted reaction beat's completion since it is not skipWhenCovered.
-    const next = selectNextPlanningMove("a2_planung_mittel", conversation, null, ["reaction"]);
+    const next = selectNextPlanningMove("a2_planung_mittel", conversation, null, ["reaction"], fullPackOptions);
     expect(next.id).toBe("birthday-reaction");
   });
 
@@ -228,7 +230,7 @@ describe("closed Placement Planning packs", () => {
     // visit-preference (mandatory, order 6) has not been asked yet; a
     // provider attempt to jump straight to visit-delay (also mandatory,
     // order 7) would skip it and must be rejected.
-    const guarded = selectNextPlanningMove("b1_planung_besuch", conversation, "visit-delay");
+    const guarded = selectNextPlanningMove("b1_planung_besuch", conversation, "visit-delay", [], fullPackOptions);
     expect(guarded.id).not.toBe("visit-delay");
     expect(guarded.id).toBe("visit-hotel");
   });
@@ -240,7 +242,7 @@ describe("closed Placement Planning packs", () => {
     // visit-budget (order 5) is a plain information move that sits before
     // the next outstanding mandatory move (visit-preference, order 6) —
     // provider choice may still legitimately skip ahead to it.
-    const guided = selectNextPlanningMove("b1_planung_besuch", conversation, "visit-budget");
+    const guided = selectNextPlanningMove("b1_planung_besuch", conversation, "visit-budget", [], fullPackOptions);
     expect(guided.id).toBe("visit-budget");
   });
 

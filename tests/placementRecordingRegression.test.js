@@ -67,7 +67,9 @@ describe("Placement recording regression", () => {
     const finish = functionBody("finishSkillAndAdvance", "handleWeiter");
     expect(finish).toContain("claimPlacementReportFinalization(finalReportInFlightRef, attemptId)");
     expect(finish).toContain("releasePlacementReportFinalization(finalReportInFlightRef, attemptId)");
-    expect(screenSource).toContain("disabled={isEvaluating || isBuildingReport}");
+    expect(screenSource).toContain(
+      "disabled={isEvaluating || isBuildingReport || isListening}"
+    );
   });
 
   it("shows remaining Planning time without changing configured durations or retry semantics", () => {
@@ -77,5 +79,13 @@ describe("Placement recording regression", () => {
     expect(screenSource).toContain("Number(saved.planningResponseSeconds) || 0");
     expect(screenSource).toContain("setRetryAnswer({ text, inputMode })");
     expect(screenSource).toContain("Bitte versuchen Sie die Auswertung erneut");
+  });
+
+  it("arms a stop fallback when recognition.onend may not fire", () => {
+    const stopRecording = functionBody("stopRecording", "playHoerenAudio");
+    expect(screenSource).toContain("createPlacementStopSubmitCoordinator");
+    expect(stopRecording).toContain("armStopFallback");
+    expect(stopRecording).toContain("hasCommitted()");
+    expect(stopRecording).toContain("submitOnce");
   });
 });

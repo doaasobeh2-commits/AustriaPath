@@ -1,17 +1,7 @@
 /**
  * Phase 1 — Part B: every new Placement attempt must start from the
  * weak/A2 path. The learner-facing "Startniveau" picker is context only
- * (see its own UI copy: "nur Kontext — die Bewertung folgt Ihrer Leistung")
- * and must never bias the starting model or the pre-evidence routing calls.
- *
- * There is no component-render test harness in this project (no jsdom /
- * React Testing Library dependency), so the screen-level wiring is verified
- * at the source level: the routing call sites must use the fixed
- * conservative constant, never the learner-selected level, before any real
- * evidence exists. The underlying adaptive routing functions themselves are
- * pure and already covered by tests/placementHistoricalScoring.test.js and
- * tests/placementImagePool.test.js, which continue to pass unchanged since
- * this fix does not modify src/data/placementLogic.js at all.
+ * and must never bias the starting model or routing before real evidence.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -20,6 +10,7 @@ import {
   getImageStepAfterSelfIntro,
   getPlacementStartModel,
   getReadingListeningStep,
+  workingLevelAfterSelf,
 } from "../src/data/placementLogic.js";
 
 const screenSource = fs.readFileSync(
@@ -28,50 +19,41 @@ const screenSource = fs.readFileSync(
 );
 
 describe("Phase 1: conservative Placement start (weak/A2 by default)", () => {
-  it("defines a fixed A2 starting-level constant, independent of the learner-selected context level", () => {
-    expect(screenSource).toMatch(/CONSERVATIVE_START_LEVEL\s*=\s*'A2'/);
+  it("tracks adaptive working level in the screen", () => {
+    expect(screenSource).toMatch(/const \[workingLevel, setWorkingLevel\] = useState\('A2'\)/);
   });
 
-  it("starts every new attempt's Selbstvorstellung model from the fixed A2 constant, not the learner-selected level", () => {
-    expect(screenSource).toMatch(/getPlacementStartModel\(CONSERVATIVE_START_LEVEL\)/);
+  it("starts every new attempt's Selbstvorstellung model from A2 only", () => {
+    expect(screenSource).toMatch(/getPlacementStartModel\(\)/);
     expect(screenSource).not.toMatch(/getPlacementStartModel\(selectedLevel\)/);
+    expect(getPlacementStartModel()?.id).toBe("a2_self_mittel");
   });
 
-  it("routes the pre-evidence Bild/Listening steps from the fixed A2 constant, not the learner-selected level", () => {
-    expect(screenSource).toMatch(/getImageStepAfterSelfIntro\(selfBand, CONSERVATIVE_START_LEVEL, routingContext\)/);
-    expect(screenSource).toMatch(/getReadingListeningStep\(selfBand, imageBand, CONSERVATIVE_START_LEVEL, routingContext\)/);
-    expect(screenSource).not.toMatch(/getImageStepAfterSelfIntro\(selfBand, selectedLevel\)/);
-    expect(screenSource).not.toMatch(/getReadingListeningStep\(selfBand, imageBand, selectedLevel\)/);
+  it("routes subsequent stages from performance-derived working level", () => {
+    expect(screenSource).toMatch(/getImageStepAfterSelfIntro\(selfBand\)/);
+    expect(screenSource).toMatch(/getReadingListeningStep\(selfBand, imageBand/);
+    expect(screenSource).toMatch(/speakingWorkingLevel: nextWorkingLevel/);
+    expect(screenSource).not.toMatch(/getImageStepAfterSelfIntro\(selfBand, selectedLevel/);
   });
 
-  it("resolves the conservative constant to the real A2 Selbstvorstellung model", () => {
-    expect(getPlacementStartModel("A2")?.id).toBe("a2_self_mittel");
-  });
-
-  it("keeps weak first-stage evidence on the A2 path (no optimistic default penalty)", () => {
-    expect(getImageStepAfterSelfIntro("weak", "A2")).toMatchObject({
+  it("keeps weak first-stage evidence on the A2 path", () => {
+    expect(getImageStepAfterSelfIntro("weak")).toMatchObject({
       skill: "bildbeschreibung",
       level: "A2",
     });
+    expect(workingLevelAfterSelf("weak")).toBe("A2");
   });
 
-  it("still allows strong first-stage evidence to route upward only after bridge confirmation", () => {
-    expect(getImageStepAfterSelfIntro("strong", "A2")).toMatchObject({
-      skill: "bildbeschreibung",
-      level: "A2",
-    });
-    expect(
-      getImageStepAfterSelfIntro("strong", "A2", { bridgeProbeStatus: "confirmed" })
-    ).toMatchObject({
+  it("routes strong first-stage evidence to B1 bild only (never B2)", () => {
+    expect(getImageStepAfterSelfIntro("strong")).toMatchObject({
       skill: "bildbeschreibung",
       level: "B1",
-      difficulty: "leicht",
     });
   });
 
-  it("still lets confirmed strong evidence route to B1 listening bridge from an A2 start", () => {
+  it("routes B1 working level to B1 listening bridge", () => {
     expect(
-      getReadingListeningStep("strong", "strong", "A2", { bridgeProbeStatus: "confirmed" })
+      getReadingListeningStep("medium", "medium", { speakingWorkingLevel: "B1" })
     ).toMatchObject({
       skill: "lesenHoeren",
       level: "B1",

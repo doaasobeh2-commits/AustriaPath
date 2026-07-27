@@ -6,10 +6,8 @@ import { describe, expect, it } from "vitest";
 import {
   applyProductiveBandWithTaskSeparation,
   conversationUsedSimplifiedRephrase,
-  deriveBridgeProbeResult,
   detectMisunderstandingPhrase,
   sanitizeExaminerSignals,
-  shouldOfferBridgeProbe,
   simplifiedRephraseForQuestion,
 } from "../src/data/utils/placementExaminerSignals.js";
 import {
@@ -67,22 +65,9 @@ describe("Placement examiner philosophy", () => {
     ).toBe(true);
   });
 
-  it("3. memorized strong intro fails bridge probe and stays on stable A2 path", () => {
-    expect(
-      shouldOfferBridgeProbe({
-        band: "strong",
-        examinerSignals: { memorizationRisk: "high" },
-        conversation: [],
-        followUpCount: 0,
-      })
-    ).toBe(true);
-    const failed = deriveBridgeProbeResult(
-      sanitizeExaminerSignals({ taskFulfilment: "low", comprehension: "uncertain" }),
-      "Ich habe nicht verstanden."
-    );
-    expect(failed).toBe("failed");
-    expect(getImageStepAfterSelfIntro("strong", "A2", { bridgeProbeStatus: failed })).toMatchObject({
-      level: "A2",
+  it("3. strong self intro routes to B1 bild only (Rule 2)", () => {
+    expect(getImageStepAfterSelfIntro("strong")).toMatchObject({
+      level: "B1",
     });
   });
 
@@ -115,9 +100,11 @@ describe("Placement examiner philosophy", () => {
     expect(allowed).not.toContain("Warum lernen Sie Deutsch?");
   });
 
-  it("6. medium self + medium Bild does not route to A2-stark medical listening", () => {
-    expect(getReadingListeningStep("medium", "medium")).toMatchObject({
-      difficulty: "mittel",
+  it("6. medium self + medium Bild routes to B1 listening at working level", () => {
+    expect(
+      getReadingListeningStep("medium", "medium", { speakingWorkingLevel: "B1" })
+    ).toMatchObject({
+      level: "B1",
     });
     for (const random of [0, 0.5, 0.99]) {
       const selected = selectPlacementListeningModel(

@@ -10,7 +10,7 @@ import {
   getEligibleBildFollowUps,
   sanitizePlacementEvaluation,
   buildExaminerSystemPrompt,
-  PLACEMENT_MAX_FOLLOWUPS,
+  getPlacementFollowUpLimit,
 } from "../server/src/services/placementEvaluateService.js";
 
 const EXPECTED = [
@@ -149,12 +149,12 @@ describe("closed Placement Bild assessment packs", () => {
     expect(mismatchedPair.followUpQuestionId).toBe(missingEligible[0].id);
     expect(mismatchedPair.followUpQuestion).toBe(missingEligible[0].question);
 
-    // Maximum remains two.
+    // Maximum is one follow-up for Bildbeschreibung.
     const capped = sanitizePlacementEvaluation({
       band: "medium", needsFollowUp: true,
       followUpQuestionId: missingEligible[0].id,
       followUpQuestion: missingEligible[0].question,
-    }, model, PLACEMENT_MAX_FOLLOWUPS, [], image);
+    }, model, getPlacementFollowUpLimit("bildbeschreibung"), [], image);
     expect(capped.needsFollowUp).toBe(false);
 
     // With every evidence unit sufficient there is no question to borrow or invent.

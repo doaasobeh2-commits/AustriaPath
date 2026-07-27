@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   buildHistoricalPlacementResult,
   bandToPlacementScore,
+  computeSpeakingWorkingLevelAfterBild,
   getFinalBandFromTurnEvidence,
   getImageStepAfterSelfIntro,
   getPlanningStep,
@@ -13,7 +14,9 @@ import {
   placementTurnIdempotencyKey,
   isPlacementAnswerTooShortValidationError,
   PLACEMENT_ANSWER_TOO_SHORT_MESSAGE,
+  PLACEMENT_B2_CONFIRMATION_MODEL_ID,
   isPlanningEvaluationComplete,
+  workingLevelAfterSelf,
   claimPlacementReportFinalization,
   releasePlacementReportFinalization,
 } from '../../data/placementLogic';
@@ -58,6 +61,7 @@ import {
   createPlacementRuntimeMonitor,
   PLACEMENT_RUNTIME_CALM_MESSAGE,
 } from '../../data/utils/placementRuntimeMonitor.js';
+import { createPlacementStopSubmitCoordinator } from '../../data/utils/placementRecordingStop.js';
 
 const SpeechRecognitionCtor =
   typeof window !== 'undefined'
@@ -77,8 +81,6 @@ const STAGE_COUNT = 4;
  * evidence has been collected. Movement upward happens only through
  * demonstrated performance via the existing adaptive routing functions.
  */
-const CONSERVATIVE_START_LEVEL = 'A2';
-
 export default function PlacementTestScreen({ setActiveTab }) {
   const [selectedLevel, setSelectedLevel] = useState('A2');
   const [started, setStarted] = useState(false);
@@ -118,6 +120,8 @@ export default function PlacementTestScreen({ setActiveTab }) {
     bridgeProbeStatus: null,
     b1ListeningStable: false,
   });
+  /** Adaptive task level (A2/B1/B2) — derived only from current-exam performance. */
+  const [workingLevel, setWorkingLevel] = useState('A2');
   /** True while the learner must revise a locally rejected too-short answer. */
   const [answerTooShortBlocked, setAnswerTooShortBlocked] = useState(false);
   const [planningMoveId, setPlanningMoveId] = useState(null);
@@ -136,6 +140,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
   const hydratingRef = useRef(false);
   /** Planung: defer examiner audio until evaluation UI has cleared. */
   const pendingPlanningMoveRef = useRef(null);
+  const stopSubmitCoordinatorRef = useRef(createPlacementStopSubmitCoordinator());
   const diagnosticRecorderRef = useRef(null);
   const runtimeMonitorRef = useRef(null);
   const stageIndexRef = useRef(stageIndex);
@@ -197,7 +202,8 @@ export default function PlacementTestScreen({ setActiveTab }) {
   const isVoiceSkill =
     skill === 'selbstvorstellung' ||
     skill === 'bildbeschreibung' ||
-    skill === 'planung';
+    skill === 'planung' ||
+    skill === 'diskussion';
 
   const stopRecognition = () => {
     listenIntentRef.current = false;
@@ -301,6 +307,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
     transcriptRef.current = '';
     finalTranscriptRef.current = '';
     submitAfterStopRef.current = false;
+    stopSubmitCoordinatorRef.current.reset();
     stopRecognition();
     stopAudio();
   }, [stageIndex, currentModel?.id]);
@@ -335,6 +342,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
         setFinalizedTranscript(saved.finalizedTranscript || '');
         setRetryAnswer(saved.retryAnswer || null);
         setRoutingContext(saved.routingContext || { bridgeProbeStatus: null, b1ListeningStable: false });
+        setWorkingLevel(saved.workingLevel || 'A2');
         setPlanningMoveId(saved.planningMoveId || null);
         setPlanningPhase(
           saved.planningPhase === 'examiner'
@@ -383,6 +391,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
       finalizedTranscript,
       retryAnswer,
       routingContext,
+      workingLevel,
       planningMoveId,
       planningPhase,
       planningCountdown,
@@ -392,7 +401,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
     resumeChecked, started, attemptId, selectedLevel, stageIndex, currentModel,
     skillBands, numericScores, modelsUsed, turnEvidence, selectedBildImage,
     followUpCount, activeFollowUp, listeningAnswers, answerSubmitted,
-    finalizedTranscript, retryAnswer, routingContext, planningMoveId, planningPhase,
+    finalizedTranscript, retryAnswer, routingContext, workingLevel, planningMoveId, planningPhase,
     planningCountdown, planningResponseSeconds,
   ]);
 
@@ -405,7 +414,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
 
   const startTest = async () => {
     if (isStarting) return;
-    const startModel = getPlacementStartModel(CONSERVATIVE_START_LEVEL);
+    const startModel = getPlacementStartModel();
     if (!startModel) {
       setControlMessage('Placement-Startmodell fehlt.');
       return;
@@ -427,6 +436,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
     }
     setSkillBands({});
     setNumericScores({});
+    setWorkingLevel('A2');
     setModelsUsed([{ stage: 'selbstvorstellung', modelId: startModel.id }]);
     setTurnEvidence({});
     setSelectedBildImage(null);
@@ -555,17 +565,24 @@ export default function PlacementTestScreen({ setActiveTab }) {
     const listenBand = completedBands.lesenHoeren;
 
     let nextStep = null;
+    let nextWorkingLevel = workingLevel;
     if (stageIndex === STAGE_SELF) {
-      nextStep = getImageStepAfterSelfIntro(selfBand, CONSERVATIVE_START_LEVEL, routingContext);
+      nextWorkingLevel = workingLevelAfterSelf(selfBand);
+      nextStep = getImageStepAfterSelfIntro(selfBand);
     } else if (stageIndex === STAGE_IMAGE) {
-      nextStep = getReadingListeningStep(selfBand, imageBand, CONSERVATIVE_START_LEVEL, routingContext);
+      nextWorkingLevel = computeSpeakingWorkingLevelAfterBild(selfBand, imageBand);
+      nextStep = getReadingListeningStep(selfBand, imageBand, {
+        speakingWorkingLevel: nextWorkingLevel,
+      });
     } else if (stageIndex === STAGE_LISTEN) {
+      nextWorkingLevel = computeSpeakingWorkingLevelAfterBild(selfBand, imageBand);
       nextStep = getPlanningStep({
         selfIntroResult: selfBand,
         imageResult: imageBand,
         lesenHoerenResult: listenBand,
       });
     }
+    setWorkingLevel(nextWorkingLevel);
 
     const nextModel = nextStep
       ? nextStep.skill === 'lesenHoeren'
@@ -577,7 +594,11 @@ export default function PlacementTestScreen({ setActiveTab }) {
           ? selectPlacementPlanningPack(nextStep, {
               recentIds: recentPlacementContentIds('planning'),
             })
-          : resolvePlacementModelFromStep(nextStep)
+          : nextStep.skill === 'diskussion'
+            ? getPlacementModel(
+                nextStep.modelId || PLACEMENT_B2_CONFIRMATION_MODEL_ID
+              )
+            : resolvePlacementModelFromStep(nextStep)
       : null;
     if (!nextModel) {
       runtimeMonitorRef.current?.recordIssue({
@@ -655,7 +676,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
     if (nextStep.skill === 'planung') {
       setPlanningMoveId(nextModel.mainMoves[0]?.id || null);
       setPlanningPhase('idle');
-      setPlanningCountdown(15);
+      setPlanningCountdown(10);
     }
   };
 
@@ -737,6 +758,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
     transcriptRef.current = '';
     finalTranscriptRef.current = '';
     submitAfterStopRef.current = false;
+    stopSubmitCoordinatorRef.current.reset();
     setRecognizedDraft('');
     setFinalizedTranscript('');
     listenIntentRef.current = true;
@@ -812,14 +834,14 @@ export default function PlacementTestScreen({ setActiveTab }) {
         }
       }
       setIsListening(false);
-      if (submitAfterStopRef.current) {
-        submitAfterStopRef.current = false;
-        const transcript = transcriptRef.current.trim();
-        if (transcript) {
-          setFinalizedTranscript(transcript);
-          void handleSendAnswer(transcript, 'voice_transcript');
-        }
-      }
+      if (!submitAfterStopRef.current) return;
+      const transcript = transcriptRef.current.trim();
+      submitAfterStopRef.current = false;
+      if (!transcript) return;
+      stopSubmitCoordinatorRef.current.submitOnce(() => {
+        setFinalizedTranscript(transcript);
+        void handleSendAnswer(transcript, 'voice_transcript');
+      });
     };
 
     recognitionRef.current = recognition;
@@ -834,22 +856,44 @@ export default function PlacementTestScreen({ setActiveTab }) {
   };
 
   const stopRecording = () => {
-    if (!transcriptRef.current.trim()) {
+    const transcript = transcriptRef.current.trim();
+    if (!transcript) {
       setControlMessage(
         'Es wurde noch keine Sprache erkannt. Bitte versuchen Sie es erneut.'
       );
       return;
     }
+    if (stopSubmitCoordinatorRef.current.hasCommitted()) {
+      return;
+    }
     submitAfterStopRef.current = true;
     listenIntentRef.current = false;
+
+    const runStopFallback = () => {
+      if (!submitAfterStopRef.current) return;
+      const pendingTranscript = transcriptRef.current.trim();
+      submitAfterStopRef.current = false;
+      if (!pendingTranscript) return;
+      setIsListening(false);
+      stopSubmitCoordinatorRef.current.submitOnce(() => {
+        setFinalizedTranscript(pendingTranscript);
+        void handleSendAnswer(pendingTranscript, 'voice_transcript');
+      });
+    };
+
     try {
       recognitionRef.current?.stop?.();
+      stopSubmitCoordinatorRef.current.armStopFallback({
+        scheduleTimeout: (ms, fn) => window.setTimeout(fn, ms),
+        onFallback: runStopFallback,
+      });
     } catch {
       submitAfterStopRef.current = false;
-      const transcript = transcriptRef.current.trim();
       setIsListening(false);
-      setFinalizedTranscript(transcript);
-      void handleSendAnswer(transcript, 'voice_transcript');
+      stopSubmitCoordinatorRef.current.submitOnce(() => {
+        setFinalizedTranscript(transcript);
+        void handleSendAnswer(transcript, 'voice_transcript');
+      });
     }
   };
 
@@ -1442,7 +1486,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
                 type="button"
                 style={secondaryActionStyle}
                 onClick={() => {
-                  setPlanningCountdown(15);
+                  setPlanningCountdown(10);
                   setPlanningPhase('preparing');
                   setControlMessage('Sie haben 15 Sekunden Vorbereitungszeit.');
                 }}
@@ -1636,7 +1680,7 @@ export default function PlacementTestScreen({ setActiveTab }) {
           type="button"
           style={buttonStyle}
           onClick={handleWeiter}
-          disabled={isEvaluating || isBuildingReport}
+          disabled={isEvaluating || isBuildingReport || isListening}
         >
           Weiter
         </button>

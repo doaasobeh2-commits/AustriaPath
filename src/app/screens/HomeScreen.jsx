@@ -78,9 +78,9 @@ export function HomeScreen({ setActiveTab }) {
 
           <div style={gridStyle}>
             <Card icon="📖" title="Lesen Trainer" text="Kostenlose Lesemodelle für A2, B1 und B2." color="#e0f2fe" onClick={() => setActiveTab('lesen')} />
-            <Card icon="🎧" title="Hören Trainer" text="Kostenlose Hörmodelle mit Text, Audio und Fragen." color="#f3e8ff" onClick={() => setActiveTab('horen')} />
+            <Card icon="🎧" title="Hören Trainer" text="Kostenlose Hörmodelle mit Text, Audio und Verständnisfragen." color="#f3e8ff" onClick={() => setActiveTab('horen')} />
             <Card icon="🖼️" title="Bildbeschreibung" text="Trainiere Bilder mit Beschreibung, Meinung und Beispielen." color="#ecfdf5" onClick={() => setActiveTab('images')} />
-            <Card icon="🗣️" title="Sprechen üben" text="A2: Selbstvorstellung · B1: Etwas planen · B2: Diskussion und Präsentation." color="#eff6ff" onClick={() => setActiveTab('speaking')} />
+            <Card icon="🗣️" title="Sprechen üben" text="A2: Aufgabe lösen · B1: Etwas planen · B2: Diskussion und Präsentation." color="#eff6ff" onClick={() => setActiveTab('speaking')} />
             <Card icon="📚" title="Themenbibliothek" text="Häufige Alltagsthemen nach Niveau, Bundesland und Stadt." color="#fff7ed" onClick={() => setActiveTab('database')} />
             <Card icon="⭐" title="AI-Training" text="Interaktive Übungssimulation mit AI-Feedback und Lernbericht." color="#fef9c3" onClick={() => setActiveTab('premium')} />
           </div>
