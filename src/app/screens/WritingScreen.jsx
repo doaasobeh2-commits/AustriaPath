@@ -25,8 +25,11 @@ const [showPremiumHint, setShowPremiumHint] = useState(false);
 
   const baseModels = modelsByLevel[level] || [];
 
-  const currentModel =
-  selectedWritingModel?.source === 'admin'
+  const usesSelectedModelDirectly =
+    selectedWritingModel?.source === 'admin' ||
+    selectedWritingModel?.source === 'b1-static';
+
+  const currentModel = usesSelectedModelDirectly
     ? selectedWritingModel
     : baseModels[modelIndex];
 
