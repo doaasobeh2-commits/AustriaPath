@@ -2194,7 +2194,7 @@ Vor einem Vertrag sollte man Angebote vergleichen und Fragen stellen. So findet 
 },
 
 {
-  id: 'b1-lesen-06',
+  id: 'b1-lesen-12',
   title: 'Gesund leben & Vorsorge',
   level: 'B1',
 
