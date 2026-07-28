@@ -1,8 +1,5 @@
-import { isB1WeeklyTrainingEnabled } from '../../utils/b1WeeklyTrainingAvailability.js';
-
 export default function LevelSelectScreen({ onSelectLevel }) {
   const allowedLevels = ['A2', 'B1', 'B2'];
-  const b1WeeklyEnabled = isB1WeeklyTrainingEnabled();
 
   const levels = [
     {
@@ -22,10 +19,7 @@ export default function LevelSelectScreen({ onSelectLevel }) {
     },
   ];
 
-  const visibleLevels = levels.filter((level) => {
-    if (level.id === 'B1' && !b1WeeklyEnabled) return false;
-    return allowedLevels.includes(level.id);
-  });
+  const visibleLevels = levels.filter((level) => allowedLevels.includes(level.id));
 
   return (
     <div style={{ padding: '24px', maxWidth: '700px', margin: '0 auto' }}>
