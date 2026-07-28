@@ -62,6 +62,8 @@ import { isTrialExpiredUser } from "../utils/accessStatus.js";
 import { isOnboardingComplete, markOnboardingComplete } from "../utils/userPreferences.js";
 import DailyLearningScreen from "./screens/DailyLearningScreen.jsx";
 import { canAccessPlacementTest } from "../utils/placementEntitlement.js";
+import { shouldBlockPremiumTab } from "../config/premiumFeaturesGate.js";
+import { PremiumComingSoonScreen } from "./components/PremiumComingSoonScreen.jsx";
 
 const AdminScreen = React.lazy(() =>
   import("./screens/AdminScreen").then((module) => ({ default: module.AdminScreen }))
@@ -251,6 +253,7 @@ export default function App() {
   };
 
   const guardedTab = getSafeTab(activeTab, currentUser);
+  const premiumBlocked = shouldBlockPremiumTab(guardedTab);
 
   useEffect(() => {
     if (!isLoggedIn || guardedTab !== "placementTest") return;
@@ -431,6 +434,10 @@ export default function App() {
 
         <main style={mainStyle}>
           <Suspense fallback={<AdminRouteFallback />}>
+          {premiumBlocked ? (
+            <PremiumComingSoonScreen setActiveTab={setActiveTabGuarded} />
+          ) : (
+          <>
           {guardedTab === "home" && (
             <HomeScreen setActiveTab={setActiveTabGuarded} />
           )}
@@ -694,6 +701,8 @@ export default function App() {
 
           {guardedTab === "premiumExamSession" && (
             <PremiumExamSessionScreen setActiveTab={setActiveTabGuarded} />
+          )}
+          </>
           )}
           </Suspense>
         </main>

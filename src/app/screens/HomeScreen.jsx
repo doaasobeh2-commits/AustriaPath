@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { getUserLanguage, getUserLevel } from '../../utils/userPreferences';
 import { getDailyLearningSession } from '../../data/dailyLearningRotation.js';
 import { DailyLearningHomeCard } from '../components/DailyLearningHomeCard.jsx';
+import { isPremiumFeaturesDisabled } from '../../config/premiumFeaturesGate.js';
 
 const homeTexts = {
   Deutsch: {
@@ -51,6 +52,7 @@ export function HomeScreen({ setActiveTab }) {
   const homeT = homeTexts[userLanguage] || homeTexts.Deutsch;
   const level = getUserLevel();
   const dailySession = useMemo(() => getDailyLearningSession(level), [level]);
+  const premiumDisabled = isPremiumFeaturesDisabled();
 
   return (
     <div style={pageStyle}>
@@ -82,7 +84,7 @@ export function HomeScreen({ setActiveTab }) {
             <Card icon="🖼️" title="Bildbeschreibung" text="Trainiere Bilder mit Beschreibung, Meinung und Beispielen." color="#ecfdf5" onClick={() => setActiveTab('images')} />
             <Card icon="🗣️" title="Sprechen üben" text="A2: Aufgabe lösen · B1: Etwas planen · B2: Diskussion und Präsentation." color="#eff6ff" onClick={() => setActiveTab('speaking')} />
             <Card icon="📚" title="Themenbibliothek" text="Häufige Alltagsthemen nach Niveau, Bundesland und Stadt." color="#fff7ed" onClick={() => setActiveTab('database')} />
-            <Card icon="⭐" title="AI-Training" text="Interaktive Übungssimulation mit AI-Feedback und Lernbericht." color="#fef9c3" onClick={() => setActiveTab('premium')} />
+            <Card icon="⭐" title="AI-Training" text="Interaktive Übungssimulation mit AI-Feedback und Lernbericht." color="#fef9c3" comingSoon={premiumDisabled} onClick={() => setActiveTab('premium')} />
           </div>
 
           <div style={popularStyle}>
@@ -93,6 +95,7 @@ export function HomeScreen({ setActiveTab }) {
           </div>
 
           <div style={aiBoxStyle}>
+            {premiumDisabled && <span style={comingSoonBadgeStyle}>Coming Soon</span>}
             
             <h2 style={sectionTitleStyle}>{homeT.aiTitle}</h2>
 
@@ -101,7 +104,7 @@ export function HomeScreen({ setActiveTab }) {
             <p style={aiPlanStyle}>{homeT.aiPlan}</p>
 
             <button onClick={() => setActiveTab('premium')} style={aiButtonStyle}>
-              {homeT.aiButton}
+              {premiumDisabled ? 'Coming Soon' : homeT.aiButton}
             </button>
           </div>
 
@@ -115,10 +118,10 @@ export function HomeScreen({ setActiveTab }) {
   );
 }
 
-function Card({ icon, title, text, color, onClick }) {
+function Card({ icon, title, text, color, onClick, comingSoon = false }) {
   return (
     <button onClick={onClick} style={{ ...cardStyle, background: color }}>
-      
+      {comingSoon && <span style={cardComingSoonBadgeStyle}>Coming Soon</span>}
       <div style={iconStyle}>{icon}</div>
       <h3 style={cardTitleStyle}>{title}</h3>
       <p style={cardTextStyle}>{text}</p>
@@ -320,6 +323,30 @@ const aiButtonStyle = {
   fontWeight: '800',
   fontSize: '15px',
   cursor: 'pointer',
+};
+
+const comingSoonBadgeStyle = {
+  display: 'inline-block',
+  backgroundColor: '#fef3c7',
+  color: '#92400e',
+  border: '1px solid #fde68a',
+  borderRadius: '999px',
+  padding: '6px 12px',
+  fontSize: '12px',
+  fontWeight: '700',
+  marginBottom: '10px',
+};
+
+const cardComingSoonBadgeStyle = {
+  display: 'inline-block',
+  backgroundColor: '#fef3c7',
+  color: '#92400e',
+  border: '1px solid #fde68a',
+  borderRadius: '999px',
+  padding: '4px 10px',
+  fontSize: '11px',
+  fontWeight: '700',
+  marginBottom: '8px',
 };
 
 const footerStyle = {
