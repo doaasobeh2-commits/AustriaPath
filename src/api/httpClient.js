@@ -4,6 +4,23 @@
 
 import { buildApiUrl } from "./apiConfig.js";
 
+export const AUTH_INVALIDATED_EVENT = "austriaPath:authInvalidated";
+
+/**
+ * @param {string} url
+ * @param {string} code
+ */
+function notifyAuthInvalidated(url, code) {
+  if (typeof window === "undefined") return;
+  if (url.includes("/auth/login") || url.includes("/auth/register")) return;
+  if (code !== "AUTH_REQUIRED" && code !== "AUTH_INVALID") return;
+  window.dispatchEvent(
+    new CustomEvent(AUTH_INVALIDATED_EVENT, {
+      detail: { code },
+    })
+  );
+}
+
 export class ApiError extends Error {
   /**
    * @param {string} code
@@ -59,6 +76,9 @@ export async function apiFetch(path, options = {}) {
     const status = response.status;
     if (allowStatuses.has(status)) {
       return null;
+    }
+    if (status === 401) {
+      notifyAuthInvalidated(url, code);
     }
     throw new ApiError(
       code,

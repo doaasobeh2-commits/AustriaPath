@@ -81,8 +81,11 @@ Do **not** add `npm ci` or `npm install` to the Railway build command field.
 | `COOKIE_SECURE` | Yes | `true` |
 | `ADMIN_EMAIL` | Yes | `fadisobehau@gmail.com` |
 | `ADMIN_BOOTSTRAP_SECRET` | Yes (until bootstrap done) | One-time; remove after admin created |
-| `BETA_ALLOWED_EMAILS` | Yes (beta) | Comma-separated invite list |
-| `OPENAI_API_KEY` | Yes | For AI exams |
+| `BETA_ALLOWED_EMAILS` | Optional (legacy) | Not used by pilot registration; capacity + waitlist gate applies |
+| `OPENAI_API_KEY` | Yes | Placement / general AI |
+| `B1_WEEKLY_PLAN_AI_ENABLED` | Yes (Weekly Plan) | `true` for KI-Wochenplan AI routes |
+| `WEEKLY_TRAINING_B1_OPENAI_API_KEY` | Yes (Weekly Plan) | Dedicated B1 key (server only) |
+| `WEEKLY_TRAINING_B1_MODEL` | Optional | e.g. `gpt-5.6-sol` |
 | `RESEND_API_KEY` | Yes | For email verification / reset |
 | `EMAIL_FROM` | Yes | Verified Resend sender |
 | `PORT` | Auto | Railway sets this — do not override |

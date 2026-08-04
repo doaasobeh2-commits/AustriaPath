@@ -3,6 +3,8 @@
  */
 
 import { apiFetch } from "../httpClient.js";
+import { postPlacementEvaluateTurn } from "../placementEvaluateClient.js";
+import { postA2SchreibenCorrection } from "../a2SchreibenCorrectionClient.js";
 import { newIdempotencyKey } from "../idempotency.js";
 
 function idempotencyHeaders(key = newIdempotencyKey()) {
@@ -96,11 +98,12 @@ export async function requestAiCompletion(body) {
 
 /** Placement-only turn evaluation — POST /v1/placement/evaluate-turn */
 export async function evaluatePlacementTurn(body) {
-  return apiFetch("/placement/evaluate-turn", {
-    method: "POST",
-    json: body,
-    headers: idempotencyHeaders(body.idempotencyKey),
-  });
+  return postPlacementEvaluateTurn(body);
+}
+
+/** A2 Schreiben AI correction — POST /v1/weekly-plan/correct-schreiben */
+export async function requestA2SchreibenCorrection(body) {
+  return postA2SchreibenCorrection(body);
 }
 
 /** Placement-only learner report polish — POST /v1/placement/report */
@@ -114,6 +117,10 @@ export async function polishPlacementReport(body) {
 
 export async function getPlacementEntitlement() {
   return apiFetch("/placement/entitlement");
+}
+
+export async function getWeeklyPlanEntitlement() {
+  return apiFetch("/weekly-plan/entitlement");
 }
 
 export async function beginPlacementAttempt() {
@@ -221,5 +228,146 @@ export async function grantAdminPlacement(userId) {
   return apiFetch(`/admin/users/${userId}/grant-placement`, {
     method: "POST",
     json: {},
+  });
+}
+
+export async function grantAdminWeeklyPlan(userId) {
+  return apiFetch(`/admin/users/${userId}/grant-weekly-plan`, {
+    method: "POST",
+    json: {},
+  });
+}
+
+export async function listCommunityQuestions(params = {}) {
+  const qs = new URLSearchParams();
+  if (params.page) qs.set("page", String(params.page));
+  if (params.limit) qs.set("limit", String(params.limit));
+  const suffix = qs.toString() ? `?${qs}` : "";
+  return apiFetch(`/community/questions${suffix}`);
+}
+
+export async function createCommunityQuestion(body) {
+  const data = await apiFetch("/community/questions", {
+    method: "POST",
+    json: body,
+  });
+  return data.question;
+}
+
+export async function fetchCommunityQuestion(questionId) {
+  return apiFetch(`/community/questions/${questionId}`);
+}
+
+export async function createCommunityAnswer(questionId, body) {
+  const data = await apiFetch(`/community/questions/${questionId}/answers`, {
+    method: "POST",
+    json: { body },
+  });
+  return data.answer;
+}
+
+export async function closeCommunityQuestion(questionId) {
+  return apiFetch(`/community/questions/${questionId}/close`, {
+    method: "POST",
+    json: {},
+  });
+}
+
+export async function listMyCommunityQuestions(params = {}) {
+  const qs = new URLSearchParams();
+  if (params.archived) qs.set("archived", "true");
+  if (params.page) qs.set("page", String(params.page));
+  if (params.limit) qs.set("limit", String(params.limit));
+  const suffix = qs.toString() ? `?${qs}` : "";
+  return apiFetch(`/community/my/questions${suffix}`);
+}
+
+export async function fetchMyCommunityQuestion(questionId) {
+  return apiFetch(`/community/my/questions/${questionId}`);
+}
+
+export async function archiveCommunityQuestion(questionId) {
+  return apiFetch(`/community/my/questions/${questionId}/archive`, {
+    method: "POST",
+    json: {},
+  });
+}
+
+export async function restoreCommunityQuestion(questionId) {
+  return apiFetch(`/community/my/questions/${questionId}/restore`, {
+    method: "POST",
+    json: {},
+  });
+}
+
+export async function adminListCommunityQuestions(params = {}) {
+  const qs = new URLSearchParams();
+  if (params.page) qs.set("page", String(params.page));
+  if (params.limit) qs.set("limit", String(params.limit));
+  const suffix = qs.toString() ? `?${qs}` : "";
+  return apiFetch(`/admin/community/questions${suffix}`);
+}
+
+export async function adminAnswerCommunityQuestion(questionId, body) {
+  const data = await apiFetch(`/admin/community/questions/${questionId}/answer`, {
+    method: "POST",
+    json: { body },
+  });
+  return data.answer;
+}
+
+export async function adminSetCommunityQuestionVisibility(questionId, visibility) {
+  return apiFetch(`/admin/community/questions/${questionId}/visibility`, {
+    method: "PATCH",
+    json: { visibility },
+  });
+}
+
+export async function adminSetCommunityQuestionStatus(questionId, status) {
+  return apiFetch(`/admin/community/questions/${questionId}/status`, {
+    method: "PATCH",
+    json: { status },
+  });
+}
+
+export async function adminSetCommunityAnswerVisibility(answerId, visibility) {
+  return apiFetch(`/admin/community/answers/${answerId}/visibility`, {
+    method: "PATCH",
+    json: { visibility },
+  });
+}
+
+export async function fetchRegistrationStatus() {
+  return apiFetch("/registration/status");
+}
+
+export async function joinRegistrationWaitlist(body) {
+  const data = await apiFetch("/registration/waitlist", {
+    method: "POST",
+    json: body,
+  });
+  return data.entry;
+}
+
+export async function fetchAdminRegistrationOverview() {
+  return apiFetch("/admin/registration/overview");
+}
+
+export async function fetchAdminWaitlist(search = "") {
+  const qs = search ? `?search=${encodeURIComponent(search)}` : "";
+  return apiFetch(`/admin/registration/waitlist${qs}`);
+}
+
+export async function patchAdminWaitlistEntry(entryId, body) {
+  return apiFetch(`/admin/registration/waitlist/${entryId}`, {
+    method: "PATCH",
+    json: body,
+  });
+}
+
+export async function patchAdminRegistrationSettings(body) {
+  return apiFetch("/admin/registration/settings", {
+    method: "PATCH",
+    json: body,
   });
 }

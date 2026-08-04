@@ -38,3 +38,33 @@ export async function consumeOneTimeToken(endpoint, token) {
   await query(`DELETE FROM idempotency_records WHERE idempotency_key = $1`, [tokenHash]);
   return rows[0].response_body;
 }
+
+/**
+ * Remove all outstanding one-time tokens for a user on a given route.
+ * @param {string} endpoint
+ * @param {string} userId
+ */
+export async function revokeOneTimeTokensForUser(endpoint, userId) {
+  if (!endpoint || !userId) return;
+  await query(
+    `DELETE FROM idempotency_records
+     WHERE endpoint = $1 AND response_body->>'userId' = $2`,
+    [endpoint, String(userId)]
+  );
+}
+
+/**
+ * @param {string} endpoint
+ * @param {string} token
+ */
+export async function findOneTimeToken(endpoint, token) {
+  const tokenHash = hashToken(token);
+  const { rows } = await query(
+    `SELECT response_body, expires_at FROM idempotency_records
+     WHERE idempotency_key = $1 AND endpoint = $2
+     LIMIT 1`,
+    [tokenHash, endpoint]
+  );
+  if (!rows.length) return null;
+  return rows[0];
+}

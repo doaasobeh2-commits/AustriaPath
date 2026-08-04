@@ -1,6 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { isAdminEmail } from "../../config/authConfig";
 import { registerStudentUser } from "../userAccess";
+import { getUserLanguage } from "../../utils/userPreferences";
+import {
+  fetchRegistrationStatus,
+  joinRegistrationWaitlist,
+} from "../../api/repositories/index.js";
+import { ApiError } from "../../api/httpClient.js";
 import {
   authCardStyle,
   authCheckboxStyle,
@@ -13,6 +19,31 @@ import {
   authTextButtonStyle,
   authTitleStyle,
 } from "../auth/authStyles";
+
+const COPY = {
+  Deutsch: {
+    fullTitle: "Testphase voll",
+    fullMessage:
+      "Die aktuelle Testphase ist vollständig belegt. Sie können sich in die Warteliste eintragen. Wir informieren Sie, sobald neue Plätze verfügbar sind.",
+    closedMessage:
+      "Die Registrierung ist derzeit geschlossen. Sie können sich in die Warteliste eintragen.",
+    waitlistSuccess: "Sie wurden zur Warteliste hinzugefügt.",
+    waitlistEmail: "E-Mail",
+    waitlistName: "Vorname oder Anzeigename (optional)",
+    waitlistSubmit: "Zur Warteliste hinzufügen",
+  },
+  العربية: {
+    fullTitle: "اكتمل العدد",
+    fullMessage:
+      "اكتمل العدد المتاح للنسخة التجريبية حاليًا. يمكنك الانضمام إلى قائمة الانتظار، وسنبلغك عند توفر أماكن جديدة.",
+    closedMessage:
+      "التسجيل مغلق حاليًا. يمكنك الانضمام إلى قائمة الانتظار.",
+    waitlistSuccess: "تمت إضافتك إلى قائمة الانتظار.",
+    waitlistEmail: "البريد الإلكتروني",
+    waitlistName: "الاسم أو الاسم المعروض (اختياري)",
+    waitlistSubmit: "الانضمام إلى قائمة الانتظار",
+  },
+};
 
 export default function RegisterScreen({
   onRegisterSuccess,
@@ -27,6 +58,31 @@ export default function RegisterScreen({
   const [level, setLevel] = useState("B1");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [notRobot, setNotRobot] = useState(false);
+  const [registrationState, setRegistrationState] = useState("open");
+  const [statusLoading, setStatusLoading] = useState(true);
+  const [waitlistDone, setWaitlistDone] = useState(false);
+  const [waitlistError, setWaitlistError] = useState("");
+
+  const language = getUserLanguage();
+  const copy = COPY[language] || COPY.Deutsch;
+  const registrationBlocked = registrationState !== "open";
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchRegistrationStatus()
+      .then((data) => {
+        if (!cancelled) setRegistrationState(data?.registrationState || "open");
+      })
+      .catch(() => {
+        if (!cancelled) setRegistrationState("open");
+      })
+      .finally(() => {
+        if (!cancelled) setStatusLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleRegister = async () => {
     const cleanEmail = email.trim().toLowerCase();
@@ -66,6 +122,11 @@ export default function RegisterScreen({
     });
 
     if (!result.ok) {
+      if (result.code === "REGISTRATION_FULL" || result.code === "REGISTRATION_CLOSED") {
+        setRegistrationState(
+          result.code === "REGISTRATION_CLOSED" ? "manually_closed" : "capacity_full"
+        );
+      }
       alert(result.message);
       return;
     }
@@ -74,6 +135,86 @@ export default function RegisterScreen({
       onRegisterSuccess(result.user);
     }
   };
+
+  const handleWaitlist = async () => {
+    setWaitlistError("");
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
+      setWaitlistError(copy.waitlistEmail);
+      return;
+    }
+    try {
+      await joinRegistrationWaitlist({
+        email: cleanEmail,
+        displayName: name.trim() || undefined,
+        preferredLanguage: language,
+      });
+      setWaitlistDone(true);
+    } catch (err) {
+      setWaitlistError(err instanceof ApiError ? err.message : "Aktion fehlgeschlagen.");
+    }
+  };
+
+  if (statusLoading) {
+    return (
+      <div style={authPageStyle}>
+        <div style={authCardStyle}>
+          <p style={authSubtitleStyle}>Wird geladen …</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (registrationBlocked) {
+    return (
+      <div style={authPageStyle}>
+        <div style={authCardStyle}>
+          <h1 style={authTitleStyle}>{copy.fullTitle}</h1>
+          <p style={authSubtitleStyle}>
+            {registrationState === "manually_closed" ? copy.closedMessage : copy.fullMessage}
+          </p>
+
+          {waitlistDone ? (
+            <div style={successBoxStyle}>{copy.waitlistSuccess}</div>
+          ) : (
+            <>
+              <label style={authLabelStyle}>{copy.waitlistEmail}</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={authInputStyle}
+                autoComplete="email"
+              />
+              <label style={authLabelStyle}>{copy.waitlistName}</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                style={authInputStyle}
+                autoComplete="name"
+              />
+              {waitlistError ? <p style={errorStyle}>{waitlistError}</p> : null}
+              <button type="button" onClick={handleWaitlist} style={authPrimaryButtonStyle}>
+                {copy.waitlistSubmit}
+              </button>
+            </>
+          )}
+
+          {onLogin && (
+            <button type="button" onClick={onLogin} style={authTextButtonStyle}>
+              Bereits ein Konto? Anmelden
+            </button>
+          )}
+          {onBack && (
+            <button type="button" onClick={onBack} style={authTextButtonStyle}>
+              ← Zurück
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={authPageStyle}>
@@ -202,11 +343,7 @@ export default function RegisterScreen({
           </span>
         </label>
 
-        <button
-          type="button"
-          onClick={handleRegister}
-          style={authPrimaryButtonStyle}
-        >
+        <button type="button" onClick={handleRegister} style={authPrimaryButtonStyle}>
           Konto erstellen
         </button>
 
@@ -236,3 +373,14 @@ const inlineLinkStyle = {
   textDecoration: "underline",
   fontSize: "inherit",
 };
+
+const successBoxStyle = {
+  background: "#ecfdf5",
+  color: "#166534",
+  borderRadius: "14px",
+  padding: "14px 16px",
+  fontWeight: 700,
+  marginBottom: "12px",
+};
+
+const errorStyle = { color: "#b91c1c", fontSize: "14px" };

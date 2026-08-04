@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { b1PlanningModels } from '../../data/modelsb1';
 import { b2PlanningModels } from '../../data/b2PlanningModels';
-import { getUserLevel } from '../../utils/userPreferences';
+import { useAdminLearningLevel } from '../hooks/useAdminLearningLevel.js';
+import { LearningLevelSelector } from '../components/LearningLevelSelector.jsx';
 
 const planningModels = {
   A2: [
@@ -62,16 +63,20 @@ export function PlanningScreen({
   setActiveTab,
   navigationContext,
   selectedLevel,
+  setSelectedLevel,
   clearNavigationContext,
 }) {
-  const userLevel = selectedLevel || getUserLevel();
-  const [level, setLevel] = useState(userLevel);
+  const { level, setLevel } = useAdminLearningLevel({
+    selectedLevel,
+    setSelectedLevel,
+    navigationLevel: navigationContext?.level,
+  });
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
     if (!navigationContext?.fromDailyLearning) return;
     if (selectedLevel) setLevel(selectedLevel);
-    const models = planningModels[selectedLevel || userLevel] || [];
+    const models = planningModels[selectedLevel || level] || [];
     if (navigationContext.planId) {
       const planIndex = models.findIndex((item) => item.id === navigationContext.planId);
       if (planIndex >= 0) setIndex(planIndex);
@@ -79,7 +84,7 @@ export function PlanningScreen({
       setIndex(navigationContext.planIndex);
     }
     clearNavigationContext?.();
-  }, [navigationContext, selectedLevel, userLevel, clearNavigationContext]);
+  }, [navigationContext, selectedLevel, level, clearNavigationContext, setLevel]);
 
   const models = planningModels[level] || [];
   const model = models[index];
@@ -109,15 +114,7 @@ export function PlanningScreen({
         {level === 'B2' && 'Übe Diskussion, Meinung und Präsentation.'}
       </p>
 
-     <select
-  style={inputStyle}
-  value={userLevel}
-  disabled
->
-  <option value={userLevel}>
-    {userLevel}
-  </option>
-</select>
+      <LearningLevelSelector level={level} onChange={changeLevel} inputStyle={inputStyle} />
 
       {models.length === 0 ? (
         <div style={boxStyle}>

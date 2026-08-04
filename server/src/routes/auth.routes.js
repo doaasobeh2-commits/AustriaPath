@@ -9,6 +9,7 @@ import {
   resetPasswordWithToken,
   verifyEmailWithToken,
 } from "../services/authService.js";
+import { recordClientUserActivity } from "../services/userActivityService.js";
 import { requireAuth } from "../middleware/auth.js";
 import { hashToken } from "../middleware/request.js";
 import { env } from "../config/env.js";
@@ -16,6 +17,8 @@ import {
   loginRateLimit,
   loginEmailRateLimit,
   registerRateLimit,
+  forgotPasswordRateLimit,
+  resetPasswordRateLimit,
 } from "../middleware/rateLimit.js";
 const router = Router();
 
@@ -57,7 +60,7 @@ router.post("/logout", requireAuth, async (req, res, next) => {
       ? req.headers.authorization.slice(7)
       : null;
     const token = bearer || req.cookies?.austria_path_session;
-    await logoutUser(token);
+    await logoutUser(token, req.auth?.userId);
     res.clearCookie("austria_path_session", { path: "/" });
     success(res, { loggedOut: true });
   } catch (e) {
@@ -74,7 +77,7 @@ router.get("/me", requireAuth, async (req, res, next) => {
   }
 });
 
-router.post("/forgot-password", async (req, res, next) => {
+router.post("/forgot-password", forgotPasswordRateLimit, async (req, res, next) => {
   try {
     const result = await requestPasswordReset(req.body?.email);
     success(res, result);
@@ -83,9 +86,18 @@ router.post("/forgot-password", async (req, res, next) => {
   }
 });
 
-router.post("/reset-password", async (req, res, next) => {
+router.post("/reset-password", resetPasswordRateLimit, async (req, res, next) => {
   try {
     const result = await resetPasswordWithToken(req.body?.token, req.body?.password);
+    success(res, result);
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/activity", requireAuth, async (req, res, next) => {
+  try {
+    const result = await recordClientUserActivity(req.auth.userId, req.body?.event);
     success(res, result);
   } catch (e) {
     next(e);

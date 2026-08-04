@@ -1,5 +1,6 @@
 import React from "react";
 import { enableAdminQaMode } from "../../utils/adminQaMode.js";
+import { loadAdminQaFullDayPlan } from "../../data/utils/adminQaFullDayPlan.js";
 
 const TABS = [
   { id: "content", label: "📋 Content Manager", description: "Inhalte erstellen & extrahieren" },
@@ -36,6 +37,20 @@ export default function AdminNav({ activeTab, onTabChange, setActiveTab }) {
         >
           🩺 Placement Diagnostics
         </button>
+        <button
+          type="button"
+          onClick={() => onTabChange("communityModeration")}
+          style={toolButtonStyle("#15803d")}
+        >
+          ❓ Fragen &amp; Antworten
+        </button>
+        <button
+          type="button"
+          onClick={() => onTabChange("registrationWaitlist")}
+          style={toolButtonStyle("#7c2d12")}
+        >
+          📝 Registrierung &amp; Warteliste
+        </button>
       </div>
 
       <button
@@ -47,6 +62,16 @@ export default function AdminNav({ activeTab, onTabChange, setActiveTab }) {
         style={qaButtonStyle}
       >
         🧪 Learner QA — echte Prüfungen als Schüler
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          enableAdminQaMode();
+          loadAdminQaFullDayPlan({ setActiveTab });
+        }}
+        style={qaFullDayButtonStyle}
+      >
+        📋 Kompletten A2-Testtag laden
       </button>
       <p style={qaHintStyle}>
         Normale Lerner-UI. Über Home → AI-Training die Pläne öffnen (Einstufung / Training /
@@ -117,6 +142,18 @@ const qaButtonStyle = {
   fontSize: "14px",
   textAlign: "left",
   marginTop: "4px",
+};
+
+const qaFullDayButtonStyle = {
+  border: "2px solid #2563eb",
+  background: "#eff6ff",
+  color: "#1d4ed8",
+  padding: "14px 16px",
+  borderRadius: "14px",
+  fontWeight: 800,
+  cursor: "pointer",
+  fontSize: "14px",
+  textAlign: "left",
 };
 
 const qaHintStyle = {

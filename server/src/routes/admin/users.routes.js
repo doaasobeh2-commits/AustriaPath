@@ -5,8 +5,10 @@ import { query } from "../../db/client.js";
 import { AppError } from "../../middleware/errorHandler.js";
 import { formatPgTextArray } from "../../db/arrays.js";
 import { accessFieldsForUser } from "../../services/accessService.js";
+import { mapUserActivitySummary } from "../../services/userActivityService.js";
 import { env } from "../../config/env.js";
 import { grantPlacementAttempt } from "../../services/placementEntitlementService.js";
+import { grantWeeklyPlanAccess } from "../../services/weeklyPlanEntitlementService.js";
 
 const router = Router();
 
@@ -15,7 +17,8 @@ router.get("/", requireAuth, requireAdmin, async (_req, res, next) => {
     const { rows } = await query(
       `SELECT u.id, u.email, u.role, u.status, u.level, u.plan, u.allowed_levels,
               u.ai_credits, u.used_ai_credits,
-              u.created_at, u.last_login_at, u.trial_started_at, u.trial_expires_at,
+              u.created_at, u.last_login_at, u.login_count, u.last_activity_at,
+              u.last_feature_opened, u.trial_started_at, u.trial_expires_at,
               u.is_access_approved, p.display_name,
               s.type AS subscription_type, s.status AS subscription_status,
               s.remaining_exams, s.permissions AS subscription_permissions
@@ -51,6 +54,7 @@ router.get("/", requireAuth, requireAdmin, async (_req, res, next) => {
         allowedLevels: r.allowed_levels,
         createdAt: r.created_at,
         lastLogin: r.last_login_at,
+        ...mapUserActivitySummary(r),
         trialStartedAt: r.trial_started_at,
         trialExpiresAt: r.trial_expires_at,
         isAccessApproved: r.is_access_approved,
@@ -65,6 +69,14 @@ router.get("/", requireAuth, requireAdmin, async (_req, res, next) => {
 router.post("/:userId/grant-placement", requireAuth, requireAdmin, async (req, res, next) => {
   try {
     success(res, await grantPlacementAttempt(req.params.userId));
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/:userId/grant-weekly-plan", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    success(res, await grantWeeklyPlanAccess(req.params.userId));
   } catch (e) {
     next(e);
   }

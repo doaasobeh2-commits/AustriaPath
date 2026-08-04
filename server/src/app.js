@@ -12,6 +12,8 @@ import studentProfileRoutes from "./routes/studentProfile.routes.js";
 import subscriptionRoutes from "./routes/subscription.routes.js";
 import aiRoutes from "./routes/ai.routes.js";
 import placementRoutes from "./routes/placement.routes.js";
+import weeklyPlanRoutes from "./routes/weeklyPlan.routes.js";
+import { b1WeeklyTrainingRoutes } from "./weekly-training-ai/index.js";
 import webhooksRoutes from "./routes/webhooks.routes.js";
 import examinerLabRoutes from "./routes/admin/examinerLab.routes.js";
 import ruleRegistryPublicRoutes from "./routes/ruleRegistry.routes.js";
@@ -22,6 +24,10 @@ import adminUsersRoutes from "./routes/admin/users.routes.js";
 import placementDiagnosticsRoutes from "./routes/admin/placementDiagnostics.routes.js";
 import migrationRoutes from "./routes/migration.routes.js";
 import messagesRoutes from "./routes/messages.routes.js";
+import communityQaRoutes from "./routes/communityQa.routes.js";
+import adminCommunityQaRoutes from "./routes/admin/communityQa.routes.js";
+import registrationRoutes from "./routes/registration.routes.js";
+import adminRegistrationRoutes from "./routes/admin/registration.routes.js";
 
 export function createApp() {
   const app = express();
@@ -40,21 +46,27 @@ export function createApp() {
 
   app.use("/health", healthRoutes);
   app.use("/auth", authRoutes);
+  app.use("/registration", registrationRoutes);
   app.use("/exam-sessions", examSessionsRoutes);
   app.use("/reports", reportsRoutes);
   app.use("/student-profile", studentProfileRoutes);
   app.use("/subscription", subscriptionRoutes);
   app.use("/ai", aiRoutes);
   app.use("/placement", placementRoutes);
+  app.use("/weekly-plan", weeklyPlanRoutes);
+  app.use("/weekly-training-ai/b1", b1WeeklyTrainingRoutes);
   app.use("/admin/examiner-lab", examinerLabRoutes);
   app.use("/admin/rule-registry", ruleRegistryAdminRoutes);
   app.use("/rule-registry", ruleRegistryPublicRoutes);
   app.use("/migration", migrationRoutes);
   app.use("/users", usersRoutes);
   app.use("/messages", messagesRoutes);
+  app.use("/community", communityQaRoutes);
   app.use("/internal", bootstrapRoutes);
   app.use("/admin/users", adminUsersRoutes);
   app.use("/admin/placement-diagnostics", placementDiagnosticsRoutes);
+  app.use("/admin/community", adminCommunityQaRoutes);
+  app.use("/admin/registration", adminRegistrationRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

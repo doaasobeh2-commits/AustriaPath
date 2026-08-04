@@ -7,7 +7,7 @@ import { b2LesenModels } from './b2LesenModels.js';
 import { b2Grafiken } from './b2Grafiken.js';
 import { b1LesenModels } from './b1LesenModels.js';
 
-import { a2Images } from './a2Images.js';
+import { getAvailableA2Images } from './a2ImageTaskCatalog.js';
 import { b1Images } from './b1Images.js';
 
 import { examBank } from './examBank.js';
@@ -118,7 +118,7 @@ function getImageModel(level) {
   if (admin.length) return pickOne(admin);
 
   const banks = {
-    A2: a2Images,
+    A2: getAvailableA2Images(),
     B1: b1Images,
     B2: b2Grafiken,
   };

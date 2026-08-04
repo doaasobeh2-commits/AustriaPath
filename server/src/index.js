@@ -1,3 +1,4 @@
+import "./config/loadServerEnv.js";
 import express from "express";
 import { createApp } from "./app.js";
 import { attachProductionFrontend } from "./spa.js";
@@ -7,7 +8,10 @@ import { env } from "./config/env.js";
 import { assertProductionDatabaseConfig } from "./config/validateEnv.js";
 import { attachRequestLogger } from "./middleware/requestLogger.js";
 import { attachProcessHandlers } from "./runtime/processHandlers.js";
+import { logWeeklyTrainingStartupDiagnostics } from "./weekly-training-ai/core/config.js";
 import healthzRoutes from "./routes/healthz.routes.js";
+
+logWeeklyTrainingStartupDiagnostics();
 
 const root = express();
 root.set("trust proxy", 1);

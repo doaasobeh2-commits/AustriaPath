@@ -1,16 +1,18 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { isAdminAccount } from '../../config/authConfig';
 import { getCurrentUser } from '../userAccess';
-import { buildPremiumExamParts } from '../../data/premiumExamBuilder';
 import { readJsonStorage } from '../../security/secureStorage';
-import { AI_SESSION_STORAGE_KEY } from '../../constants/storageKeys';
-import { isAdminQaMode } from '../../utils/adminQaMode.js';
+import { fetchWeeklyPlanEntitlementView } from '../../utils/weeklyPlanEntitlement.js';
 import {
   getWeeklyPlanEntryCard,
   isCoachV1Plan,
   loadWeeklyPlan,
 } from '../../data/utils/weeklyPlanCoachState.js';
 import { setWeeklyPlanHandoff } from '../../data/utils/weeklyPlanHandoff.js';
+import { useBackend } from '../../api/useBackend.js';
+
+const SHOW_LEGACY_PREMIUM_EXAM_CARDS = false;
+
 export function ProfileScreen({ setActiveTab }) {
   const placementProfile = useMemo(() => {
     return readJsonStorage('austriaPathPlacementProfile', null);
@@ -20,8 +22,16 @@ export function ProfileScreen({ setActiveTab }) {
 
   const weeklyEntry = useMemo(() => getWeeklyPlanEntryCard(weeklyPlan), [weeklyPlan]);
 
-  const premiumExams = useMemo(() => {
-    return readJsonStorage('austriaPathPremiumExams', []) || [];
+  const [weeklyEntitled, setWeeklyEntitled] = useState(false);
+
+  useEffect(() => {
+    if (!useBackend()) {
+      setWeeklyEntitled(false);
+      return;
+    }
+    fetchWeeklyPlanEntitlementView().then((view) => {
+      setWeeklyEntitled(Boolean(view?.canAccess));
+    });
   }, []);
 
   const reports = useMemo(() => {
@@ -58,123 +68,17 @@ const targetLevel =
     learnerReport,
     hasAIResult,
   });
-  const exams = buildPremiumExamCards(premiumExams, level);
 
   const openWeeklyEntry = () => {
+    if (!weeklyEntitled) {
+      setActiveTab('premium');
+      return;
+    }
     if (weeklyEntry.tab === 'trainingPlanDashboard' && weeklyEntry.planIndex) {
       setWeeklyPlanHandoff({ planIndex: weeklyEntry.planIndex, view: 'dashboard' });
     }
     setActiveTab(weeklyEntry.tab);
   };
-
-const getPremiumSchedule = () => {
-  try {
-    return JSON.parse(localStorage.getItem('austriaPathPremiumSchedule') || '[]');
-  } catch {
-    return [];
-  }
-};
-
-const canStartScheduledExam = (exam) => {
-  const schedule = getPremiumSchedule();
-  const now = new Date();
-
-  const next = schedule.find(
-    (item) => item.type === exam.type && !item.used
-  );
-
-  if (!next) return { allowed: false, message: 'Bitte zuerst Termine planen.' };
-
-  const start = new Date(next.startAt);
-
-  if (now < start) {
-    return {
-      allowed: false,
-      message: `Diese Trainingseinheit beginnt am ${next.date} um ${next.time}.`,
-    };
-  }
-
-  return { allowed: true, appointment: next };
-};
-const openPremiumExam = (exam) => {
-  const cleanLevel = level?.replace('+', '') || 'B1';
-
-  localStorage.setItem(
-    AI_SESSION_STORAGE_KEY,
-    JSON.stringify({
-      sessionType:
-        exam.type === 'intensive'
-          ? 'intensive_week'
-          : exam.type === 'month'
-          ? 'premium_month'
-          : 'ai_exam',
-      mode: 'exam',
-      title: exam.title || 'AI Sprechtraining',
-      level: cleanLevel,
-    parts: buildPremiumExamParts(cleanLevel),
-      examId: exam.id,
-      startedAt: new Date().toISOString(),
-    })
-  );
-
-setActiveTab('aiSession');
-};
-
-const handlePremiumExamClick = (exam) => {
-  const subscription = JSON.parse(
-    localStorage.getItem("austriaPathSubscription") || "null"
-  );
-
-  if (!subscription && !isAdminQaMode()) {
-    alert("Bitte zuerst einen Premium-Plan auswählen.");
-    setActiveTab("premium");
-    return;
-  }
-
- if (exam.type === "probe" || exam.type === "ai_exam") {
-    localStorage.setItem(
-  "austriaPathCurrentPremiumType",
-  "ai_exam"
-);
-
-setActiveTab("premiumSchedule");
-    return;
-  }
-
- if (exam.type === "intensive") {
-   localStorage.setItem(
-  "austriaPathCurrentPremiumType",
-  "intensive_week"
-);
-
-setActiveTab("premiumSchedule");
-    return;
-  }
-
- if (exam.type === "month") {
-   localStorage.setItem(
-  "austriaPathCurrentPremiumType",
-  "premium_month"
-);
-
-setActiveTab("premiumSchedule");
-    return;
-  }
-
-const result = canStartScheduledExam(exam);
-
-if (!result.allowed) {
-  alert(result.message);
-  return;
-}
-
-localStorage.setItem(
-  'austriaPathActivePremiumAppointment',
-  JSON.stringify(result.appointment)
-);
-
-openPremiumExam(exam);
-};
 
 return (
   <div style={pageStyle}>
@@ -204,6 +108,12 @@ return (
 >
   ⚙️ Kontoeinstellungen
 </button>
+              <button
+                onClick={() => setActiveTab('communityMyQuestions')}
+                style={{ ...settingsButtonStyle, marginTop: '10px' }}
+              >
+                📋 Meine Fragen
+              </button>
             </div>
 {isAdminAccount(currentUser) && (
   <button
@@ -298,7 +208,7 @@ return (
     {weeklyEntry.cta}
   </button>
 
-  {isCoachV1Plan(weeklyPlan) && (
+  {weeklyEntitled && isCoachV1Plan(weeklyPlan) && (
     <button
       type="button"
       style={{ ...createPlanButtonStyle, backgroundColor: '#ffffff', color: '#2563eb', border: '1px solid #bfdbfe', marginTop: '10px' }}
@@ -313,34 +223,11 @@ return (
         </div>
       </div>
 
+      {SHOW_LEGACY_PREMIUM_EXAM_CARDS ? (
       <div style={planCardStyle}>
         <h2 style={{ marginTop: 0 }}>🧪 Mein AI-Training</h2>
-
-        <div style={examGridStyle}>
-          {exams.map((exam) => (
-            <div key={exam.id} style={examCardStyle}>
-              <div style={examIconStyle}>{exam.icon}</div>
-              <h3>{exam.title}</h3>
-              <p style={mutedStyle}>{exam.text}</p>
-              <p style={smallTextStyle}>
-                Fortschritt: {exam.used}/{exam.total}
-              </p>
-
-              <button
-                style={examButtonStyle}
-                onClick={() => handlePremiumExamClick(exam)}
-                disabled={exam.used >= exam.total}
-              >
-                {
-  exam.used >= exam.total
-    ? "Abgeschlossen"
-    : "Termin planen"
-}
-              </button>
-            </div>
-          ))}
-        </div>
       </div>
+      ) : null}
 
       <div style={planCardStyle}>
   <h2 style={{ marginTop: 0 }}>📊 Ergebnisse & Berichte</h2>

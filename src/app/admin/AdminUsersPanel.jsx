@@ -16,6 +16,10 @@ function mapApiUser(u) {
     allowedLevels: u.allowedLevels || u.allowed_levels || ["A2", "B1", "B2"],
     createdAt: u.createdAt,
     lastLogin: u.lastLogin,
+    lastActivity: u.lastActivity,
+    loginCount: u.loginCount ?? 0,
+    lastFeatureOpened: u.lastFeatureOpened,
+    activityStatus: u.activityStatus,
     trialStartedAt: u.trialStartedAt,
     trialExpiresAt: u.trialExpiresAt,
     isAccessApproved: u.isAccessApproved,
@@ -23,13 +27,25 @@ function mapApiUser(u) {
   };
 }
 
-function formatDate(date) {
+function formatDateTime(date) {
   if (!date) return "—";
   try {
-    return new Date(date).toLocaleDateString("de-DE");
+    return new Date(date).toLocaleString("de-DE", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   } catch {
     return "—";
   }
+}
+
+function activityStatusLabel(status) {
+  if (status === "active") return "Aktiv";
+  if (status === "inactive") return "Inaktiv";
+  return "Nur registriert";
 }
 
 function accountStatusLabel(status) {
@@ -135,9 +151,18 @@ export default function AdminUsersPanel({ isActive = true }) {
               <strong>{user.name || "Ohne Name"}</strong>
               <p style={hintStyle}>{user.email}</p>
               <p style={hintStyle}>
-                Registriert: {formatDate(user.createdAt)} · Letzter Login:{" "}
-                {formatDate(user.lastLogin)} · Status: {accountStatusLabel(user.status)}
+                Registriert: {formatDateTime(user.createdAt)} · Status:{" "}
+                {accountStatusLabel(user.status)}
                 {user.accessStatus ? ` · Zugang: ${accessStatusLabel(user.accessStatus)}` : ""}
+              </p>
+              <p style={hintStyle}>
+                Letzter Login: {formatDateTime(user.lastLogin)} · Letzte Aktivität:{" "}
+                {formatDateTime(user.lastActivity)}
+              </p>
+              <p style={hintStyle}>
+                Login-Anzahl: {user.loginCount ?? 0} · Letztes Feature:{" "}
+                {user.lastFeatureOpened || "—"} · Nutzerstatus:{" "}
+                {activityStatusLabel(user.activityStatus)}
               </p>
               <p style={hintStyle}>Niveau: {user.level} · Plan: {user.plan || "free"}</p>
               <div style={checkRowStyle}>

@@ -48,6 +48,7 @@ export const SUBSCRIPTION_KEYS = Object.freeze([
 export const AI_SESSION_KEYS = Object.freeze([
   "austriaPathPlacementProfile",
   "austriaPathWeeklyPlan",
+  "austriaPathWeeklyPlanHandoff",
   "austriaPathCurrentAISession",
   "austriaPathAiSession",
   "austriaPathCurrentSessionAnswers",

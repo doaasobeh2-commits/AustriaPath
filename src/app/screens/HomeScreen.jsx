@@ -84,6 +84,7 @@ export function HomeScreen({ setActiveTab }) {
             <Card icon="🖼️" title="Bildbeschreibung" text="Trainiere Bilder mit Beschreibung, Meinung und Beispielen." color="#ecfdf5" onClick={() => setActiveTab('images')} />
             <Card icon="🗣️" title="Sprechen üben" text="A2: Aufgabe lösen · B1: Etwas planen · B2: Diskussion und Präsentation." color="#eff6ff" onClick={() => setActiveTab('speaking')} />
             <Card icon="📚" title="Themenbibliothek" text="Häufige Alltagsthemen nach Niveau, Bundesland und Stadt." color="#fff7ed" onClick={() => setActiveTab('database')} />
+            <Card icon="❓" title="Fragen & Antworten" text="Stellen Sie anonym eine Frage oder helfen Sie anderen Lernenden." color="#f0fdf4" onClick={() => setActiveTab('communityQuestions')} />
             <Card icon="⭐" title="AI-Training" text="Interaktive Übungssimulation mit AI-Feedback und Lernbericht." color="#fef9c3" comingSoon={premiumDisabled} onClick={() => setActiveTab('premium')} />
           </div>
 

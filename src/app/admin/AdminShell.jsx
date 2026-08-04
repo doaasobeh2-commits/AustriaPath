@@ -4,6 +4,8 @@ import ContentManager from "./ContentManager.jsx";
 import AdminUsersPanel from "./AdminUsersPanel.jsx";
 import AdminOverviewPanel from "./AdminOverviewPanel.jsx";
 import PlacementDiagnosticsPanel from "./PlacementDiagnosticsPanel.jsx";
+import CommunityModerationPanel from "./CommunityModerationPanel.jsx";
+import RegistrationWaitlistPanel from "./RegistrationWaitlistPanel.jsx";
 import { useAdminContent } from "./useAdminContent.js";
 
 export default function AdminShell({ setActiveTab }) {
@@ -51,6 +53,10 @@ export default function AdminShell({ setActiveTab }) {
       {activeSection === "users" && <AdminUsersPanel isActive={activeSection === "users"} />}
 
       {activeSection === "placementDiagnostics" && <PlacementDiagnosticsPanel />}
+
+      {activeSection === "communityModeration" && <CommunityModerationPanel />}
+
+      {activeSection === "registrationWaitlist" && <RegistrationWaitlistPanel />}
     </div>
   );
 }

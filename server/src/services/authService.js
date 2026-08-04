@@ -1,6 +1,5 @@
 import { AppError } from "../middleware/errorHandler.js";
 import {
-  createUserWithProfile,
   findUserByEmail,
   findUserById,
   getCurrentSubscription,
@@ -15,6 +14,7 @@ import { query } from "../db/client.js";
 import { env } from "../config/env.js";
 import { createOneTimeToken, consumeOneTimeToken } from "../repositories/tokenStoreRepository.js";
 import { sendPasswordResetEmail, sendVerificationEmail } from "../services/emailService.js";
+import { registerUserWithCapacityGate } from "../services/registrationCapacityService.js";
 
 const SESSION_DAYS = 7;
 const TOKEN_ROUTE_RESET = "auth:password-reset";
@@ -50,25 +50,11 @@ export async function registerUser(body) {
     throw new AppError("EMAIL_ALREADY_REGISTERED", "Diese E-Mail ist bereits registriert.", 409);
   }
 
-  const passwordHash = await hashPassword(body.password);
-  const user = await createUserWithProfile({
+  return registerUserWithCapacityGate({
+    ...body,
     email,
-    passwordHash,
-    name: body.name,
-    level: body.level,
+    password: body.password,
   });
-  const sub = await getCurrentSubscription(user.id);
-  const apiUser = rowToApiUser({ ...user, display_name: body.name }, sub);
-
-  try {
-    const token = await createOneTimeToken(TOKEN_ROUTE_VERIFY, { userId: user.id, email }, 48);
-    const verifyUrl = `${env.corsOrigin}?verifyEmail=${token}`;
-    await sendVerificationEmail(email, verifyUrl);
-  } catch {
-    /* non-blocking */
-  }
-
-  return apiUser;
 }
 
 export async function loginUser(body, meta = {}) {

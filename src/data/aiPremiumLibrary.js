@@ -91,7 +91,7 @@ export const aiPremiumLibrary = [
   },
 
   {
-    id: 'a2-bild-001',
+    id: 'a2-premium-bild-baeckerei',
     level: 'A2',
     skill: 'bildbeschreibung',
     difficulty: 'leicht',
@@ -101,6 +101,11 @@ export const aiPremiumLibrary = [
     visibleToStudents: false,
     placementUse: true,
     placementWeight: 25,
+    assetStatus: 'available',
+    canonicalImageId: 'A2-IMG-12',
+    catalogImageId: 12,
+    image: '/images/a2/baeckerei.jpeg',
+    topicLabel: 'Bäckerei',
 
     title: 'A2 Bildbeschreibung – Bäckerei',
     studentPreview: 'Beschreiben Sie das Bild kurz.',
@@ -182,7 +187,7 @@ export const aiPremiumLibrary = [
   },
 
   {
-    id: 'a2-bild-002',
+    id: 'a2-premium-bild-kochen',
     level: 'A2',
     skill: 'bildbeschreibung',
     difficulty: 'mittel',
@@ -192,6 +197,11 @@ export const aiPremiumLibrary = [
     visibleToStudents: false,
     placementUse: true,
     placementWeight: 25,
+    assetStatus: 'available',
+    canonicalImageId: 'A2-IMG-10',
+    catalogImageId: 10,
+    image: '/images/a2/kueche-salat.jpeg',
+    topicLabel: 'Kochen zu Hause',
 
     title: 'A2 Bildbeschreibung – Kochen zu Hause',
     studentPreview: 'Beschreiben Sie das Bild.',
@@ -278,7 +288,7 @@ export const aiPremiumLibrary = [
   },
 
   {
-    id: 'a2-bild-003',
+    id: 'a2-premium-bild-familienausflug',
     level: 'A2',
     skill: 'bildbeschreibung',
     difficulty: 'stark',
@@ -288,6 +298,11 @@ export const aiPremiumLibrary = [
     visibleToStudents: false,
     placementUse: true,
     placementWeight: 25,
+    assetStatus: 'available',
+    canonicalImageId: 'A2-IMG-13',
+    catalogImageId: 13,
+    image: '/images/a2/familienausflug.jpeg',
+    topicLabel: 'Familienausflug',
 
     title: 'A2 Bildbeschreibung – Familienausflug',
     studentPreview: 'Beschreiben Sie das Bild etwas genauer.',
@@ -799,7 +814,8 @@ export function getAiPremiumModels({
       matchService &&
       matchDifficulty &&
       notUsed &&
-      item.visibleToStudents === false
+      item.visibleToStudents === false &&
+      item.assetStatus !== 'missing'
     );
   });
 }

@@ -3,8 +3,29 @@ dist/
 .env
 .env.local
 .env.vercel.local
+server/.env
 deploy/closed-beta-env.local
 .DS_Store
 .vercel/
 .vercel
 server/data/placement-diagnostics/
+
+# Local embedded DB (never commit)
+server/.pglite/
+server/.pglite-*/
+
+# Review / preview / audit artifacts (not production)
+review-only/
+audit/
+*-preview.html
+weekly-plan-preview*.html
+phase-a-preview.html
+a1a-preview.html
+a1b-preview.html
+generate_a2_hoeren.py
+
+# Local diagnostic scripts (optional dev tooling)
+scripts/diag-*.mjs
+scripts/verify-*.mjs
+scripts/placement-ui-qa.mjs
+scripts/diagnose-local-admin-login.mjs

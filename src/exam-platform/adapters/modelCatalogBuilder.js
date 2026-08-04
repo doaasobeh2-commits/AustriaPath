@@ -12,7 +12,7 @@ import { b1LesenModels } from "../../data/b1LesenModels.js";
 import { b2LesenModels } from "../../data/b2LesenModels.js";
 import { b1HorenModels } from "../../data/b1HorenModels.js";
 import { b2HorenModels } from "../../data/b2HorenModels.js";
-import { a2Images } from "../../data/a2Images.js";
+import { getAvailableA2Images } from "../../data/a2ImageTaskCatalog.js";
 import { b1Images } from "../../data/b1Images.js";
 import { b2Grafiken } from "../../data/b2Grafiken.js";
 import { aiPlacementLibrary } from "../../data/aiPlacementLibrary.js";
@@ -194,7 +194,7 @@ export function buildModelCatalog() {
   addListeningEntries(catalog, b1HorenModels, "B1");
   addListeningEntries(catalog, b2HorenModels, "B2");
 
-  addImageEntries(catalog, a2Images, "A2");
+  addImageEntries(catalog, getAvailableA2Images(), "A2");
   addImageEntries(catalog, b1Images, "B1");
   addImageEntries(catalog, b2Grafiken, "B2", "picture_description");
 

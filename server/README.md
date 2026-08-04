@@ -22,8 +22,8 @@ Implements Gate 0 Contract Pack `2.0.0-gate0`.
 # Optional: Docker PostgreSQL
 docker compose up -d
 
-cp .env.example .env
-# Set DATABASE_URL=postgresql://austria:austria@localhost:5432/austria_path
+cp server/.env.example server/.env
+# Set WEEKLY_TRAINING_B1_OPENAI_API_KEY in server/.env (password manager — not root .env)
 
 npm run server:migrate
 npm run server:dev

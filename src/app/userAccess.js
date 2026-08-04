@@ -7,6 +7,7 @@ import {
   clearSessionIntegrity,
   writeSessionIntegrity,
 } from "../security/sessionIntegrity";
+import { clearAdminSessionLearningLevel } from "../utils/learningLevelAccess.js";
 import { readJsonStorage, writeJsonStorage } from "../security/secureStorage.js";
 import { isValidEmail } from "../security/sanitize.js";
 import { useBackend } from "../api/useBackend.js";
@@ -121,22 +122,52 @@ function buildSeedAdminUser() {
   };
 }
 
+/**
+ * Local-only: keep stored admin password aligned with VITE_ADMIN_INITIAL_PASSWORD.
+ * Does not run when VITE_USE_BACKEND=true (production/API auth untouched).
+ */
+function restoreLocalSeedAdminPassword(users) {
+  const seedAdmin = buildSeedAdminUser();
+  if (!seedAdmin) return { users, changed: false };
+
+  const adminIndex = users.findIndex(
+    (user) => user.email?.toLowerCase() === ADMIN_EMAIL
+  );
+
+  if (adminIndex === -1) {
+    return { users: [seedAdmin, ...users], changed: true };
+  }
+
+  const existing = users[adminIndex];
+  if (
+    existing.password === seedAdmin.password &&
+    existing.role === "admin" &&
+    existing.status === "approved"
+  ) {
+    return { users, changed: false };
+  }
+
+  const restored = [...users];
+  restored[adminIndex] = {
+    ...existing,
+    ...seedAdmin,
+    id: existing.id || seedAdmin.id,
+    createdAt: existing.createdAt || seedAdmin.createdAt,
+  };
+  return { users: restored, changed: true };
+}
+
 export function getUsers() {
   if (useBackend()) {
     return [];
   }
   try {
-    const users = getStoredUsers();
-    const hasAdmin = users.some(
-      (user) => user.email?.toLowerCase() === ADMIN_EMAIL
-    );
-
-    if (hasAdmin) {
-      return users.map(normalizeStoredUser);
+    const stored = getStoredUsers();
+    const { users, changed } = restoreLocalSeedAdminPassword(stored);
+    if (changed) {
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
     }
-
-    const seedAdmin = buildSeedAdminUser();
-    return seedAdmin ? [seedAdmin, ...users] : users;
+    return users.map(normalizeStoredUser);
   } catch {
     const seedAdmin = buildSeedAdminUser();
     return seedAdmin ? [seedAdmin] : [];
@@ -167,6 +198,7 @@ export function saveCurrentUser(user) {
 
 export function clearSession() {
   activeSessionUser = null;
+  clearAdminSessionLearningLevel();
   localStorage.removeItem("isLoggedIn");
   localStorage.removeItem("currentUser");
   localStorage.removeItem(CURRENT_USER_KEY);
@@ -176,6 +208,11 @@ export function clearSession() {
   localStorage.removeItem("isAdminPreview");
   clearSessionIntegrity();
   if (useBackend()) clearBackendCache();
+}
+
+/** Clears orphaned in-memory session after API auth rejection (stale cookie). */
+export function invalidateAuthSessionFromApi() {
+  clearSession();
 }
 
 /** Remove forged/stale client auth markers; legal consent and UI prefs are kept. */
@@ -420,7 +457,11 @@ export async function registerStudentUser({ name, email, password, level }) {
       notifyUserRegistered();
       return authenticateUser(cleanEmail, password);
     } catch (error) {
-      return { ok: false, message: backendAuthErrorMessage(error) };
+      return {
+        ok: false,
+        code: error instanceof ApiError ? error.code : undefined,
+        message: backendAuthErrorMessage(error),
+      };
     }
   }
 

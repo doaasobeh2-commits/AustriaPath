@@ -84,16 +84,19 @@ export async function getCurrentSubscription(userId) {
   return rows[0] || null;
 }
 
-export async function createUserWithProfile({
-  email,
-  passwordHash,
-  name,
-  level,
-}) {
+export async function createUserWithProfile(
+  {
+    email,
+    passwordHash,
+    name,
+    level,
+  },
+  runQuery = query
+) {
   const cefr = mapCefrLevel(level);
   const allowed = defaultAllowedLevels(cefr);
 
-  const { rows } = await query(
+  const { rows } = await runQuery(
     `INSERT INTO users (email, password_hash, level, allowed_levels, ai_credits, is_access_approved)
      VALUES ($1, $2, $3::cefr_label, $4::cefr_label[], 5, TRUE)
      RETURNING *`,
@@ -101,18 +104,18 @@ export async function createUserWithProfile({
   );
   const user = rows[0];
 
-  await query(
+  await runQuery(
     `INSERT INTO user_profiles (user_id, display_name) VALUES ($1, $2)`,
     [user.id, name.trim()]
   );
 
-  await query(
+  await runQuery(
     `INSERT INTO subscriptions (user_id, type, status, remaining_exams, permissions, is_current)
      VALUES ($1, 'free', 'inactive', 0, $2::jsonb, TRUE)`,
     [user.id, JSON.stringify(getPermissionsByPlan("free"))]
   );
 
-  await query(
+  await runQuery(
     `INSERT INTO student_learning_profiles (user_id, profile_json, official_exam_level)
      VALUES ($1, $2::jsonb, $3::cefr_label)`,
     [
@@ -135,7 +138,7 @@ export async function createUserWithProfile({
     ]
   );
 
-  await query(
+  await runQuery(
     `INSERT INTO ai_credits (user_id, amount, balance_after, reason)
      VALUES ($1, 5, 5, 'registration_default')`,
     [user.id]

@@ -64,6 +64,18 @@ export const registerRateLimit = rateLimit({
   keyFn: (req) => `register:ip:${req.ip}`,
 });
 
+export const forgotPasswordRateLimit = rateLimit({
+  max: 3,
+  windowMs: 3_600_000,
+  keyFn: (req) => `forgot-password:email:${String(req.body?.email || "").toLowerCase()}`,
+});
+
+export const resetPasswordRateLimit = rateLimit({
+  max: 10,
+  windowMs: 3_600_000,
+  keyFn: (req) => `reset-password:ip:${req.ip}`,
+});
+
 export const aiRateLimit = rateLimit({
   max: 30,
   windowMs: 60_000,
@@ -83,3 +95,30 @@ export function aiDailyRateLimit(req, _res, next) {
   }
   next();
 }
+
+export const communityQuestionBurstRateLimit = rateLimit({
+  max: 6,
+  windowMs: 60_000,
+  keyFn: (req) => `community:question:burst:${req.auth?.userId || req.ip}`,
+});
+
+export const communityAnswerBurstRateLimit = rateLimit({
+  max: 15,
+  windowMs: 60_000,
+  keyFn: (req) => `community:answer:burst:${req.auth?.userId || req.ip}`,
+});
+
+/** Daily limits enforced in communityQaService; burst guard only. */
+export function communityQuestionDailyRateLimit(req, res, next) {
+  return communityQuestionBurstRateLimit(req, res, next);
+}
+
+export function communityAnswerDailyRateLimit(req, res, next) {
+  return communityAnswerBurstRateLimit(req, res, next);
+}
+
+export const waitlistRateLimit = rateLimit({
+  max: 5,
+  windowMs: 3_600_000,
+  keyFn: (req) => `waitlist:ip:${req.ip}`,
+});

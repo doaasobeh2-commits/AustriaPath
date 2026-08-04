@@ -1,6 +1,5 @@
 import { useBackend } from "../api/useBackend.js";
 import { getPlacementEntitlement } from "../api/repositories/index.js";
-import { isAdminQaMode } from "./adminQaMode.js";
 import { getCurrentUser } from "../app/userAccess.js";
 
 export async function fetchPlacementEntitlementView() {
@@ -44,7 +43,6 @@ export function isPlacementPlan(plan) {
 }
 
 export function canAccessPlacementTest(user = getCurrentUser()) {
-  if (isAdminQaMode(user)) return true;
   const permissions = user?.permissions || {};
   const remainingExams = Number(user?.subscription?.remainingExams ?? 0);
   return Boolean(permissions.placementTest) && remainingExams > 0;

@@ -10,6 +10,7 @@ import AdminActionBar from '../components/AdminActionBar';
 import { useBackend } from '../../api/useBackend.js';
 import {
   grantAdminPlacement,
+  grantAdminWeeklyPlan,
   listAdminUsers,
   patchAdminUser,
 } from '../../api/repositories/index.js';
@@ -45,6 +46,10 @@ function mapApiUser(u) {
     usedAiCredits: u.usedAiCredits ?? 0,
     createdAt: u.createdAt,
     lastLogin: u.lastLogin,
+    lastActivity: u.lastActivity,
+    loginCount: u.loginCount ?? 0,
+    lastFeatureOpened: u.lastFeatureOpened,
+    activityStatus: u.activityStatus,
     trialStartedAt: u.trialStartedAt,
     trialExpiresAt: u.trialExpiresAt,
     isAccessApproved: u.isAccessApproved,
@@ -145,6 +150,74 @@ export default function UserManagementScreen({ setActiveTab, backTab = "profile"
     updateUser(user.id, {
       allowedLevels: next.length ? next : ['A2'],
     });
+  };
+
+  const reloadSelectedUser = async (userId) => {
+    const rows = await listAdminUsers();
+    const mapped = rows.map(mapApiUser);
+    setUsers(mapped);
+    const fresh = mapped.find((user) => String(user.id) === String(userId));
+    if (fresh) setSelectedUser(fresh);
+  };
+
+  const applyBackendGrant = async (actionId, grantFn, successMessage, planPatch) => {
+    if (!useBackend() || !selectedUser || processingAction) return;
+    setProcessingAction(actionId);
+    try {
+      const data = await grantFn(selectedUser.id);
+      await reloadSelectedUser(selectedUser.id);
+      alert(
+        data?.alreadyEntitled
+          ? "Benutzer hat bereits einen aktiven Zugang."
+          : successMessage
+      );
+      if (planPatch) {
+        setSelectedUser((prev) => (prev ? { ...prev, ...planPatch(data) } : prev));
+      }
+    } catch (error) {
+      alert(error?.message || "Freigabe fehlgeschlagen.");
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
+  const handlePlanSelect = async (planType) => {
+    if (!selectedUser) return;
+    if (useBackend() && planType === 'placement_test') {
+      await applyBackendGrant(
+        'sub-placement',
+        grantAdminPlacement,
+        'Einstufungstest freigegeben (1 Versuch).',
+        (data) => ({
+          subscription: {
+            type: 'placement_test',
+            status: 'active',
+            remainingExams: data.remainingExams ?? 1,
+          },
+          permissions: { placementTest: true, reports: true },
+        })
+      );
+      return;
+    }
+    if (useBackend() && planType === 'weekly_plan') {
+      await applyBackendGrant(
+        'sub-weekly',
+        grantAdminWeeklyPlan,
+        'KI-Wochenplan freigegeben.',
+        () => ({
+          subscription: { type: 'weekly_plan', status: 'active', remainingExams: 0 },
+          permissions: {
+            weeklyPlan: true,
+            reports: true,
+            writingAI: true,
+            imageAI: true,
+            speakingAI: true,
+          },
+        })
+      );
+      return;
+    }
+    changeSubscription(selectedUser, planType);
   };
 
  const changeSubscription = (user, type) => {
@@ -391,58 +464,14 @@ const addActivity = (user, action, details = '') => {
         icon: "📝",
         label: "Einstufungstest geben",
         variant: "blue",
-        onClick: async () => {
-          if (!useBackend() || processingAction) return;
-          setProcessingAction("sub-placement");
-          try {
-            const data = await grantAdminPlacement(selectedUser.id);
-            const updated = {
-              ...selectedUser,
-              subscription: {
-                type: "placement_test",
-                status: "active",
-                remainingExams: data.remainingExams ?? 1,
-              },
-              permissions: {
-                ...(selectedUser.permissions || {}),
-                placementTest: true,
-                reports: true,
-              },
-            };
-            setUsers((current) => current.map((user) =>
-              String(user.id) === String(selectedUser.id) ? updated : user
-            ));
-            setSelectedUser(updated);
-            alert(data.alreadyEntitled
-              ? "Benutzer hat bereits einen offenen Placement-Versuch."
-              : "Einstufungstest freigegeben (1 Versuch)."
-            );
-          } catch (error) {
-            alert(error?.message || "Placement-Freigabe fehlgeschlagen.");
-          } finally {
-            setProcessingAction(null);
-          }
-        },
+        onClick: () => handlePlanSelect("placement_test"),
       },
       {
-        id: "sub-ai-exam",
-        icon: "🤖",
-        label: "AI Prüfung geben",
+        id: "sub-weekly",
+        icon: "📅",
+        label: "KI-Wochenplan freigeben",
         variant: "blue",
-        onClick: () =>
-          runAction("sub-ai-exam", () =>
-            changeSubscription(selectedUser, "ai_exam")
-          ),
-      },
-      {
-        id: "sub-premium",
-        icon: "⭐",
-        label: "Premium Monat",
-        variant: "blue",
-        onClick: () =>
-          runAction("sub-premium", () =>
-            changeSubscription(selectedUser, "premium_month")
-          ),
+        onClick: () => handlePlanSelect("weekly_plan"),
       },
       {
         id: "sub-free",
@@ -506,7 +535,11 @@ const addActivity = (user, action, details = '') => {
           </select>
 
           <p><b>Registriert:</b> {formatDate(selectedUser.createdAt)}</p>
-          <p><b>Letzter Login:</b> {formatDate(selectedUser.lastLogin)}</p>
+          <p><b>Letzter Login:</b> {formatDateTime(selectedUser.lastLogin)}</p>
+          <p><b>Letzte Aktivität:</b> {formatDateTime(selectedUser.lastActivity)}</p>
+          <p><b>Login-Anzahl:</b> {selectedUser.loginCount ?? 0}</p>
+          <p><b>Letztes Feature:</b> {selectedUser.lastFeatureOpened || '—'}</p>
+          <p><b>Nutzerstatus:</b> {activityStatusLabel(selectedUser.activityStatus)}</p>
           <p><b>Zugang:</b> {accessStatusLabel(selectedUser.accessStatus)}</p>
           <p><b>Trial bis:</b> {formatDate(selectedUser.trialExpiresAt)}</p>
           <p><b>Freigegeben:</b> {selectedUser.isAccessApproved ? 'Ja' : 'Nein'}</p>
@@ -550,13 +583,11 @@ const addActivity = (user, action, details = '') => {
           <select
             style={inputStyle}
             value={selectedUser.subscription?.type || 'free'}
-            onChange={(e) => changeSubscription(selectedUser, e.target.value)}
+            onChange={(e) => handlePlanSelect(e.target.value)}
           >
             <option value="free">Free</option>
             <option value="placement_test">Einstufungstest</option>
-            <option value="ai_exam">AI Probeprüfung</option>
-            <option value="intensive_week">Intensive Woche</option>
-            <option value="premium_month">Premium Monat</option>
+            <option value="weekly_plan">KI-Wochenplan</option>
           </select>
 
          <p>
@@ -768,6 +799,27 @@ function subscriptionLabel(type) {
   };
 
   return labels[type] || 'Free';
+}
+
+function formatDateTime(date) {
+  if (!date) return '—';
+  try {
+    return new Date(date).toLocaleString('de-DE', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return '—';
+  }
+}
+
+function activityStatusLabel(status) {
+  if (status === 'active') return 'Aktiv';
+  if (status === 'inactive') return 'Inaktiv';
+  return 'Nur registriert';
 }
 
 function formatDate(date) {

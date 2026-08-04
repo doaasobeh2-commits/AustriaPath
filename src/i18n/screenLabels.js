@@ -23,6 +23,8 @@ export const screenLabels = {
     dailyLearningDone: 'Bis morgen — dann gibt es neue Karten.',
     dailyLearningNext: 'Weiter',
     dailyLearningRecommends: 'AustriaPath empfiehlt:',
+    guidedSpeakingRecordInstruction:
+      'Lesen Sie den Satz im Feld laut vor und nehmen Sie Ihre Stimme auf.',
   },
   English: {
     back: '← Back',
@@ -47,6 +49,8 @@ export const screenLabels = {
     dailyLearningDone: 'See you tomorrow — new cards then.',
     dailyLearningNext: 'Next',
     dailyLearningRecommends: 'AustriaPath empfiehlt:',
+    guidedSpeakingRecordInstruction:
+      'Read the sentence inside the box aloud and record your voice.',
   },
   العربية: {
     back: '← رجوع',
@@ -71,6 +75,8 @@ export const screenLabels = {
     dailyLearningDone: 'نراك غدًا — بطاقات جديدة حينها.',
     dailyLearningNext: 'التالي',
     dailyLearningRecommends: 'AustriaPath empfiehlt:',
+    guidedSpeakingRecordInstruction:
+      'اقرأ النص الموجود داخل المربع بصوتٍ عالٍ ثم سجّل صوتك.',
   },
   Türkçe: {
     back: '← Geri',
@@ -95,6 +101,8 @@ export const screenLabels = {
     dailyLearningDone: 'Yarın görüşürüz — yeni kartlar o zaman.',
     dailyLearningNext: 'Devam',
     dailyLearningRecommends: 'AustriaPath empfiehlt:',
+    guidedSpeakingRecordInstruction:
+      'Kutunun içindeki cümleyi yüksek sesle okuyun ve sesinizi kaydedin.',
   },
   فارسی: {
     back: '← بازگشت',
@@ -119,6 +127,8 @@ export const screenLabels = {
     dailyLearningDone: 'فردا می‌بینیم — کارت‌های جدید آن وقت.',
     dailyLearningNext: 'بعدی',
     dailyLearningRecommends: 'AustriaPath empfiehlt:',
+    guidedSpeakingRecordInstruction:
+      'جمله داخل کادر را با صدای بلند بخوانید و صدای خود را ضبط کنید.',
   },
   Українська: {
     back: '← Назад',
@@ -143,6 +153,8 @@ export const screenLabels = {
     dailyLearningDone: 'До завтра — тоді нові картки.',
     dailyLearningNext: 'Далі',
     dailyLearningRecommends: 'AustriaPath empfiehlt:',
+    guidedSpeakingRecordInstruction:
+      'Прочитайте речення в полі вголос і запишіть свій голос.',
   },
 };
 

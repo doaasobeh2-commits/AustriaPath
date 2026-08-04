@@ -58,10 +58,15 @@ import {
 } from "../constants/storageKeys.js";
 import TrialExpiredScreen from "./screens/TrialExpiredScreen";
 import MessagesScreen from "./screens/MessagesScreen.jsx";
+import CommunityQuestionsScreen from "./screens/CommunityQuestionsScreen.jsx";
+import CommunityQuestionDetailScreen from "./screens/CommunityQuestionDetailScreen.jsx";
+import CommunityAskQuestionScreen from "./screens/CommunityAskQuestionScreen.jsx";
+import MyQuestionsArchiveScreen from "./screens/MyQuestionsArchiveScreen.jsx";
 import { isTrialExpiredUser } from "../utils/accessStatus.js";
 import { isOnboardingComplete, markOnboardingComplete } from "../utils/userPreferences.js";
 import DailyLearningScreen from "./screens/DailyLearningScreen.jsx";
-import { canAccessPlacementTest } from "../utils/placementEntitlement.js";
+import { fetchPlacementEntitlementView } from "../utils/placementEntitlement.js";
+import { fetchWeeklyPlanEntitlementView } from "../utils/weeklyPlanEntitlement.js";
 import { shouldBlockPremiumTab } from "../config/premiumFeaturesGate.js";
 import { PremiumComingSoonScreen } from "./components/PremiumComingSoonScreen.jsx";
 
@@ -253,14 +258,68 @@ export default function App() {
   };
 
   const guardedTab = getSafeTab(activeTab, currentUser);
-  const premiumBlocked = shouldBlockPremiumTab(guardedTab);
+
+  const [pilotEntitlements, setPilotEntitlements] = useState({
+    placement: false,
+    weeklyPlan: false,
+    loading: true,
+  });
+
+  const refreshPilotEntitlements = useCallback(() => {
+    if (!isLoggedIn || !useBackend()) {
+      setPilotEntitlements({ placement: false, weeklyPlan: false, loading: false });
+      return Promise.resolve();
+    }
+    setPilotEntitlements((prev) => ({ ...prev, loading: true }));
+    return Promise.all([fetchPlacementEntitlementView(), fetchWeeklyPlanEntitlementView()])
+      .then(([placement, weekly]) => {
+        setPilotEntitlements({
+          placement: Boolean(placement?.canTake),
+          weeklyPlan: Boolean(weekly?.canAccess),
+          loading: false,
+        });
+      })
+      .catch(() => {
+        setPilotEntitlements({ placement: false, weeklyPlan: false, loading: false });
+      });
+  }, [isLoggedIn]);
 
   useEffect(() => {
-    if (!isLoggedIn || guardedTab !== "placementTest") return;
-    if (canAccessPlacementTest(currentUser)) return;
-    alert("Coming Soon");
-    setActiveTabGuarded("premium");
-  }, [guardedTab, currentUser, isLoggedIn, setActiveTabGuarded]);
+    refreshPilotEntitlements();
+  }, [refreshPilotEntitlements, guardedTab]);
+
+  const premiumBlocked = shouldBlockPremiumTab(guardedTab, {
+    placement: pilotEntitlements.placement,
+    weeklyPlan: pilotEntitlements.weeklyPlan,
+  });
+
+  useEffect(() => {
+    if (!isLoggedIn || pilotEntitlements.loading) return;
+    if (guardedTab === "placementTest" && !pilotEntitlements.placement) {
+      setActiveTabGuarded("premium");
+    }
+    if (
+      [
+        "weeklyPlanSetup",
+        "b1WeeklyPlanSetup",
+        "b1WeeklyPlanPreview",
+        "weeklyPlanHome",
+        "trainingPlanDashboard",
+        "coachExercise",
+        "weeklyCompletion",
+      ].includes(guardedTab) &&
+      !pilotEntitlements.weeklyPlan
+    ) {
+      setActiveTabGuarded("premium");
+    }
+  }, [
+    guardedTab,
+    isLoggedIn,
+    pilotEntitlements.loading,
+    pilotEntitlements.placement,
+    pilotEntitlements.weeklyPlan,
+    setActiveTabGuarded,
+  ]);
 
   if (legalView) {
     return (
@@ -456,6 +515,31 @@ export default function App() {
             <MessagesScreen setActiveTab={setActiveTabGuarded} />
           )}
 
+          {guardedTab === "communityQuestions" && (
+            <CommunityQuestionsScreen
+              setActiveTab={setActiveTabGuarded}
+              setNavigationContext={setNavigationContext}
+            />
+          )}
+
+          {guardedTab === "communityAskQuestion" && (
+            <CommunityAskQuestionScreen setActiveTab={setActiveTabGuarded} />
+          )}
+
+          {guardedTab === "communityQuestionDetail" && (
+            <CommunityQuestionDetailScreen
+              setActiveTab={setActiveTabGuarded}
+              navigationContext={navigationContext}
+            />
+          )}
+
+          {guardedTab === "communityMyQuestions" && (
+            <MyQuestionsArchiveScreen
+              setActiveTab={setActiveTabGuarded}
+              setNavigationContext={setNavigationContext}
+            />
+          )}
+
           {guardedTab === "examinerLab" &&
             (isAdmin ? (
               <ExaminerLabScreen setActiveTab={setActiveTabGuarded} />
@@ -607,45 +691,38 @@ export default function App() {
           )}
 
           {guardedTab === "premium" && (
-            <SubscriptionScreen
-              setActiveTab={setActiveTabGuarded}
-              onOpenPremiumExam={() => setActiveTabGuarded("premiumExam")}
-            />
+            <SubscriptionScreen setActiveTab={setActiveTabGuarded} />
           )}
 
-          {guardedTab === "premiumSchedule" && (
-            <PremiumScheduleScreen setActiveTab={setActiveTabGuarded} />
-          )}
+          {guardedTab === "premiumSchedule" && null}
 
-          {guardedTab === "placementTest" && canAccessPlacementTest(currentUser) && (
+          {guardedTab === "placementTest" && pilotEntitlements.placement && (
             <PlacementTestScreen setActiveTab={setActiveTabGuarded} />
           )}
 
-          {guardedTab === "premiumExam" && (
-            <PremiumExamScreen setActiveTab={setActiveTabGuarded} />
-          )}
+          {guardedTab === "premiumExam" && null}
 
-          {guardedTab === "weeklyPlanSetup" && (
+          {guardedTab === "weeklyPlanSetup" && pilotEntitlements.weeklyPlan && (
             <WeeklyPlanSetupScreen setActiveTab={setActiveTabGuarded} />
           )}
 
-          {guardedTab === "b1WeeklyPlanSetup" && (
+          {guardedTab === "b1WeeklyPlanSetup" && pilotEntitlements.weeklyPlan && (
             <B1WeeklyPlanSetupScreen setActiveTab={setActiveTabGuarded} />
           )}
 
-          {guardedTab === "b1WeeklyPlanPreview" && (
+          {guardedTab === "b1WeeklyPlanPreview" && pilotEntitlements.weeklyPlan && (
             <B1WeeklyPlanPreviewScreen setActiveTab={setActiveTabGuarded} />
           )}
 
-          {guardedTab === "weeklyPlanHome" && (
+          {guardedTab === "weeklyPlanHome" && pilotEntitlements.weeklyPlan && (
             <WeeklyPlanHomeScreen setActiveTab={setActiveTabGuarded} />
           )}
 
-          {guardedTab === "trainingPlanDashboard" && (
+          {guardedTab === "trainingPlanDashboard" && pilotEntitlements.weeklyPlan && (
             <TrainingPlanDashboardScreen setActiveTab={setActiveTabGuarded} />
           )}
 
-          {guardedTab === "coachExercise" && (
+          {guardedTab === "coachExercise" && pilotEntitlements.weeklyPlan && (
             <CoachExerciseScreen
               setActiveTab={setActiveTabGuarded}
               setNavigationContext={setNavigationContext}
@@ -653,7 +730,7 @@ export default function App() {
             />
           )}
 
-          {guardedTab === "weeklyCompletion" && (
+          {guardedTab === "weeklyCompletion" && pilotEntitlements.weeklyPlan && (
             <WeeklyCompletionScreen setActiveTab={setActiveTabGuarded} />
           )}
 

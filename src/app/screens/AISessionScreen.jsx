@@ -3,8 +3,8 @@ import { getUserLanguage } from '../../utils/userPreferences';
 import { finalizeAiSessionParts } from '../../exam-platform/adapters/examEngineBridge.js';
 
 export default function AISessionScreen({
-  mode = 'exam', // exam | weekly_plan | placement_test
-  sessionType = 'ai_exam', // ai_exam | weekly_plan | placement_test | intensive_week | premium_month
+  mode = 'exam', // exam | placement_test
+  sessionType = 'ai_exam', // ai_exam | placement_test | intensive_week | premium_month
   title = 'AustriaPath AI',
   level = 'B1',
   parts = [],
@@ -511,7 +511,6 @@ localStorage.setItem(
 }
 
 function getSessionText(sessionType) {
-  if (sessionType === 'weekly_plan') return 'Flexibles KI-Training nach deinen Schwächen';
   if (sessionType === 'placement_test') return 'Kurzer Einstufungstest mit KI';
   if (sessionType === 'intensive_week') return 'Intensive Woche';
   if (sessionType === 'premium_month') return 'Premium Monat';

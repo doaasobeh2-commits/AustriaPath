@@ -5,6 +5,8 @@ import {
   mergeAkademieLists,
 } from '../../data/akademieContent';
 import { getAdminAkademieFeed } from '../../utils/adminContent';
+import { useAdminLearningLevel } from '../hooks/useAdminLearningLevel.js';
+import { LearningLevelSelector } from '../components/LearningLevelSelector.jsx';
 
 const splitItems = (value) => {
   if (!value) return [];
@@ -101,10 +103,15 @@ const SECTIONS = [
 export function AkademieScreen({
   setActiveTab,
   selectedLevel = 'A2',
+  setSelectedLevel,
   navigationContext,
   clearNavigationContext,
 }) {
-  const level = selectedLevel || 'A2';
+  const { level, setLevel } = useAdminLearningLevel({
+    selectedLevel,
+    setSelectedLevel,
+    navigationLevel: navigationContext?.level,
+  });
   const [section, setSection] = useState('grammatik');
   const [contentVersion, setContentVersion] = useState(0);
 
@@ -159,6 +166,8 @@ export function AkademieScreen({
 
         <h1 style={titleStyle}>Akademie {level}</h1>
         <p style={subtitleStyle}>{subtitle}</p>
+
+        <LearningLevelSelector level={level} onChange={setLevel} />
 
         <div style={tabsStyle}>
           {SECTIONS.map((tab) => (
