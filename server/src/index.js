@@ -5,7 +5,10 @@ import { attachProductionFrontend } from "./spa.js";
 import { closeDb } from "./db/client.js";
 import { prepareDatabase } from "./db/startup.js";
 import { env } from "./config/env.js";
-import { assertProductionDatabaseConfig } from "./config/validateEnv.js";
+import {
+  assertProductionAuthConfig,
+  assertProductionDatabaseConfig,
+} from "./config/validateEnv.js";
 import { attachRequestLogger } from "./middleware/requestLogger.js";
 import { attachProcessHandlers } from "./runtime/processHandlers.js";
 import { logWeeklyTrainingStartupDiagnostics } from "./weekly-training-ai/core/config.js";
@@ -23,6 +26,7 @@ root.use("/healthz", healthzRoutes);
 root.use("/v1", createApp());
 
 assertProductionDatabaseConfig();
+assertProductionAuthConfig();
 await prepareDatabase();
 
 const spaEnabled = attachProductionFrontend(root);

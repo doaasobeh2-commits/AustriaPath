@@ -5,16 +5,25 @@ import {
   getCurrentSubscription,
   isReservedAdminEmail,
   rowToApiUser,
-  updateLastLogin,
 } from "../repositories/userRepository.js";
-import { createAuthSession, revokeSession } from "../repositories/authSessionRepository.js";
+import {
+  createAuthSession,
+  revokeAllSessionsForUser,
+  revokeSession,
+} from "../repositories/authSessionRepository.js";
 import { hashPassword, verifyPassword } from "../utils/password.js";
 import { generateSessionToken, hashToken } from "../middleware/request.js";
 import { query } from "../db/client.js";
 import { env } from "../config/env.js";
-import { createOneTimeToken, consumeOneTimeToken } from "../repositories/tokenStoreRepository.js";
+import {
+  consumeOneTimeToken,
+  createOneTimeToken,
+  revokeOneTimeTokensForUser,
+} from "../repositories/tokenStoreRepository.js";
+import { buildPublicAppQueryUrl } from "../config/publicAppUrl.js";
 import { sendPasswordResetEmail, sendVerificationEmail } from "../services/emailService.js";
 import { registerUserWithCapacityGate } from "../services/registrationCapacityService.js";
+import { recordUserActivity, USER_ACTIVITY_EVENTS } from "./userActivityService.js";
 
 const SESSION_DAYS = 7;
 const TOKEN_ROUTE_RESET = "auth:password-reset";
@@ -77,7 +86,7 @@ export async function loginUser(body, meta = {}) {
     throw new AppError("AUTH_INVALID", "E-Mail oder Passwort ist falsch.", 401);
   }
 
-  await updateLastLogin(user.id);
+  await recordUserActivity(user.id, USER_ACTIVITY_EVENTS.LOGIN);
   const token = generateSessionToken();
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 86400000);
   await createAuthSession({
@@ -117,17 +126,18 @@ export async function requestPasswordReset(email) {
   const user = await findUserByEmail(clean);
   if (!user || user.status === "blocked") return { sent: true };
   try {
+    await revokeOneTimeTokensForUser(TOKEN_ROUTE_RESET, user.id);
     const token = await createOneTimeToken(
       TOKEN_ROUTE_RESET,
       { userId: user.id, email: clean },
       1
     );
-    const resetUrl = `${env.corsOrigin}?resetPassword=${token}`;
+    const resetUrl = buildPublicAppQueryUrl(`resetPassword=${token}`);
     await sendPasswordResetEmail(clean, resetUrl);
   } catch (error) {
     console.warn(
-      "[auth] password reset email failed:",
-      error instanceof Error ? error.message : String(error)
+      "[auth] password reset email delivery failed",
+      { email: clean, reason: error instanceof Error ? error.message : String(error) }
     );
   }
   return { sent: true };
@@ -146,7 +156,41 @@ export async function resetPasswordWithToken(token, password) {
     payload.userId,
     passwordHash,
   ]);
+  await revokeAllSessionsForUser(payload.userId);
   return { reset: true };
+}
+
+export async function adminSetUserPassword(actorId, userId, password) {
+  if (!password || password.length < 8) {
+    throw new AppError("VALIDATION_ERROR", "Passwort mindestens 8 Zeichen.", 400, {
+      fields: [{ path: "password", message: "Mindestens 8 Zeichen." }],
+    });
+  }
+
+  const user = await findUserById(userId);
+  if (!user) {
+    throw new AppError("NOT_FOUND", "Benutzer nicht gefunden.", 404);
+  }
+
+  const passwordHash = await hashPassword(password);
+  await query(`UPDATE users SET password_hash = $2, updated_at = NOW() WHERE id = $1`, [
+    userId,
+    passwordHash,
+  ]);
+  await revokeAllSessionsForUser(userId);
+
+  await query(
+    `INSERT INTO admin_activity_log (actor_id, action, details, metadata)
+     VALUES ($1, $2, $3, $4::jsonb)`,
+    [
+      actorId,
+      "admin_set_user_password",
+      `Admin set password for user ${userId}`,
+      JSON.stringify({ userId, targetEmail: user.email }),
+    ]
+  );
+
+  return { updated: true };
 }
 
 export async function verifyEmailWithToken(token) {

@@ -27,7 +27,7 @@ After pilot deploy: **bugs, stability, and performance only.** No new features w
 
 ## Production checklist
 
-- Railway: `DATABASE_URL`, `SESSION_SECRET`, `CORS_ORIGIN`, `COOKIE_SECURE`, `ADMIN_EMAIL`, email + OpenAI keys.
+- Railway: `DATABASE_URL`, `SESSION_SECRET`, `CORS_ORIGIN`, `PUBLIC_APP_URL`, `COOKIE_SECURE`, `ADMIN_EMAIL`, `RESEND_API_KEY`, `EMAIL_FROM`, email + OpenAI keys.
 - Weekly Plan AI: `B1_WEEKLY_PLAN_AI_ENABLED=true`, `WEEKLY_TRAINING_B1_OPENAI_API_KEY`, `WEEKLY_TRAINING_B1_MODEL`.
 - Vercel: `VITE_USE_BACKEND=true`, `VITE_API_BASE=/v1` (see `.env.production`).
 - Deploy: `npm run server:migrate && npm run server:start` on Railway; Vercel SPA rewrite to `/v1`.

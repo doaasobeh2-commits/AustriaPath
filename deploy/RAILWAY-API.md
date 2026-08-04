@@ -78,6 +78,7 @@ Do **not** add `npm ci` or `npm install` to the Railway build command field.
 | `DATABASE_URL` | Yes | Neon pooled URL (`?sslmode=require`) |
 | `SESSION_SECRET` | Yes | 64+ random chars |
 | `CORS_ORIGIN` | Yes | Your public app URL(s), comma-separated, e.g. `https://austriapath-production.up.railway.app,https://austriapath-exam-ai.vercel.app,http://localhost:5173` |
+| `PUBLIC_APP_URL` | Yes | **Single** public learner URL for email deep links (password reset), e.g. `https://austriapath-exam-ai.vercel.app` — not comma-separated |
 | `COOKIE_SECURE` | Yes | `true` |
 | `ADMIN_EMAIL` | Yes | `fadisobehau@gmail.com` |
 | `ADMIN_BOOTSTRAP_SECRET` | Yes (until bootstrap done) | One-time; remove after admin created |

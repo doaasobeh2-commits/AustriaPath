@@ -5,9 +5,8 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import { createApp } from "../server/src/app.js";
-import { initDb, runMigrations, closeDb, query } from "../server/src/db/client.js";
-import { runTrialAccessMigration } from "../server/src/db/trialAccessMigration.js";
-import { seedRuleRegistryIfEmpty } from "../server/src/db/seed.js";
+import { closeDb, query } from "../server/src/db/client.js";
+import { prepareServerTestDb } from "./helpers/serverTestDb.js";
 import {
   computeAccessStatus,
   hasApplicationAccess,
@@ -44,10 +43,7 @@ describe("public application access", () => {
   let app;
 
   beforeAll(async () => {
-    await initDb();
-    await runMigrations();
-    await runTrialAccessMigration();
-    await seedRuleRegistryIfEmpty();
+    await prepareServerTestDb();
     app = createApp();
   });
 

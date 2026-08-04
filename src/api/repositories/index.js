@@ -238,6 +238,13 @@ export async function grantAdminWeeklyPlan(userId) {
   });
 }
 
+export async function adminSetUserPassword(userId, password) {
+  return apiFetch(`/admin/users/${userId}/set-password`, {
+    method: "POST",
+    json: { password },
+  });
+}
+
 export async function listCommunityQuestions(params = {}) {
   const qs = new URLSearchParams();
   if (params.page) qs.set("page", String(params.page));

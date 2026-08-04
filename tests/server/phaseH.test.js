@@ -6,9 +6,8 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import { randomUUID } from "node:crypto";
 import { createApp } from "../../server/src/app.js";
-import { initDb, runMigrations, closeDb } from "../../server/src/db/client.js";
-import { runTrialAccessMigration } from "../../server/src/db/trialAccessMigration.js";
-import { seedRuleRegistryIfEmpty } from "../../server/src/db/seed.js";
+import { closeDb } from "../../server/src/db/client.js";
+import { prepareServerTestDb } from "../helpers/serverTestDb.js";
 
 process.env.NODE_ENV = "test";
 process.env.USE_PGLITE = "true";
@@ -36,10 +35,7 @@ describe("Phase H API", () => {
   let app;
 
   beforeAll(async () => {
-    await initDb();
-    await runMigrations();
-    await runTrialAccessMigration();
-    await seedRuleRegistryIfEmpty();
+    await prepareServerTestDb();
     app = createApp();
   });
 

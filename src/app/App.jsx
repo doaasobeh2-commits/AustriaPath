@@ -14,6 +14,7 @@ import LoginScreen from "./screens/LoginScreen";
 import RegisterScreen from "./screens/RegisterScreen";
 import AuthWelcomeScreen from "./screens/AuthWelcomeScreen";
 import ForgotPasswordScreen from "./screens/ForgotPasswordScreen";
+import { shouldShowResetPasswordScreen } from "../utils/resetPasswordDeepLink.js";
 import ResetPasswordScreen from "./screens/ResetPasswordScreen";
 import { DatabaseScreen } from "./screens/DatabaseScreen";
 import { WritingScreen } from "./screens/WritingScreen";
@@ -353,24 +354,27 @@ export default function App() {
     );
   }
 
-  if (!isLoggedIn) {
-    if (authTokenAction?.type === "reset") {
-      return (
-        <ResetPasswordScreen
-          token={authTokenAction.token}
-          onBack={() => {
-            setAuthTokenAction(null);
-            window.history.replaceState({}, "", window.location.pathname);
-            setAuthScreen("login");
-          }}
-          onSuccess={() => {
-            setAuthTokenAction(null);
-            window.history.replaceState({}, "", window.location.pathname);
-          }}
-        />
-      );
-    }
+  if (shouldShowResetPasswordScreen(authTokenAction)) {
+    return (
+      <ResetPasswordScreen
+        token={authTokenAction.token}
+        onBack={() => {
+          setAuthTokenAction(null);
+          window.history.replaceState({}, "", window.location.pathname);
+          if (!isLoggedIn) setAuthScreen("login");
+        }}
+        onSuccess={() => {
+          setAuthTokenAction(null);
+          window.history.replaceState({}, "", window.location.pathname);
+          if (isLoggedIn) {
+            handleLogout?.();
+          }
+        }}
+      />
+    );
+  }
 
+  if (!isLoggedIn) {
     if (authScreen === "forgot") {
       return (
         <ForgotPasswordScreen onBack={() => setAuthScreen("login")} />
@@ -403,7 +407,12 @@ export default function App() {
           <LoginScreen
           onLogin={completeLogin}
           onRegister={() => setAuthScreen("register")}
-          onForgotPassword={() => setAuthScreen("forgot")}
+          onForgotPassword={useBackend() ? undefined : () => setAuthScreen("forgot")}
+          pilotPasswordHint={
+            useBackend()
+              ? "Passwort vergessen? Bitte wenden Sie sich an den Administrator."
+              : undefined
+          }
           onBack={() => setAuthScreen("welcome")}
         />
         </>

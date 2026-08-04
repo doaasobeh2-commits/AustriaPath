@@ -22,3 +22,10 @@ export async function revokeSession(tokenHash) {
     [tokenHash]
   );
 }
+
+export async function revokeAllSessionsForUser(userId) {
+  await query(
+    `UPDATE auth_sessions SET revoked_at = NOW() WHERE user_id = $1 AND revoked_at IS NULL`,
+    [userId]
+  );
+}

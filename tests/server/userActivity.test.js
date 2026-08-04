@@ -8,10 +8,9 @@ process.env.SESSION_SECRET = "test-secret";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import { createApp } from "../../server/src/app.js";
-import { initDb, runMigrations, closeDb, query } from "../../server/src/db/client.js";
-import { runTrialAccessMigration } from "../../server/src/db/trialAccessMigration.js";
+import { closeDb, query } from "../../server/src/db/client.js";
 import { runUserActivityMigration } from "../../server/src/db/userActivityMigration.js";
-import { seedRuleRegistryIfEmpty } from "../../server/src/db/seed.js";
+import { prepareServerTestDb } from "../helpers/serverTestDb.js";
 import {
   deriveUserActivityStatus,
   INACTIVE_AFTER_DAYS,
@@ -40,11 +39,7 @@ describe("user activity summary", () => {
   let app;
 
   beforeAll(async () => {
-    await initDb();
-    await runMigrations();
-    await runTrialAccessMigration();
-    await runUserActivityMigration();
-    await seedRuleRegistryIfEmpty();
+    await prepareServerTestDb({ extra: [runUserActivityMigration] });
     app = createApp();
   });
 

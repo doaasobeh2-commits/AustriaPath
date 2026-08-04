@@ -9,6 +9,7 @@ import { mapUserActivitySummary } from "../../services/userActivityService.js";
 import { env } from "../../config/env.js";
 import { grantPlacementAttempt } from "../../services/placementEntitlementService.js";
 import { grantWeeklyPlanAccess } from "../../services/weeklyPlanEntitlementService.js";
+import { adminSetUserPassword } from "../../services/authService.js";
 
 const router = Router();
 
@@ -77,6 +78,17 @@ router.post("/:userId/grant-placement", requireAuth, requireAdmin, async (req, r
 router.post("/:userId/grant-weekly-plan", requireAuth, requireAdmin, async (req, res, next) => {
   try {
     success(res, await grantWeeklyPlanAccess(req.params.userId));
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/:userId/set-password", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    success(
+      res,
+      await adminSetUserPassword(req.auth.userId, req.params.userId, req.body?.password)
+    );
   } catch (e) {
     next(e);
   }

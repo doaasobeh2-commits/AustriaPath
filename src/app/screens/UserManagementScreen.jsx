@@ -11,6 +11,7 @@ import { useBackend } from '../../api/useBackend.js';
 import {
   grantAdminPlacement,
   grantAdminWeeklyPlan,
+  adminSetUserPassword,
   listAdminUsers,
   patchAdminUser,
 } from '../../api/repositories/index.js';
@@ -63,6 +64,10 @@ export default function UserManagementScreen({ setActiveTab, backTab = "profile"
   const [selectedUser, setSelectedUser] = useState(null);
   const [search, setSearch] = useState('');
   const [processingAction, setProcessingAction] = useState(null);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordModalError, setPasswordModalError] = useState('');
 
   useEffect(() => {
     if (!useBackend()) return;
@@ -85,6 +90,37 @@ export default function UserManagementScreen({ setActiveTab, backTab = "profile"
     if (changes.trialExpiresAt) apiFields.trialExpiresAt = changes.trialExpiresAt;
     if (Object.keys(apiFields).length) {
       await patchAdminUser(id, apiFields);
+    }
+  };
+
+  const applyUserPatch = async (id, changes) => {
+    if (useBackend()) {
+      await persistUserPatch(id, changes);
+    }
+
+    const next = users.map((u) => {
+      if (String(u.id) !== String(id)) return u;
+      return { ...u, ...changes };
+    });
+
+    setUsers(next);
+    if (!useBackend()) saveUsers(next);
+
+    if (String(selectedUser?.id) === String(id)) {
+      setSelectedUser((old) => ({ ...old, ...changes }));
+    }
+  };
+
+  const runAdminAction = async (actionId, fn) => {
+    if (processingAction) return;
+
+    setProcessingAction(actionId);
+    try {
+      await fn();
+    } catch (error) {
+      alert(error?.message || 'Aktion fehlgeschlagen.');
+    } finally {
+      setProcessingAction(null);
     }
   };
 
@@ -121,24 +157,13 @@ export default function UserManagementScreen({ setActiveTab, backTab = "profile"
   blocked: users.filter((u) => u.status === "blocked").length,
 }), [users]);
   const updateUser = (id, changes) => {
-    const next = users.map((u) => {
-     if (String(u.id) !== String(id)) return u;
-
-      const updated = {
-        ...u,
-        ...changes,
-      };
-
-      return updated;
-    });
-
-    setUsers(next);
-    if (!useBackend()) saveUsers(next);
-    else persistUserPatch(id, changes).catch(() => {});
-
-    if (String(selectedUser?.id) === String(id)) {
-      setSelectedUser((old) => ({ ...old, ...changes }));
-    }
+    void (async () => {
+      try {
+        await applyUserPatch(id, changes);
+      } catch (error) {
+        alert(error?.message || 'Speichern fehlgeschlagen.');
+      }
+    })();
   };
 
   const toggleAllowedLevel = (user, level) => {
@@ -246,16 +271,25 @@ const testConsumeCredits = (user) => {
 };
 
 
-const addActivity = (user, action, details = '') => {
+const appendLocalActivity = (user, action, details = '') => {
   const item = {
     date: new Date().toISOString(),
     action,
     details,
   };
 
-  updateUser(user.id, {
+  const changes = {
     activityLog: [item, ...(user.activityLog || [])],
-  });
+  };
+
+  const next = users.map((u) =>
+    String(u.id) === String(user.id) ? { ...u, ...changes } : u
+  );
+  setUsers(next);
+  if (!useBackend()) saveUsers(next);
+  if (String(selectedUser?.id) === String(user.id)) {
+    setSelectedUser((old) => ({ ...old, ...changes }));
+  }
 };
   const deleteUser = (user) => {
     const ok = window.confirm(`Benutzer ${user.name} wirklich löschen?`);
@@ -271,45 +305,62 @@ const addActivity = (user, action, details = '') => {
     const isBlocked = selectedUser.status === "blocked";
 
     const handleUnlockUser = () => {
-      runAction("unlock", () => {
-        const updated = {
-          ...selectedUser,
-          status: "approved",
-          accessUpdatedAt: new Date().toISOString(),
-        };
-
-        const next = users.map((u) =>
-          String(u.id) === String(selectedUser.id) ? updated : u
-        );
-
-        setUsers(next);
-        saveUsers(next);
-        setSelectedUser(updated);
+      void runAdminAction("unlock", async () => {
+        await applyUserPatch(selectedUser.id, { status: "approved" });
+        appendLocalActivity(selectedUser, "Benutzer entsperrt");
       });
     };
 
     const handleBlockUser = () => {
-      runAction("block", () => {
-        updateUser(selectedUser.id, { status: "blocked" });
-        addActivity(selectedUser, "Benutzer gesperrt");
+      void runAdminAction("block", async () => {
+        await applyUserPatch(selectedUser.id, { status: "blocked" });
+        appendLocalActivity(selectedUser, "Benutzer gesperrt");
       });
     };
 
     const handleResetPassword = () => {
       if (processingAction) return;
+      if (!useBackend()) {
+        alert('Passwort-Zurücksetzen ist nur mit Backend verfügbar.');
+        return;
+      }
+      setPasswordModalError('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordModalOpen(true);
+    };
 
-      const confirmed = window.confirm(
-        `Passwort für ${selectedUser.name} wirklich zurücksetzen?`
-      );
-      if (!confirmed) return;
+    const handleSavePassword = async () => {
+      if (!selectedUser || processingAction) return;
+      if (newPassword.length < 8) {
+        setPasswordModalError('Passwort mindestens 8 Zeichen.');
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        setPasswordModalError('Passwörter stimmen nicht überein.');
+        return;
+      }
 
-      runAction("reset-password", () => {
-        if (useBackend()) {
-          alert("Passwort-Reset-E-Mail wird vom Backend versendet (Forgot-Password-Flow).");
-        } else {
-          alert("Passwort-Reset wird nach Backend-Integration aktiviert.");
-        }
-      });
+      setProcessingAction('reset-password');
+      setPasswordModalError('');
+      try {
+        await adminSetUserPassword(selectedUser.id, newPassword);
+        setPasswordModalOpen(false);
+        setNewPassword('');
+        setConfirmPassword('');
+        appendLocalActivity(selectedUser, 'Passwort vom Admin zurückgesetzt');
+      } catch (error) {
+        setPasswordModalError(error?.message || 'Passwort konnte nicht gespeichert werden.');
+      } finally {
+        setProcessingAction(null);
+      }
+    };
+
+    const handleCancelPassword = () => {
+      setPasswordModalOpen(false);
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordModalError('');
     };
 
     const handleVerifyEmail = () => {
@@ -327,29 +378,32 @@ const addActivity = (user, action, details = '') => {
     };
 
     const handleApproveAccess = () => {
-      runAction("approve-access", () => {
-        updateUser(selectedUser.id, { isAccessApproved: true, accessStatus: "APPROVED" });
-        addActivity(selectedUser, "Zugang freigegeben");
+      void runAdminAction("approve-access", async () => {
+        await applyUserPatch(selectedUser.id, {
+          isAccessApproved: true,
+          accessStatus: "APPROVED",
+        });
+        appendLocalActivity(selectedUser, "Zugang freigegeben");
       });
     };
 
     const handleRevokeAccess = () => {
-      runAction("revoke-access", () => {
-        updateUser(selectedUser.id, { isAccessApproved: false });
-        addActivity(selectedUser, "Freigabe entzogen");
+      void runAdminAction("revoke-access", async () => {
+        await applyUserPatch(selectedUser.id, { isAccessApproved: false });
+        appendLocalActivity(selectedUser, "Freigabe entzogen");
       });
     };
 
     const handleRestartTrial = () => {
-      runAction("restart-trial", () => {
+      void runAdminAction("restart-trial", async () => {
         const expires = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
-        updateUser(selectedUser.id, {
+        await applyUserPatch(selectedUser.id, {
           restartTrial: true,
           isAccessApproved: false,
           accessStatus: "TRIAL_ACTIVE",
           trialExpiresAt: expires,
         });
-        addActivity(selectedUser, "Trial neu gestartet (48h)");
+        appendLocalActivity(selectedUser, "Trial neu gestartet (48h)");
       });
     };
 
@@ -401,20 +455,24 @@ const addActivity = (user, action, details = '') => {
         variant: "blue",
         onClick: handleResetPassword,
       },
-      {
-        id: "verify-email",
-        icon: "✉️",
-        label: "E-Mail bestätigen",
-        variant: "orange",
-        onClick: handleVerifyEmail,
-      },
-      {
-        id: "delete",
-        icon: "🗑",
-        label: "Löschen",
-        variant: "red",
-        onClick: handleDeleteUser,
-      },
+      ...(useBackend()
+        ? []
+        : [
+            {
+              id: "verify-email",
+              icon: "✉️",
+              label: "E-Mail bestätigen",
+              variant: "orange",
+              onClick: handleVerifyEmail,
+            },
+            {
+              id: "delete",
+              icon: "🗑",
+              label: "Löschen",
+              variant: "red",
+              onClick: handleDeleteUser,
+            },
+          ]),
     ];
 
     const creditActions = [
@@ -718,6 +776,53 @@ const addActivity = (user, action, details = '') => {
     processingAction={processingAction}
   />
 </div>
+        {passwordModalOpen && (
+          <div style={modalOverlayStyle}>
+            <div style={modalCardStyle}>
+              <h2 style={{ marginTop: 0 }}>Passwort zurücksetzen</h2>
+              <p style={mutedStyle}>
+                Neues Passwort für {selectedUser.name} ({selectedUser.email})
+              </p>
+              {passwordModalError ? (
+                <div style={modalErrorStyle}>{passwordModalError}</div>
+              ) : null}
+              <label style={labelStyle}>Neues Passwort</label>
+              <input
+                type="password"
+                style={inputStyle}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                autoComplete="new-password"
+              />
+              <label style={labelStyle}>Passwort bestätigen</label>
+              <input
+                type="password"
+                style={inputStyle}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+              />
+              <div style={modalActionsStyle}>
+                <button
+                  type="button"
+                  style={modalCancelStyle}
+                  onClick={handleCancelPassword}
+                  disabled={processingAction === 'reset-password'}
+                >
+                  Abbrechen
+                </button>
+                <button
+                  type="button"
+                  style={modalSaveStyle}
+                  onClick={handleSavePassword}
+                  disabled={processingAction === 'reset-password'}
+                >
+                  {processingAction === 'reset-password' ? 'Speichern …' : 'Speichern'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         </div>
       
     );
@@ -989,6 +1094,63 @@ const emptyStyle = {
   borderRadius: '18px',
   padding: '18px',
   color: '#64748b',
+};
+
+const modalOverlayStyle = {
+  position: 'fixed',
+  inset: 0,
+  backgroundColor: 'rgba(15, 23, 42, 0.45)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '20px',
+  zIndex: 10000,
+};
+
+const modalCardStyle = {
+  width: '100%',
+  maxWidth: '420px',
+  backgroundColor: '#ffffff',
+  borderRadius: '18px',
+  padding: '22px',
+  boxShadow: '0 20px 40px rgba(15, 23, 42, 0.18)',
+};
+
+const modalErrorStyle = {
+  backgroundColor: '#fef2f2',
+  color: '#991b1b',
+  border: '1px solid #fecaca',
+  borderRadius: '12px',
+  padding: '12px',
+  marginBottom: '12px',
+};
+
+const modalActionsStyle = {
+  display: 'flex',
+  gap: '10px',
+  marginTop: '8px',
+};
+
+const modalCancelStyle = {
+  flex: 1,
+  border: '1px solid #cbd5e1',
+  backgroundColor: '#ffffff',
+  color: '#334155',
+  padding: '12px',
+  borderRadius: '12px',
+  fontWeight: '700',
+  cursor: 'pointer',
+};
+
+const modalSaveStyle = {
+  flex: 1,
+  border: 'none',
+  backgroundColor: '#2563eb',
+  color: '#ffffff',
+  padding: '12px',
+  borderRadius: '12px',
+  fontWeight: '800',
+  cursor: 'pointer',
 };
 
 const historyItemStyle = {

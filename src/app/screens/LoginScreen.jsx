@@ -14,6 +14,7 @@ export default function LoginScreen({
   onLogin,
   onRegister,
   onForgotPassword,
+  pilotPasswordHint,
   onBack,
 }) {
   const [email, setEmail] = useState("");
@@ -48,6 +49,10 @@ export default function LoginScreen({
         <p style={authSubtitleStyle}>
           Melden Sie sich mit Ihrer E-Mail und Ihrem Passwort an.
         </p>
+
+        {pilotPasswordHint && (
+          <p style={{ ...authSubtitleStyle, marginTop: -4 }}>{pilotPasswordHint}</p>
+        )}
 
         <input
           type="email"

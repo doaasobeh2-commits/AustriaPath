@@ -4,6 +4,8 @@
  * @see docs/backend-contract-pack/13-ai-gateway-contracts.md
  */
 
+import { AppError } from "./errorHandler.js";
+
 const buckets = new Map();
 
 function pruneBucket(bucket, windowMs) {
@@ -36,11 +38,9 @@ export function rateLimit(options) {
     if (process.env.NODE_ENV === "test") return next();
     const key = keyFn(req);
     if (!hitRateLimit(key, max, windowMs)) {
-      const err = Object.assign(new Error("Zu viele Anfragen. Bitte später erneut versuchen."), {
-        code: "RATE_LIMITED",
-        status: 429,
-      });
-      return next(err);
+      return next(
+        new AppError("RATE_LIMITED", "Zu viele Anfragen. Bitte später erneut versuchen.", 429)
+      );
     }
     next();
   };
@@ -86,12 +86,7 @@ export function aiDailyRateLimit(req, _res, next) {
   if (process.env.NODE_ENV === "test") return next();
   const key = `ai:day:${req.auth?.userId}`;
   if (!hitRateLimit(key, 500, 86_400_000)) {
-    return next(
-      Object.assign(new Error("Tageslimit für AI-Anfragen erreicht."), {
-        code: "RATE_LIMITED",
-        status: 429,
-      })
-    );
+    return next(new AppError("RATE_LIMITED", "Tageslimit für AI-Anfragen erreicht.", 429));
   }
   next();
 }

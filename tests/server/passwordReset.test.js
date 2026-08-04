@@ -4,13 +4,13 @@
 process.env.NODE_ENV = "test";
 process.env.USE_PGLITE = "true";
 process.env.SESSION_SECRET = "test-secret";
+process.env.PUBLIC_APP_URL = "https://app.example.com";
 
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import request from "supertest";
 import { createApp } from "../../server/src/app.js";
-import { initDb, runMigrations, closeDb } from "../../server/src/db/client.js";
-import { runTrialAccessMigration } from "../../server/src/db/trialAccessMigration.js";
-import { seedRuleRegistryIfEmpty } from "../../server/src/db/seed.js";
+import { closeDb } from "../../server/src/db/client.js";
+import { prepareServerTestDb } from "../helpers/serverTestDb.js";
 import * as emailService from "../../server/src/services/emailService.js";
 import * as tokenStore from "../../server/src/repositories/tokenStoreRepository.js";
 
@@ -34,10 +34,7 @@ describe("Password reset flow", () => {
   let capturedResetUrl = "";
 
   beforeAll(async () => {
-    await initDb();
-    await runMigrations();
-    await runTrialAccessMigration();
-    await seedRuleRegistryIfEmpty();
+    await prepareServerTestDb();
     app = createApp();
     vi.spyOn(emailService, "sendPasswordResetEmail").mockImplementation(async (_email, resetUrl) => {
       capturedResetUrl = resetUrl;

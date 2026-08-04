@@ -2,6 +2,8 @@
  * Server environment configuration (Phase H).
  */
 
+import { resolvePublicAppUrl } from "./publicAppUrl.js";
+
 function envBool(name, defaultValue = false) {
   const v = process.env[name];
   if (v === undefined || v === "") return defaultValue;
@@ -26,6 +28,8 @@ export const env = Object.freeze({
     .toLowerCase(),
   adminBootstrapSecret: process.env.ADMIN_BOOTSTRAP_SECRET || "",
   corsOrigin: process.env.CORS_ORIGIN || "http://localhost:5173",
+  /** Public learner app URL for email deep links — never comma-separated CORS list. */
+  publicAppUrl: resolvePublicAppUrl(),
   cookieSecure: envBool("COOKIE_SECURE", process.env.NODE_ENV === "production"),
   stripeSecretKey: process.env.STRIPE_SECRET_KEY || "",
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || "",
